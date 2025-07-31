@@ -35,7 +35,7 @@
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         tools:text="Rp 15.000"
-        style="@style/MwmTextAppearance.Body1.Strong"/>
+        style="@style/MwmTextAppearance.Body1"/>
   </RelativeLayout>
 
   <RelativeLayout
@@ -62,7 +62,7 @@
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         tools:text="Rp 30.000"
-        style="@style/MwmTextAppearance.Body1.Strong"/>
+        style="@style/MwmTextAppearance.Body1"/>
   </RelativeLayout>
 
   <View
@@ -74,11 +74,9 @@
   <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:drawablePadding="@dimen/margin_base"
       android:paddingVertical="@dimen/margin_half"
       android:text="Cash"
-      app:drawableStartCompat="@drawable/ic_cash"
-      style="@style/MwmTextAppearance.Body1.Strong"/>
+      style="@style/MwmTextAppearance.Body1"/>
 
   <com.google.android.material.button.MaterialButton
       android:id="@+id/btn_book"
