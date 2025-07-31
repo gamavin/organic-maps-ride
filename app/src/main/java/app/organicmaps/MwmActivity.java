@@ -1237,6 +1237,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onBackPressed()
   {
+    if (mRoutingSummaryPanel.getVisibility() == View.VISIBLE)
+    {
+      exitRideHailingMode();
+      return;
+    }
     final RoutingController routingController = RoutingController.get();
     if (!closeBottomSheet(MAIN_MENU_ID) && !closeBottomSheet(LAYERS_MENU_ID) && !collapseNavMenu() && !closePlacePage()
         && !closeSearchToolbar(true, true) && !closeSidePanel() && !closePositionChooser()
@@ -1664,6 +1669,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onNavigationStarted()
   {
+    exitRideHailingMode();
     closeFloatingToolbarsAndPanels(true);
     ThemeSwitcher.INSTANCE.restart(isMapRendererActive());
     mMapButtonsViewModel.setLayoutMode(MapButtonsController.LayoutMode.navigation);
@@ -1793,6 +1799,14 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     // Tampilkan panel ringkasan rute
     UiUtils.show(mRoutingSummaryPanel);
+  }
+
+  private void exitRideHailingMode()
+  {
+    mIsInRideHailingMode = false;
+    mCalculationState = CalculationState.NONE;
+    UiUtils.hide(mRoutingSummaryPanel);
+    mMapButtonsViewModel.setButtonsHidden(false);
   }
 
   @Override
