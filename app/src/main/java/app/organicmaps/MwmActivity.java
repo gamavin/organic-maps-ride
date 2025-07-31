@@ -2393,6 +2393,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
     UiUtils.hide(mConfirmPickupButton);
     closePlacePage();
 
+    // Pastikan destinasi sudah dipilih
+    if (mCurrentPlacePageObject == null)
+    {
+      Toast.makeText(this, "No destination selected.", Toast.LENGTH_SHORT).show();
+      return;
+    }
+
     // Ambil koordinat titik penjemputan dari tengah layar
     final double[] center = Framework.nativeGetScreenRectCenter();
     double pickupLat = center[0];
@@ -2408,7 +2415,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     // 2. Mulai kalkulasi rute pertama: MOBIL
     // PENTING: Gunakan Router.Vehicle, bukan app.organicmaps.sdk.Router.ROUTER_TYPE_VEHICLE
-    RoutingController.get().prepare(pickupPoint, mCurrentPlacePageObject, Router.Vehicle);
+    RoutingController controller = RoutingController.get();
+    controller.prepare(pickupPoint, mCurrentPlacePageObject, Router.Vehicle);
+    controller.setRouterType(Router.Vehicle);
   }
 
   // Fungsi ini akan dipanggil oleh PlacePageController untuk mengetahui mode saat ini
