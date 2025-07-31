@@ -245,6 +245,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private View mRoutingSummaryPanel;
   private TextView mCarPrice;
   private TextView mMotorcyclePrice;
+  private com.google.android.material.button.MaterialButton mSelectCarButton;
+  private com.google.android.material.button.MaterialButton mSelectMotorcycleButton;
 
   private enum CalculationState
   {
@@ -597,6 +599,23 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mRoutingSummaryPanel = findViewById(R.id.routing_summary_panel);
     mCarPrice = mRoutingSummaryPanel.findViewById(R.id.tv_car_price);
     mMotorcyclePrice = mRoutingSummaryPanel.findViewById(R.id.tv_motorcycle_price);
+    mSelectCarButton = mRoutingSummaryPanel.findViewById(R.id.btn_select_car);
+    mSelectMotorcycleButton = mRoutingSummaryPanel.findViewById(R.id.btn_select_motorcycle);
+
+    mSelectCarButton.setOnClickListener(v -> {
+      RoutingController controller = RoutingController.get();
+      controller.setRouterType(Router.Vehicle);
+      onRoutingStart();
+      exitRideHailingMode();
+    });
+
+    mSelectMotorcycleButton.setOnClickListener(v -> {
+      RoutingController controller = RoutingController.get();
+      controller.setRouterType(Router.Bicycle);
+      if (mMotorcycleRouteDistance != 0)
+        onRoutingStart();
+      exitRideHailingMode();
+    });
 
     updateViewsInsets();
 
@@ -1653,6 +1672,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onNavigationCancelled()
   {
+    exitRideHailingMode();
     closeFloatingToolbarsAndPanels(true);
     ThemeSwitcher.INSTANCE.restart(isMapRendererActive());
     if (mRoutingPlanInplaceController == null)
