@@ -1311,8 +1311,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       mIsInRideHailingMode = true;
       mCurrentPlacePageObject = mapObject; // Simpan objek destinasi
-      RoutingController.get().prepare(null, mapObject);
-      LocationState.nativeSwitchToNextMode();
+      showConfirmPickupButton(true, mapObject);
+      if (LocationState.getMode() != FOLLOW && LocationState.getMode() != FOLLOW_AND_ROTATE)
+        LocationState.nativeSwitchToNextMode();
     }
 
     mPlacePageViewModel.setMapObject(mapObject);
