@@ -1670,9 +1670,17 @@ public class MwmActivity extends BaseMwmFragmentActivity
       }
       else
       {
-        mRoutingPlanInplaceController.show(true);
-        if (completionListener != null)
-          completionListener.run();
+        if (mIsInRideHailingMode)
+        {
+          if (completionListener != null)
+            completionListener.run();
+        }
+        else
+        {
+          mRoutingPlanInplaceController.show(true);
+          if (completionListener != null)
+            completionListener.run();
+        }
       }
     }
     else
@@ -1721,6 +1729,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       return;
 
     mRoutingPlanInplaceController.hideDrivingOptionsView();
+    mRoutingPlanInplaceController.show(false);
   }
 
   @Override
@@ -2580,6 +2589,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
       }
 
       UiUtils.hide(mConfirmPickupButton);
+      if (mRoutingPlanInplaceController != null)
+        mRoutingPlanInplaceController.show(false);
       RoutingController controller = RoutingController.get();
 
       mCarTollInfo = mCarNoTollInfo = mMotorcycleInfo = null;
