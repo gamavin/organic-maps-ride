@@ -1875,9 +1875,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
         mMotorcycleInfo = info;
         mMotorcycleRouteDistance = info.distToTarget.mDistance;
         setCalculationState(CalculationState.NONE);
+        UiUtils.hide(mRoutingProgressOverlay);
         Logger.d(TAG, "onBuiltRoute: entering showRoutingSummary()");
         showRoutingSummary();
-        UiUtils.hide(mRoutingProgressOverlay);
         Logger.d(TAG, "onBuiltRoute: prices after showRoutingSummary: car (toll)=" + mCarTollPriceValue +
                      ", car (no toll)=" + mCarNoTollPriceValue +
                      ", motorcycle=" + mMotorcyclePriceValue);
