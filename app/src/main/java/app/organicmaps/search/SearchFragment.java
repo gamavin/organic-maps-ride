@@ -414,8 +414,6 @@ public class SearchFragment extends BaseMwmFragment implements SearchListener, C
     SearchEngine.INSTANCE.cancel();
     SearchEngine.INSTANCE.setQuery(query);
 
-    final Activity host = requireActivity();
-
     if (RoutingController.get().isWaitingPoiPick())
     {
       final String subtitle = (result.description != null) ? result.description.localizedFeatureType : "";
@@ -424,18 +422,6 @@ public class SearchFragment extends BaseMwmFragment implements SearchListener, C
       final MapObject point =
           MapObject.createMapObject(FeatureId.EMPTY, MapObject.SEARCH, title, subtitle, result.lat, result.lon);
       RoutingController.get().onPoiSelected(point);
-      mToolbarController.deactivate();
-      if (host instanceof SearchActivity)
-        Utils.navigateToParent(host);
-      return;
-    }
-
-    if (host instanceof SearchActivity)
-    {
-      final Intent intent = new Intent(host, MwmActivity.class);
-      intent.putExtra(SearchActivity.EXTRA_RESULT_INDEX, resultIndex);
-      host.startActivity(intent);
-      host.finish();
     }
     else
     {
@@ -443,6 +429,9 @@ public class SearchFragment extends BaseMwmFragment implements SearchListener, C
     }
 
     mToolbarController.deactivate();
+
+    if (requireActivity() instanceof SearchActivity)
+      Utils.navigateToParent(requireActivity());
   }
 
   void showAllResultsOnMap()
