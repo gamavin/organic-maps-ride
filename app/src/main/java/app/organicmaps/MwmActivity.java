@@ -2415,7 +2415,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public void onManageRouteOpen()
   {
     if (mIsInRideHailingMode)
+    {
+      if (mRoutingPlanInplaceController != null)
+        mRoutingPlanInplaceController.show(false);
       return;
+    }
 
     // Create and show 'Manage Route' Bottom Sheet panel.
     mManageRouteBottomSheet = new ManageRouteBottomSheet();
