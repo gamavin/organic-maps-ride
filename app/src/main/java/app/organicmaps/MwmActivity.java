@@ -1549,6 +1549,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private boolean showAddStartOrFinishFrame(@NonNull RoutingController controller, boolean showFrame)
   {
+    if (mIsInRideHailingMode)
+      return false;
+
     // S - start, F - finish, L - my position
     // -S-F-L -> Start
     // -S-F+L -> Finish
@@ -2412,6 +2415,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onManageRouteOpen()
   {
+    if (mIsInRideHailingMode)
+    {
+      closeFloatingPanels();
+      return;
+    }
+
     // Create and show 'Manage Route' Bottom Sheet panel.
     mManageRouteBottomSheet = new ManageRouteBottomSheet();
     mManageRouteBottomSheet.setCancelable(false);
