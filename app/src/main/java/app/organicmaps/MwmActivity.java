@@ -1827,6 +1827,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
       return;
     }
 
+    Logger.d(TAG, "onBuiltRoute: mCalculationState=" + mCalculationState +
+                 ", distance=" + info.distToTarget.mDistance);
+
     // Cek state saat ini
     if (mCalculationState == CalculationState.CALCULATING_CAR_TOLL)
     {
@@ -1855,6 +1858,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       {
         mMotorcycleInfo = info;
         mMotorcycleRouteDistance = info.distToTarget.mDistance;
+        Logger.d(TAG, "onBuiltRoute: entering showRoutingSummary()");
         showRoutingSummary();
         UiUtils.hide(mRoutingProgressOverlay);
       }
@@ -1870,6 +1874,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mCarTollPriceValue = calculateFare(mCarTollRouteDistance, 5000);
     mCarNoTollPriceValue = calculateFare(mCarNoTollRouteDistance, 5000);
     mMotorcyclePriceValue = calculateFare(mMotorcycleRouteDistance, 3000);
+
+    Logger.d(TAG, "showRoutingSummary: car (toll) distance=" + mCarTollRouteDistance +
+                 " price=" + mCarTollPriceValue);
+    Logger.d(TAG, "showRoutingSummary: car (no toll) distance=" + mCarNoTollRouteDistance +
+                 " price=" + mCarNoTollPriceValue);
+    Logger.d(TAG, "showRoutingSummary: motorcycle distance=" + mMotorcycleRouteDistance +
+                 " price=" + mMotorcyclePriceValue);
 
     mMotorcyclePrice.setText(java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"))
                                    .format(mMotorcyclePriceValue));
@@ -1896,7 +1907,10 @@ public class MwmActivity extends BaseMwmFragmentActivity
     double km = distanceMeters / 1000.0;
     if (km < 3.0)
       km = 3.0;
-    return (long) (km * ratePerKm);
+    long price = (long) (km * ratePerKm);
+    Logger.d(TAG, "calculateFare: distanceMeters=" + distanceMeters +
+                 ", ratePerKm=" + ratePerKm + ", price=" + price);
+    return price;
   }
 
   private void exitRideHailingMode()
