@@ -76,6 +76,12 @@
     <string name="add_new_set">Add a New List</string>
     <!-- Add Bookmark list dialog - hint when the list name is empty -->
     <string name="bookmark_set_name">Bookmark List Name</string>
+    <string name="choose_this_destination">Choose This Destination</string>
+    <string name="choose_this_pickup">Choose This Pickup</string>
+    <string name="tap_to_choose_pickup">Tap on map to choose pickup point.</string>
+    <string name="pickup_not_selected">No pickup selected.</string>
+    <string name="current_location_unavailable">Current location unavailable.</string>
+    <string name="no_destination_selected">No destination selected.</string>
     <!-- Should be used in the bookmarks-only context, see bookmarks_and_tracks if tracks are also implied. -->
     <string name="bookmarks">Bookmarks</string>
     <!-- "Bookmarks and Tracks" dialog title, also sync it with iphone/plist.txt -->
