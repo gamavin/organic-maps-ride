@@ -1848,6 +1848,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
         mCarNoTollRouteDistance = info.distToTarget.mDistance;
         mCalculationState = CalculationState.CALCULATING_BIKE;
         controller.setRouterType(Router.Bicycle);
+        controller.rebuildLastRoute();
       }
     }
     else if (mCalculationState == CalculationState.CALCULATING_BIKE)
@@ -1858,6 +1859,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
         mMotorcycleRouteDistance = info.distToTarget.mDistance;
         Logger.d(TAG, "onBuiltRoute: entering showRoutingSummary()");
         showRoutingSummary();
+        Logger.d(TAG, "onBuiltRoute: prices after showRoutingSummary: car (toll)=" + mCarTollPriceValue +
+                     ", car (no toll)=" + mCarNoTollPriceValue +
+                     ", motorcycle=" + mMotorcyclePriceValue);
         UiUtils.hide(mRoutingProgressOverlay);
       }
       mCalculationState = CalculationState.NONE;
