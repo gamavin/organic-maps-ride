@@ -323,13 +323,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       return;
     intent.putExtra(EXTRA_CONSUMED, true);
 
-    final int resultIndex = intent.getIntExtra(SearchActivity.EXTRA_RESULT_INDEX, -1);
-    if (resultIndex != -1)
-    {
-      SearchEngine.INSTANCE.showResult(resultIndex);
-      return;
-    }
-
     final long categoryId = intent.getLongExtra(EXTRA_CATEGORY_ID, -1);
     final long bookmarkId = intent.getLongExtra(EXTRA_BOOKMARK_ID, -1);
     final long trackId = intent.getLongExtra(EXTRA_TRACK_ID, -1);
