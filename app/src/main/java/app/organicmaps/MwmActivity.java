@@ -128,7 +128,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
 import java.util.Objects;
 import app.organicmaps.sdk.routing.RoutingInfo;
-import app.organicmaps.sdk.bookmarks.data.FeatureId;
 
 public class MwmActivity extends BaseMwmFragmentActivity
     implements PlacePageActivationListener, View.OnTouchListener, MapRenderingListener, RoutingController.Container,
@@ -147,6 +146,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public static final String EXTRA_BOOKMARK_ID = "bookmark_id";
   public static final String EXTRA_TRACK_ID = "track_id";
   public static final String EXTRA_UPDATE_THEME = "update_theme";
+  public static final String EXTRA_DEST_LAT = "dest_lat";
+  public static final String EXTRA_DEST_LON = "dest_lon";
   private static final String EXTRA_CONSUMED = "mwm.extra.intent.processed";
   private boolean mPreciseLocationDialogShown = false;
 
@@ -562,6 +563,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     // We don't need to manually handle removing the observers it follows the activity lifecycle
     mMapButtonsViewModel.getBottomButtonsHeight().observe(this, this::onMapBottomButtonsHeightChange);
     mMapButtonsViewModel.getLayoutMode().observe(this, this::initNavigationButtons);
+    mMapButtonsViewModel.setButtonsHidden(true);
 
     mSearchController = new FloatingSearchToolbarController(this, this);
     mSearchController.getToolbar().getViewTreeObserver();
@@ -1335,6 +1337,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       mIsInRideHailingMode = true;
       mCurrentPlacePageObject = mapObject; // Simpan objek destinasi
+      Framework.nativeSetViewportCenter(mapObject.getLat(), mapObject.getLon(), Framework.nativeGetDrawScale());
       showConfirmPickupButton(true, mapObject);
       if (LocationState.getMode() != FOLLOW && LocationState.getMode() != FOLLOW_AND_ROTATE)
         LocationState.nativeSwitchToNextMode();
@@ -2434,24 +2437,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
       return;
     }
 
-    // Ambil koordinat titik penjemputan dari tengah layar
-    final double[] center = Framework.nativeGetScreenRectCenter();
-    double pickupLat = center[0];
-    double pickupLon = center[1];
-    MapObject pickupPoint = MapObject.createMapObject(FeatureId.EMPTY, MapObject.MY_POSITION,
-            "Pickup Point", "", pickupLat, pickupLon);
-
-    // Tampilkan pesan
-    Toast.makeText(this, "Calculating car route...", Toast.LENGTH_SHORT).show();
-
-    // 1. Set state untuk kalkulasi mobil
-    mCalculationState = CalculationState.CALCULATING_CAR;
-
-    // 2. Mulai kalkulasi rute pertama: MOBIL
-    // PENTING: Gunakan Router.Vehicle, bukan app.organicmaps.sdk.Router.ROUTER_TYPE_VEHICLE
-    RoutingController controller = RoutingController.get();
-    controller.prepare(pickupPoint, mCurrentPlacePageObject, Router.Vehicle);
-    controller.setRouterType(Router.Vehicle);
+    Intent result = new Intent();
+    result.putExtra(EXTRA_DEST_LAT, mCurrentPlacePageObject.getLat());
+    result.putExtra(EXTRA_DEST_LON, mCurrentPlacePageObject.getLon());
+    setResult(Activity.RESULT_OK, result);
+    Toast.makeText(this, "Destination saved.", Toast.LENGTH_SHORT).show();
+    finish();
   }
 
   // Fungsi ini akan dipanggil oleh PlacePageController untuk mengetahui mode saat ini
