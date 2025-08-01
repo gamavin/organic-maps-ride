@@ -93,10 +93,12 @@ public class RoutingPlanController extends ToolbarController
     mRoutingPlanListener = routingPlanListener;
 
     mRouterTypes = getToolbar().findViewById(R.id.route_type);
+    mRouterTypes.setVisibility(View.GONE);
 
     setupRouterButtons();
 
     View progressFrame = getToolbar().findViewById(R.id.progress_frame);
+    progressFrame.setVisibility(View.GONE);
     mProgressVehicle = progressFrame.findViewById(R.id.progress_vehicle);
     mProgressPedestrian = progressFrame.findViewById(R.id.progress_pedestrian);
     mProgressTransit = progressFrame.findViewById(R.id.progress_transit);
