@@ -142,6 +142,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
 {
   private static final String TAG = MwmActivity.class.getSimpleName();
 
+  private static boolean sIsFirstLaunch = true;
+
   public static final String EXTRA_COUNTRY_ID = "country_id";
   public static final String EXTRA_CATEGORY_ID = "category_id";
   public static final String EXTRA_BOOKMARK_ID = "bookmark_id";
@@ -323,6 +325,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     processIntent();
     migrateOAuthCredentials();
+
+    if (sIsFirstLaunch)
+    {
+      sIsFirstLaunch = false;
+      showSearch("");
+    }
 
   }
 
@@ -2415,7 +2423,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public void onManageRouteOpen()
   {
     if (mIsInRideHailingMode)
+    {
+      if (mRoutingPlanInplaceController != null)
+        mRoutingPlanInplaceController.show(false);
       return;
+    }
 
     // Create and show 'Manage Route' Bottom Sheet panel.
     mManageRouteBottomSheet = new ManageRouteBottomSheet();
