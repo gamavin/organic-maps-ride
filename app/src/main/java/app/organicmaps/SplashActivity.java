@@ -186,6 +186,7 @@ public class SplashActivity extends AppCompatActivity
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
     final int bytesToDownload = DownloadResourcesLegacyActivity.nativeGetBytesToDownload();
+    boolean openSearch = false;
 
     if (isManageSpaceActivity(intent))
     {
@@ -194,6 +195,7 @@ public class SplashActivity extends AppCompatActivity
     else if (bytesToDownload == 0)
     {
       intent.setComponent(new ComponentName(this, SearchActivity.class));
+      openSearch = true;
     }
     else
     {
@@ -214,6 +216,8 @@ public class SplashActivity extends AppCompatActivity
     }
 
     Config.setFirstStartDialogSeen(this);
+    if (openSearch)
+      MwmApplication.from(this).prepareDummyMap();
     startActivity(intent);
     finish();
   }
