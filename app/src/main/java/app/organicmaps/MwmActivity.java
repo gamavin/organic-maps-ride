@@ -1390,8 +1390,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
         mCurrentPlacePageObject = mapObject; // Simpan objek destinasi
         Framework.nativeSetViewportCenter(mapObject.getLat(), mapObject.getLon(), Framework.nativeGetDrawScale());
         showConfirmPickupButton(true, mapObject);
-        if (LocationState.getMode() != FOLLOW && LocationState.getMode() != FOLLOW_AND_ROTATE)
-          LocationState.nativeSwitchToNextMode();
       }
     }
 
