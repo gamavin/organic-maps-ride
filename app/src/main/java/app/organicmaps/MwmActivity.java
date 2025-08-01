@@ -31,6 +31,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.textfield.TextInputEditText;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
@@ -256,9 +258,14 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private View mRoutingSummaryPanel;
   private TextView mCarPrice;
   private TextView mMotorcyclePrice;
-  private com.google.android.material.button.MaterialButton mSelectCarButton;
-  private com.google.android.material.button.MaterialButton mSelectMotorcycleButton;
+  private View mCarOption;
+  private View mMotorcycleOption;
+  private SwitchMaterial mPaymentSwitch;
+  private SwitchMaterial mTollSwitch;
+  private TextInputEditText mNoteEditText;
+  private com.google.android.material.button.MaterialButton mBitARideButton;
   private View mRoutingProgressOverlay;
+  @Nullable private Router mSelectedRouter;
 
   private enum CalculationState
   {
@@ -613,8 +620,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mRoutingSummaryPanel = findViewById(R.id.routing_summary_panel);
     mCarPrice = mRoutingSummaryPanel.findViewById(R.id.tv_car_price);
     mMotorcyclePrice = mRoutingSummaryPanel.findViewById(R.id.tv_motorcycle_price);
-    mSelectCarButton = mRoutingSummaryPanel.findViewById(R.id.btn_select_car);
-    mSelectMotorcycleButton = mRoutingSummaryPanel.findViewById(R.id.btn_select_motorcycle);
+    mCarOption = mRoutingSummaryPanel.findViewById(R.id.btn_use_car);
+    mMotorcycleOption = mRoutingSummaryPanel.findViewById(R.id.btn_use_motorcycle);
+    mPaymentSwitch = mRoutingSummaryPanel.findViewById(R.id.switch_payment);
+    mTollSwitch = mRoutingSummaryPanel.findViewById(R.id.switch_toll);
+    mNoteEditText = mRoutingSummaryPanel.findViewById(R.id.et_note);
+    mBitARideButton = mRoutingSummaryPanel.findViewById(R.id.btn_bit_a_ride);
     mRoutingProgressOverlay = findViewById(R.id.routing_progress_overlay);
 
     if (!RoutingOptions.hasOption(RoadType.Dirty))
@@ -624,18 +635,30 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (!RoutingOptions.hasOption(RoadType.Motorway))
       RoutingOptions.addOption(RoadType.Motorway);
 
-    mSelectCarButton.setOnClickListener(v -> {
-      RoutingController controller = RoutingController.get();
-      controller.setRouterType(Router.Vehicle);
-      onRoutingStart();
-      exitRideHailingMode();
+    mCarOption.setOnClickListener(v -> {
+      mSelectedRouter = Router.Vehicle;
+      mTollSwitch.setVisibility(View.VISIBLE);
     });
 
-    mSelectMotorcycleButton.setOnClickListener(v -> {
+    mMotorcycleOption.setOnClickListener(v -> {
+      mSelectedRouter = Router.Bicycle;
+      mTollSwitch.setVisibility(View.GONE);
+    });
+
+    mTollSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateCarPriceDisplay());
+
+    mBitARideButton.setOnClickListener(v -> {
+      if (mSelectedRouter == null)
+      {
+        Toast.makeText(this, "Pilih kendaraan terlebih dahulu", Toast.LENGTH_SHORT).show();
+        return;
+      }
       RoutingController controller = RoutingController.get();
-      controller.setRouterType(Router.Bicycle);
-      if (mMotorcycleRouteDistance != 0)
-        onRoutingStart();
+      RoutingOptions.removeOption(RoadType.Toll);
+      if (mSelectedRouter == Router.Vehicle && mTollSwitch.isChecked())
+        RoutingOptions.addOption(RoadType.Toll);
+      controller.setRouterType(mSelectedRouter);
+      onRoutingStart();
       exitRideHailingMode();
     });
 
@@ -1848,12 +1871,24 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mCarNoTollPriceValue = calculateFare(mCarNoTollRouteDistance, 5000);
     mMotorcyclePriceValue = calculateFare(mMotorcycleRouteDistance, 3000);
 
-    java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
-    mCarPrice.setText(format.format(mCarNoTollPriceValue));
-    mMotorcyclePrice.setText(format.format(mMotorcyclePriceValue));
+    mMotorcyclePrice.setText(java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"))
+                                   .format(mMotorcyclePriceValue));
+    mTollSwitch.setChecked(false);
+    mTollSwitch.setVisibility(View.GONE);
+    mPaymentSwitch.setChecked(false);
+    mNoteEditText.setText(null);
+    mSelectedRouter = null;
+    updateCarPriceDisplay();
 
     // Tampilkan panel ringkasan rute
     UiUtils.show(mRoutingSummaryPanel);
+  }
+
+  private void updateCarPriceDisplay()
+  {
+    long price = mTollSwitch != null && mTollSwitch.isChecked() ? mCarTollPriceValue : mCarNoTollPriceValue;
+    java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
+    mCarPrice.setText(format.format(price));
   }
 
   private long calculateFare(double distanceMeters, int ratePerKm)
