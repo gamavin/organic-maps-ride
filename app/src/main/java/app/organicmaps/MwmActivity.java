@@ -1655,6 +1655,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void showRoutePlan(boolean show, @Nullable Runnable completionListener)
   {
+    if (mIsInRideHailingMode)
+    {
+      if (completionListener != null)
+        completionListener.run();
+      return;
+    }
+
     if (show)
     {
       if (mIsTabletLayout)
