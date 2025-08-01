@@ -20,6 +20,7 @@ public class SearchActivity extends BaseMwmFragmentActivity
   public static final String EXTRA_RESULT_LAT = "search_result_lat";
   public static final String EXTRA_RESULT_LON = "search_result_lon";
   public static final String EXTRA_RESULT_INDEX = "search_result_index";
+  public static final String EXTRA_FROM_SEARCH = "search_from_search_activity";
   public static void start(@NonNull Activity activity, @Nullable String query)
   {
     start(activity, query, null /* locale */, false /* isSearchOnMap */);
