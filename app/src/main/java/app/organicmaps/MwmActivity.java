@@ -1627,6 +1627,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onRoutingPlanStartAnimate(boolean show)
   {
+    if (mIsInRideHailingMode)
+    {
+      if (mRoutingPlanInplaceController != null &&
+          UiUtils.isVisible(findViewById(R.id.routing_plan_frame)))
+        mRoutingPlanInplaceController.show(false);
+      return;
+    }
     // TODO This code section may be called when insets are not yet initialized
     // This is only a workaround to prevent crashes but a proper fix should be implemented
     if (mCurrentWindowInsets == null)
