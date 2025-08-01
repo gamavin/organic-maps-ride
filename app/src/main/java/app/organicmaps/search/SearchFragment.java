@@ -434,7 +434,6 @@ public class SearchFragment extends BaseMwmFragment implements SearchListener, C
     {
       final Intent intent = new Intent(host, MwmActivity.class);
       intent.putExtra(SearchActivity.EXTRA_RESULT_INDEX, resultIndex);
-      intent.putExtra(SearchActivity.EXTRA_FROM_SEARCH, true);
       host.startActivity(intent);
       host.finish();
     }
