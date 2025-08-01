@@ -22,6 +22,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import app.organicmaps.downloader.DownloaderActivity;
 import app.organicmaps.intent.Factory;
+import app.organicmaps.sdk.Map;
 import app.organicmaps.sdk.display.DisplayManager;
 import app.organicmaps.sdk.location.LocationHelper;
 import app.organicmaps.sdk.routing.RoutingController;
@@ -75,9 +76,6 @@ public class SplashActivity extends AppCompatActivity
 
     RoutingController controller = RoutingController.get();
     controller.cancel();
-    controller.deleteSavedRoute();
-    if (controller.hasSavedRoute())
-      Logger.w(TAG, "Saved route not cleared");
 
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_view), new OnApplyWindowInsetsListener() {
       @NonNull
@@ -185,6 +183,18 @@ public class SplashActivity extends AppCompatActivity
     {
       Logger.w(TAG, "Ignore late callback from core because activity is already destroyed");
       return;
+    }
+
+    if (Map.isEngineCreated())
+    {
+      RoutingController controller = RoutingController.get();
+      controller.deleteSavedRoute();
+      if (controller.hasSavedRoute())
+        Logger.w(TAG, "Saved route not cleared");
+    }
+    else
+    {
+      Logger.w(TAG, "Engine not created, skip deleting saved route");
     }
 
     // Re-use original intent with the known safe subset of flags to retain security permissions.
