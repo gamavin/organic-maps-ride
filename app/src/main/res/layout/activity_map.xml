@@ -89,7 +89,8 @@
       <ImageView
           android:layout_width="24dp"
           android:layout_height="24dp"
-          android:src="@drawable/ic_bike" />
+          android:src="@drawable/ic_bike"
+          android:tint="@color/base_green" />
 
       <TextView
           android:layout_width="0dp"
@@ -121,7 +122,8 @@
       <ImageView
           android:layout_width="24dp"
           android:layout_height="24dp"
-          android:src="@drawable/ic_car" />
+          android:src="@drawable/ic_car"
+          android:tint="@color/base_green" />
 
       <TextView
           android:layout_width="0dp"

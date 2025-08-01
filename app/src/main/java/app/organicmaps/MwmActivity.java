@@ -638,11 +638,15 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mCarOption.setOnClickListener(v -> {
       mSelectedRouter = Router.Vehicle;
       mTollSwitch.setVisibility(View.VISIBLE);
+      mCarOption.setSelected(true);
+      mMotorcycleOption.setSelected(false);
     });
 
     mMotorcycleOption.setOnClickListener(v -> {
       mSelectedRouter = Router.Bicycle;
       mTollSwitch.setVisibility(View.GONE);
+      mMotorcycleOption.setSelected(true);
+      mCarOption.setSelected(false);
     });
 
     mTollSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateCarPriceDisplay());

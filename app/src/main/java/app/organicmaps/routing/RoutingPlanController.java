@@ -312,12 +312,8 @@ public class RoutingPlanController extends ToolbarController
 
   public void showDrivingOptionView()
   {
-    mDrivingOptionsBtnContainer.addOnLayoutChangeListener(mDriverOptionsLayoutListener);
-    UiUtils.show(mDrivingOptionsBtnContainer);
-    boolean hasAnyOptions = RoutingOptions.hasAnyOptions() && !isRulerType();
-    UiUtils.showIf(hasAnyOptions, mDrivingOptionsImage);
-    TextView title = mDrivingOptionsBtnContainer.findViewById(R.id.driving_options_btn_title);
-    title.setText(hasAnyOptions ? R.string.change_driving_options_btn : R.string.define_to_avoid_btn);
+    // Disable driving options banner to free space on the map
+    UiUtils.hide(mDrivingOptionsBtnContainer);
   }
 
   public void hideDrivingOptionsView()
