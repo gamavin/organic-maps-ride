@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import app.organicmaps.sdk.Framework;
+import app.organicmaps.sdk.Map;
 import app.organicmaps.sdk.Router;
 import app.organicmaps.sdk.bookmarks.data.FeatureId;
 import app.organicmaps.sdk.bookmarks.data.MapObject;
@@ -304,6 +305,11 @@ public class RoutingController
 
   public void deleteSavedRoute()
   {
+    if (!Map.isEngineCreated())
+    {
+      Logger.w(TAG, "Engine not created, skip deleting saved route");
+      return;
+    }
     Framework.nativeDeleteSavedRoutePoints();
   }
 
