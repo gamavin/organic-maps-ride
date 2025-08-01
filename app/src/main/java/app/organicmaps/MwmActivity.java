@@ -241,6 +241,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private com.google.android.material.button.MaterialButton mConfirmPickupButton;
   @Nullable
   private MapObject mCurrentPlacePageObject;
+  @Nullable
+  private MapObject mPickupPoint;
+  private boolean mIsSelectingPickup = false;
   private double mCarRouteDistance = 0;
   private double mMotorcycleRouteDistance = 0;
   private View mRoutingSummaryPanel;
@@ -1335,15 +1338,25 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     if (!RoutingController.get().isPlanning())
     {
-      mIsInRideHailingMode = true;
-      mCurrentPlacePageObject = mapObject; // Simpan objek destinasi
-      Framework.nativeSetViewportCenter(mapObject.getLat(), mapObject.getLon(), Framework.nativeGetDrawScale());
-      showConfirmPickupButton(true, mapObject);
-      if (LocationState.getMode() != FOLLOW && LocationState.getMode() != FOLLOW_AND_ROTATE)
-        LocationState.nativeSwitchToNextMode();
+      if (mIsSelectingPickup)
+      {
+        mPickupPoint = mapObject;
+        closePlacePage();
+        UiUtils.show(mConfirmPickupButton);
+      }
+      else
+      {
+        mIsInRideHailingMode = true;
+        mCurrentPlacePageObject = mapObject; // Simpan objek destinasi
+        Framework.nativeSetViewportCenter(mapObject.getLat(), mapObject.getLon(), Framework.nativeGetDrawScale());
+        showConfirmPickupButton(true, mapObject);
+        if (LocationState.getMode() != FOLLOW && LocationState.getMode() != FOLLOW_AND_ROTATE)
+          LocationState.nativeSwitchToNextMode();
+      }
     }
 
-    mPlacePageViewModel.setMapObject(mapObject);
+    if (!mIsSelectingPickup)
+      mPlacePageViewModel.setMapObject(mapObject);
   }
 
   @Override
@@ -2426,23 +2439,48 @@ public class MwmActivity extends BaseMwmFragmentActivity
   // Fungsi ini dipanggil saat tombol konfirmasi penjemputan di-klik
   private void onConfirmPickupClicked()
   {
-    // Sembunyikan tombol dan Place Page mini
-    UiUtils.hide(mConfirmPickupButton);
-    closePlacePage();
-
-    // Pastikan destinasi sudah dipilih
-    if (mCurrentPlacePageObject == null)
+    if (!mIsSelectingPickup)
     {
-      Toast.makeText(this, "No destination selected.", Toast.LENGTH_SHORT).show();
-      return;
-    }
+      UiUtils.hide(mConfirmPickupButton);
+      closePlacePage();
 
-    Intent result = new Intent();
-    result.putExtra(EXTRA_DEST_LAT, mCurrentPlacePageObject.getLat());
-    result.putExtra(EXTRA_DEST_LON, mCurrentPlacePageObject.getLon());
-    setResult(Activity.RESULT_OK, result);
-    Toast.makeText(this, "Destination saved.", Toast.LENGTH_SHORT).show();
-    finish();
+      if (mCurrentPlacePageObject == null)
+      {
+        Toast.makeText(this, R.string.no_destination_selected, Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      MapObject myPosition = MwmApplication.from(this).getLocationHelper().getMyPosition();
+      if (myPosition != null)
+      {
+        Framework.nativeSetViewportCenter(myPosition.getLat(), myPosition.getLon(), Framework.nativeGetDrawScale());
+      }
+      else
+      {
+        Toast.makeText(this, R.string.current_location_unavailable, Toast.LENGTH_SHORT).show();
+      }
+
+      mIsSelectingPickup = true;
+      mConfirmPickupButton.setText(R.string.choose_this_pickup);
+      Toast.makeText(this, R.string.tap_to_choose_pickup, Toast.LENGTH_SHORT).show();
+    }
+    else
+    {
+      if (mPickupPoint == null)
+      {
+        Toast.makeText(this, R.string.pickup_not_selected, Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      UiUtils.hide(mConfirmPickupButton);
+      RoutingController controller = RoutingController.get();
+      controller.setStartPoint(mPickupPoint);
+      controller.setEndPoint(mCurrentPlacePageObject);
+      onRoutingStart();
+      exitRideHailingMode();
+      mIsSelectingPickup = false;
+      mPickupPoint = null;
+    }
   }
 
   // Fungsi ini akan dipanggil oleh PlacePageController untuk mengetahui mode saat ini

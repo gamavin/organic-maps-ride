@@ -30,7 +30,7 @@
       android:id="@+id/btn_confirm"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:text="Choose This Destination"
+      android:text="@string/choose_this_destination"
       style="@style/MwmWidget.Button.Primary"/>
 
 </LinearLayout>
