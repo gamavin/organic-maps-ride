@@ -554,6 +554,14 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   protected void onSafeCreate(@Nullable Bundle savedInstanceState)
   {
+    final Intent startIntent = getIntent();
+    if (startIntent != null &&
+        (startIntent.hasExtra(SearchActivity.EXTRA_RESULT_INDEX) ||
+         startIntent.getBooleanExtra(SearchActivity.EXTRA_FROM_SEARCH, false)))
+    {
+      sIsFirstLaunch = false;
+    }
+
     super.onSafeCreate(savedInstanceState);
 
     mIsTabletLayout = getResources().getBoolean(R.bool.tabletLayout);
