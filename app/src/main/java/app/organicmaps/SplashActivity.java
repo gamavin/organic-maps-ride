@@ -22,6 +22,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import app.organicmaps.downloader.DownloaderActivity;
 import app.organicmaps.intent.Factory;
+import app.organicmaps.sdk.DownloadResourcesLegacyActivity;
+import app.organicmaps.search.SearchActivity;
 import app.organicmaps.sdk.display.DisplayManager;
 import app.organicmaps.sdk.location.LocationHelper;
 import app.organicmaps.sdk.util.Config;
@@ -183,14 +185,19 @@ public class SplashActivity extends AppCompatActivity
     // Re-use original intent with the known safe subset of flags to retain security permissions.
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
+    final int bytesToDownload = DownloadResourcesLegacyActivity.nativeGetBytesToDownload();
 
     if (isManageSpaceActivity(intent))
     {
       intent.setComponent(new ComponentName(this, DownloaderActivity.class));
     }
+    else if (bytesToDownload == 0)
+    {
+      intent.setComponent(new ComponentName(this, SearchActivity.class));
+    }
     else
     {
-      intent.setComponent(new ComponentName(this, DownloadResourcesLegacyActivity.class));
+      intent.setComponent(new ComponentName(this, app.organicmaps.DownloadResourcesLegacyActivity.class));
     }
 
     // FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_RESET_TASK_IF_NEEDED break the cold start.
