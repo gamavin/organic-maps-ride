@@ -2431,6 +2431,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     if (mIsInRideHailingMode)
     {
+      UiUtils.hide(mRoutingProgressOverlay);
+      setCalculationState(CalculationState.NONE);
       if (mRoutingPlanInplaceController != null)
         mRoutingPlanInplaceController.show(false);
       return;
