@@ -307,7 +307,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     else if (RoutingController.get().isNavigating())
       onNavigationStarted();
     else if (RoutingController.get().hasSavedRoute())
-      RoutingController.get().restoreRoute();
+      RoutingController.get().deleteSavedRoute();
 
     if (TrackRecorder.nativeIsTrackRecordingEnabled() && !startTrackRecording())
     {
@@ -2503,7 +2503,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     if (!mIsSelectingPickup)
     {
-      UiUtils.hide(mConfirmPickupButton);
       closePlacePage();
 
       if (mCurrentPlacePageObject == null)
@@ -2516,6 +2515,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       if (myPosition != null)
       {
         Framework.nativeSetViewportCenter(myPosition.getLat(), myPosition.getLon(), Framework.nativeGetDrawScale());
+        mPickupPoint = myPosition;
       }
       else
       {
@@ -2524,6 +2524,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
       mIsSelectingPickup = true;
       mConfirmPickupButton.setText(R.string.choose_this_pickup);
+      UiUtils.show(mConfirmPickupButton);
       Toast.makeText(this, R.string.tap_to_choose_pickup, Toast.LENGTH_SHORT).show();
     }
     else
