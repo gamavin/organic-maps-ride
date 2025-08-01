@@ -24,6 +24,7 @@ import app.organicmaps.downloader.DownloaderActivity;
 import app.organicmaps.intent.Factory;
 import app.organicmaps.sdk.display.DisplayManager;
 import app.organicmaps.sdk.location.LocationHelper;
+import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.sdk.util.LocationUtils;
 import app.organicmaps.sdk.util.concurrency.UiThread;
@@ -71,6 +72,12 @@ public class SplashActivity extends AppCompatActivity
 
     UiThread.cancelDelayedTasks(mInitCoreDelayedTask);
     setContentView(R.layout.activity_splash);
+
+    RoutingController controller = RoutingController.get();
+    controller.cancel();
+    controller.deleteSavedRoute();
+    if (controller.hasSavedRoute())
+      Logger.w(TAG, "Saved route not cleared");
 
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_view), new OnApplyWindowInsetsListener() {
       @NonNull
