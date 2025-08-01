@@ -307,7 +307,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     else if (RoutingController.get().isNavigating())
       onNavigationStarted();
     else if (RoutingController.get().hasSavedRoute())
-      RoutingController.get().restoreRoute();
+      RoutingController.get().deleteSavedRoute();
 
     if (TrackRecorder.nativeIsTrackRecordingEnabled() && !startTrackRecording())
     {
