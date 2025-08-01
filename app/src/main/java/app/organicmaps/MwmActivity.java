@@ -141,7 +141,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
                DisplayChangedListener
 {
   private static final String TAG = MwmActivity.class.getSimpleName();
-  private static boolean sIsFirstLaunch = true; // <-- TAMBAHKAN INI
 
   public static final String EXTRA_COUNTRY_ID = "country_id";
   public static final String EXTRA_CATEGORY_ID = "category_id";
@@ -325,15 +324,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     processIntent();
     migrateOAuthCredentials();
 
-    // ================================================================
-    // TAMBAHAN BARU
-    // Saat mesin rendering sudah siap, langsung buka halaman pencarian.
-    if (sIsFirstLaunch)
-    {
-      sIsFirstLaunch = false;
-      showSearch(""); // Fungsi ini akan membuka SearchActivity
-    }
-    // ================================================================
   }
 
   /**
