@@ -7,9 +7,6 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
-import android.view.Surface;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
@@ -24,7 +21,6 @@ import app.organicmaps.routing.NavigationService;
 import app.organicmaps.sdk.Map;
 import app.organicmaps.sdk.OrganicMaps;
 import app.organicmaps.sdk.display.DisplayManager;
-import app.organicmaps.sdk.display.DisplayType;
 import app.organicmaps.sdk.location.LocationHelper;
 import app.organicmaps.sdk.location.LocationState;
 import app.organicmaps.sdk.location.SensorHelper;
@@ -55,13 +51,6 @@ public class MwmApplication extends Application implements Application.ActivityL
 
   @Nullable
   private WeakReference<Activity> mTopActivity;
-
-  @Nullable
-  private Map mPreloadedMap;
-  @Nullable
-  private SurfaceTexture mDummyTexture;
-  @Nullable
-  private Surface mDummySurface;
 
   @SuppressWarnings("NotNullFieldNotInitialized")
   @NonNull
@@ -150,45 +139,6 @@ public class MwmApplication extends Application implements Application.ActivityL
       ProcessLifecycleOwner.get().getLifecycle().addObserver(mProcessLifecycleObserver);
       onComplete.run();
     });
-  }
-
-  public void prepareDummyMap()
-  {
-    if (mPreloadedMap != null)
-      return;
-    mPreloadedMap = new Map(DisplayType.Device, getLocationHelper());
-    mDummyTexture = new SurfaceTexture(0);
-    mDummyTexture.setDefaultBufferSize(1, 1);
-    mDummySurface = new Surface(mDummyTexture);
-    Rect frame = new Rect(0, 0, 1, 1);
-    int dpi = getResources().getDisplayMetrics().densityDpi;
-    mPreloadedMap.onSurfaceCreated(this, mDummySurface, frame, dpi);
-    mPreloadedMap.onSurfaceChanged(this, mDummySurface, frame, true);
-    mPreloadedMap.onStart();
-    mPreloadedMap.onResume();
-  }
-
-  @NonNull
-  public Map getMap()
-  {
-    if (mPreloadedMap == null)
-      mPreloadedMap = new Map(DisplayType.Device, getLocationHelper());
-    return mPreloadedMap;
-  }
-
-  public void detachDummySurface()
-  {
-    if (mPreloadedMap != null && mDummySurface != null)
-    {
-      mPreloadedMap.onSurfaceDestroyed(false, true);
-      mDummySurface.release();
-      mDummySurface = null;
-    }
-    if (mDummyTexture != null)
-    {
-      mDummyTexture.release();
-      mDummyTexture = null;
-    }
   }
 
   private final LifecycleObserver mProcessLifecycleObserver = new DefaultLifecycleObserver() {
