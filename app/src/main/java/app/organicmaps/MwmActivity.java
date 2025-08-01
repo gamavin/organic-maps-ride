@@ -1301,15 +1301,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onBackPressed()
   {
-    if (mRoutingSummaryPanel.getVisibility() == View.VISIBLE)
-    {
-      exitRideHailingMode();
-      return;
-    }
+    resetRoutingController();
     final RoutingController routingController = RoutingController.get();
     if (!closeBottomSheet(MAIN_MENU_ID) && !closeBottomSheet(LAYERS_MENU_ID) && !collapseNavMenu() && !closePlacePage()
         && !closeSearchToolbar(true, true) && !closeSidePanel() && !closePositionChooser()
-        && !routingController.resetToPlanningStateIfNavigating() && !routingController.cancel())
+        && !routingController.resetToPlanningStateIfNavigating())
     {
       try
       {
@@ -1913,6 +1909,23 @@ public class MwmActivity extends BaseMwmFragmentActivity
     return price;
   }
 
+  private void clearTariffCache()
+  {
+    mCarTollInfo = mCarNoTollInfo = mMotorcycleInfo = null;
+    mCarTollRouteDistance = mCarNoTollRouteDistance = mMotorcycleRouteDistance = 0;
+    mCarTollPriceValue = mCarNoTollPriceValue = mMotorcyclePriceValue = 0;
+  }
+
+  private void resetRoutingController()
+  {
+    RoutingController controller = RoutingController.get();
+    controller.cancel();
+    controller.deleteSavedRoute();
+    if (controller.hasSavedRoute())
+      Logger.w(TAG, "Saved route not cleared");
+    clearTariffCache();
+  }
+
   private void exitRideHailingMode()
   {
     mIsInRideHailingMode = false;
@@ -2358,9 +2371,20 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (!showRoutingDisclaimer())
       return;
 
+    clearTariffCache();
+    RoutingController controller = RoutingController.get();
+    MapObject startPoint = controller.getStartPoint();
+    MapObject endPoint = controller.getEndPoint();
+    controller.cancel();
+    controller.deleteSavedRoute();
+    if (controller.hasSavedRoute())
+      Logger.w(TAG, "Saved route not cleared");
+    controller.setStartPoint(startPoint);
+    controller.setEndPoint(endPoint);
+
     closeFloatingPanels();
     setFullscreen(false);
-    RoutingController.get().start();
+    controller.start();
   }
 
   @Override
