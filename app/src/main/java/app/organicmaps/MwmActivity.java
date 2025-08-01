@@ -2620,6 +2620,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
       }
 
       UiUtils.hide(mConfirmPickupButton);
+      if (mManageRouteBottomSheet != null)
+        mManageRouteBottomSheet.dismiss();
+      mManageRouteBottomSheet = null;
       if (mRoutingPlanInplaceController != null)
         mRoutingPlanInplaceController.show(false);
       RoutingController controller = RoutingController.get();
