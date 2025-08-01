@@ -16,6 +16,7 @@ import androidx.core.content.res.ConfigurationHelper;
 import app.organicmaps.base.BaseMwmFragment;
 import app.organicmaps.sdk.Map;
 import app.organicmaps.sdk.MapRenderingListener;
+import app.organicmaps.sdk.display.DisplayType;
 import app.organicmaps.sdk.util.log.Logger;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -56,7 +57,6 @@ public class MapFragment extends BaseMwmFragment implements View.OnTouchListener
   public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder)
   {
     Logger.d(TAG);
-    MwmApplication.from(requireContext()).detachDummySurface();
     int densityDpi;
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
@@ -87,8 +87,7 @@ public class MapFragment extends BaseMwmFragment implements View.OnTouchListener
   {
     Logger.d(TAG);
     super.onAttach(context);
-    MwmApplication app = MwmApplication.from(requireContext());
-    mMap = app.getMap();
+    mMap = new Map(DisplayType.Device, MwmApplication.from(requireContext()).getLocationHelper());
     mMap.setMapRenderingListener((MapRenderingListener) context);
     mMap.setCallbackUnsupported(this::reportUnsupported);
   }
