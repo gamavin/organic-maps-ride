@@ -28,8 +28,6 @@ import app.organicmaps.R;
 import app.organicmaps.base.BaseMwmFragment;
 import app.organicmaps.downloader.CountrySuggestFragment;
 import app.organicmaps.sdk.Framework;
-import app.organicmaps.sdk.bookmarks.data.FeatureId;
-import app.organicmaps.sdk.bookmarks.data.MapObject;
 import app.organicmaps.sdk.downloader.MapManager;
 import app.organicmaps.sdk.location.LocationListener;
 import app.organicmaps.sdk.routing.RoutingController;
@@ -414,19 +412,7 @@ public class SearchFragment extends BaseMwmFragment implements SearchListener, C
     SearchEngine.INSTANCE.cancel();
     SearchEngine.INSTANCE.setQuery(query);
 
-    if (RoutingController.get().isWaitingPoiPick())
-    {
-      final String subtitle = (result.description != null) ? result.description.localizedFeatureType : "";
-      final String title = TextUtils.isEmpty(result.name) ? subtitle : result.name;
-
-      final MapObject point =
-          MapObject.createMapObject(FeatureId.EMPTY, MapObject.SEARCH, title, subtitle, result.lat, result.lon);
-      RoutingController.get().onPoiSelected(point);
-    }
-    else
-    {
-      SearchEngine.INSTANCE.showResult(resultIndex);
-    }
+    SearchEngine.INSTANCE.showResult(resultIndex);
 
     mToolbarController.deactivate();
 
