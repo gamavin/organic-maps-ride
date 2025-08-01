@@ -170,8 +170,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private View mPointChooser;
   private Toolbar mPointChooserToolbar;
-  @Nullable
-  private View mMapPlaceholder;
 
   private RoutingPlanInplaceController mRoutingPlanInplaceController;
 
@@ -276,13 +274,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public void onRenderingCreated()
   {
     checkMeasurementSystem();
-    hideMapPlaceholder();
-  }
-
-  @Override
-  public void onRenderingRestored()
-  {
-    hideMapPlaceholder();
   }
 
   @Override
@@ -580,8 +571,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     setContentView(R.layout.activity_map);
     makeNavigationBarTransparentInLightMode();
-    mMapPlaceholder = findViewById(R.id.map_placeholder);
-    showMapPlaceholder();
 
     mPlacePageViewModel = new ViewModelProvider(this).get(PlacePageViewModel.class);
     mMapButtonsViewModel = new ViewModelProvider(this).get(MapButtonsViewModel.class);
@@ -663,18 +652,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     UiUtils.setLightStatusBar(this, !(ThemeUtils.isNightTheme(this) || RoutingController.get().isPlanning()
                                       || ChoosePositionMode.get() != ChoosePositionMode.None));
-  }
-
-  private void showMapPlaceholder()
-  {
-    if (mMapPlaceholder != null)
-      UiUtils.show(mMapPlaceholder);
-  }
-
-  private void hideMapPlaceholder()
-  {
-    if (mMapPlaceholder != null)
-      UiUtils.hide(mMapPlaceholder);
   }
 
   private void updateViewsInsets()
@@ -855,7 +832,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mMapFragment = (MapFragment) manager.findFragmentByTag(MapFragment.class.getName());
     if (mMapFragment == null)
     {
-      showMapPlaceholder();
       Bundle args = new Bundle();
       args.putBoolean(Map.ARG_LAUNCH_BY_DEEP_LINK, isLaunchByDeepLink);
       final FragmentFactory factory = manager.getFragmentFactory();
