@@ -244,18 +244,27 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Nullable
   private MapObject mPickupPoint;
   private boolean mIsSelectingPickup = false;
-  private double mCarRouteDistance = 0;
+  private double mCarTollRouteDistance = 0;
+  private double mCarNoTollRouteDistance = 0;
   private double mMotorcycleRouteDistance = 0;
+  private long mCarTollPriceValue = 0;
+  private long mCarNoTollPriceValue = 0;
+  private long mMotorcyclePriceValue = 0;
+  @Nullable private RoutingInfo mCarTollInfo;
+  @Nullable private RoutingInfo mCarNoTollInfo;
+  @Nullable private RoutingInfo mMotorcycleInfo;
   private View mRoutingSummaryPanel;
   private TextView mCarPrice;
   private TextView mMotorcyclePrice;
   private com.google.android.material.button.MaterialButton mSelectCarButton;
   private com.google.android.material.button.MaterialButton mSelectMotorcycleButton;
+  private View mRoutingProgressOverlay;
 
   private enum CalculationState
   {
     NONE,
-    CALCULATING_CAR,
+    CALCULATING_CAR_TOLL,
+    CALCULATING_CAR_NO_TOLL,
     CALCULATING_BIKE
   }
   private CalculationState mCalculationState = CalculationState.NONE;
@@ -606,6 +615,14 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mMotorcyclePrice = mRoutingSummaryPanel.findViewById(R.id.tv_motorcycle_price);
     mSelectCarButton = mRoutingSummaryPanel.findViewById(R.id.btn_select_car);
     mSelectMotorcycleButton = mRoutingSummaryPanel.findViewById(R.id.btn_select_motorcycle);
+    mRoutingProgressOverlay = findViewById(R.id.routing_progress_overlay);
+
+    if (!RoutingOptions.hasOption(RoadType.Dirty))
+      RoutingOptions.addOption(RoadType.Dirty);
+    if (!RoutingOptions.hasOption(RoadType.Ferry))
+      RoutingOptions.addOption(RoadType.Ferry);
+    if (!RoutingOptions.hasOption(RoadType.Motorway))
+      RoutingOptions.addOption(RoadType.Motorway);
 
     mSelectCarButton.setOnClickListener(v -> {
       RoutingController controller = RoutingController.get();
@@ -1783,38 +1800,41 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       Toast.makeText(this, "Failed to get route info.", Toast.LENGTH_SHORT).show();
       mCalculationState = CalculationState.NONE; // Reset state jika gagal
+      UiUtils.hide(mRoutingProgressOverlay);
       return;
     }
 
     // Cek state saat ini
-    if (mCalculationState == CalculationState.CALCULATING_CAR)
+    if (mCalculationState == CalculationState.CALCULATING_CAR_TOLL)
     {
-      // Jika selesai menghitung rute mobil...
       if (controller.getLastRouterType() == Router.Vehicle)
       {
-        // 1. Ambil jarak rute mobil dari info
-        mCarRouteDistance = info.distToTarget.mDistance;
-
-        Toast.makeText(this, "Calculating motorcycle route...", Toast.LENGTH_SHORT).show();
-
-        // 2. Lanjut ke kalkulasi motor (sepeda)
+        mCarTollInfo = info;
+        mCarTollRouteDistance = info.distToTarget.mDistance;
+        RoutingOptions.addOption(RoadType.Toll);
+        mCalculationState = CalculationState.CALCULATING_CAR_NO_TOLL;
+        controller.rebuildLastRoute();
+      }
+    }
+    else if (mCalculationState == CalculationState.CALCULATING_CAR_NO_TOLL)
+    {
+      if (controller.getLastRouterType() == Router.Vehicle)
+      {
+        mCarNoTollInfo = info;
+        mCarNoTollRouteDistance = info.distToTarget.mDistance;
         mCalculationState = CalculationState.CALCULATING_BIKE;
-        // setRouterType akan otomatis memicu build() lagi
         controller.setRouterType(Router.Bicycle);
       }
     }
     else if (mCalculationState == CalculationState.CALCULATING_BIKE)
     {
-      // Jika selesai menghitung rute motor...
       if (controller.getLastRouterType() == Router.Bicycle)
       {
-        // 3. Ambil jarak rute motor
+        mMotorcycleInfo = info;
         mMotorcycleRouteDistance = info.distToTarget.mDistance;
-
-        // 4. Semua data sudah ada, tampilkan panel harga
         showRoutingSummary();
+        UiUtils.hide(mRoutingProgressOverlay);
       }
-      // 5. Selesai, reset state
       mCalculationState = CalculationState.NONE;
     }
   }
@@ -1824,17 +1844,24 @@ public class MwmActivity extends BaseMwmFragmentActivity
     // Sembunyikan semua tombol di peta (zoom, my location, dll)
     mMapButtonsViewModel.setButtonsHidden(true);
 
-    // Hitung harga
-    long carPrice = (long) (mCarRouteDistance / 1000.0) * 6000;
-    long motorcyclePrice = (long) (mMotorcycleRouteDistance / 1000.0) * 3000;
+    mCarTollPriceValue = calculateFare(mCarTollRouteDistance, 5000);
+    mCarNoTollPriceValue = calculateFare(mCarNoTollRouteDistance, 5000);
+    mMotorcyclePriceValue = calculateFare(mMotorcycleRouteDistance, 3000);
 
-    // Format harga ke format Rupiah
     java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
-    mCarPrice.setText(format.format(carPrice));
-    mMotorcyclePrice.setText(format.format(motorcyclePrice));
+    mCarPrice.setText(format.format(mCarNoTollPriceValue));
+    mMotorcyclePrice.setText(format.format(mMotorcyclePriceValue));
 
     // Tampilkan panel ringkasan rute
     UiUtils.show(mRoutingSummaryPanel);
+  }
+
+  private long calculateFare(double distanceMeters, int ratePerKm)
+  {
+    double km = distanceMeters / 1000.0;
+    if (km < 3.0)
+      km = 3.0;
+    return (long) (km * ratePerKm);
   }
 
   private void exitRideHailingMode()
@@ -2474,10 +2501,23 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
       UiUtils.hide(mConfirmPickupButton);
       RoutingController controller = RoutingController.get();
+
+      mCarTollInfo = mCarNoTollInfo = mMotorcycleInfo = null;
+      mCarTollRouteDistance = mCarNoTollRouteDistance = mMotorcycleRouteDistance = 0;
+      mCarTollPriceValue = mCarNoTollPriceValue = mMotorcyclePriceValue = 0;
+
       controller.setStartPoint(mPickupPoint);
+
+      RoutingOptions.addOption(RoadType.Dirty);
+      RoutingOptions.addOption(RoadType.Ferry);
+      RoutingOptions.addOption(RoadType.Motorway);
+      RoutingOptions.removeOption(RoadType.Toll);
+      controller.setRouterType(Router.Vehicle);
+
+      mCalculationState = CalculationState.CALCULATING_CAR_TOLL;
+      UiUtils.show(mRoutingProgressOverlay);
       controller.setEndPoint(mCurrentPlacePageObject);
-      onRoutingStart();
-      exitRideHailingMode();
+
       mIsSelectingPickup = false;
       mPickupPoint = null;
     }
