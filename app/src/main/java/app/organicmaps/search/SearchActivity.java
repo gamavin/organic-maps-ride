@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StyleRes;
 import androidx.fragment.app.Fragment;
+import app.organicmaps.MwmApplication;
 import app.organicmaps.base.BaseMwmFragmentActivity;
 import app.organicmaps.util.ThemeUtils;
 
@@ -46,5 +47,12 @@ public class SearchActivity extends BaseMwmFragmentActivity
   protected Class<? extends Fragment> getFragmentClass()
   {
     return SearchFragment.class;
+  }
+
+  @Override
+  protected void onSafeCreate(@Nullable Bundle savedInstanceState)
+  {
+    super.onSafeCreate(savedInstanceState);
+    MwmApplication.from(this).prepareDummyMap();
   }
 }
