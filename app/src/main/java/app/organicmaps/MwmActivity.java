@@ -276,6 +276,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
   }
   private CalculationState mCalculationState = CalculationState.NONE;
 
+  private void setCalculationState(@NonNull CalculationState newState)
+  {
+    Logger.d(TAG, "mCalculationState: " + mCalculationState + " -> " + newState);
+    mCalculationState = newState;
+  }
+
   public interface LeftAnimationTrackListener
   {
     void onTrackStarted(boolean collapsed);
@@ -1839,7 +1845,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (info == null)
     {
       Toast.makeText(this, "Failed to get route info.", Toast.LENGTH_SHORT).show();
-      mCalculationState = CalculationState.NONE; // Reset state jika gagal
+      setCalculationState(CalculationState.NONE); // Reset state jika gagal
       UiUtils.hide(mRoutingProgressOverlay);
       return;
     }
@@ -1855,7 +1861,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
         mCarTollInfo = info;
         mCarTollRouteDistance = info.distToTarget.mDistance;
         RoutingOptions.addOption(RoadType.Toll);
-        mCalculationState = CalculationState.CALCULATING_CAR_NO_TOLL;
+        setCalculationState(CalculationState.CALCULATING_CAR_NO_TOLL);
+        Logger.d(TAG, "onBuiltRoute: trigger rebuild for car without toll");
         controller.rebuildLastRoute();
       }
     }
@@ -1865,8 +1872,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
       {
         mCarNoTollInfo = info;
         mCarNoTollRouteDistance = info.distToTarget.mDistance;
-        mCalculationState = CalculationState.CALCULATING_BIKE;
+        setCalculationState(CalculationState.CALCULATING_BIKE);
         controller.setRouterType(Router.Bicycle);
+        Logger.d(TAG, "onBuiltRoute: trigger rebuild for bike route");
         controller.rebuildLastRoute();
       }
     }
@@ -1876,14 +1884,14 @@ public class MwmActivity extends BaseMwmFragmentActivity
       {
         mMotorcycleInfo = info;
         mMotorcycleRouteDistance = info.distToTarget.mDistance;
+        setCalculationState(CalculationState.NONE);
+        UiUtils.hide(mRoutingProgressOverlay);
         Logger.d(TAG, "onBuiltRoute: entering showRoutingSummary()");
         showRoutingSummary();
         Logger.d(TAG, "onBuiltRoute: prices after showRoutingSummary: car (toll)=" + mCarTollPriceValue +
                      ", car (no toll)=" + mCarNoTollPriceValue +
                      ", motorcycle=" + mMotorcyclePriceValue);
-        UiUtils.hide(mRoutingProgressOverlay);
       }
-      mCalculationState = CalculationState.NONE;
     }
   }
 
@@ -1954,7 +1962,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private void exitRideHailingMode()
   {
     mIsInRideHailingMode = false;
-    mCalculationState = CalculationState.NONE;
+    setCalculationState(CalculationState.NONE);
     UiUtils.hide(mRoutingSummaryPanel);
     mMapButtonsViewModel.setButtonsHidden(false);
   }
@@ -2621,7 +2629,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       RoutingOptions.removeOption(RoadType.Toll);
       controller.setRouterType(Router.Vehicle);
 
-      mCalculationState = CalculationState.CALCULATING_CAR_TOLL;
+      setCalculationState(CalculationState.CALCULATING_CAR_TOLL);
       UiUtils.show(mRoutingProgressOverlay);
       controller.setEndPoint(mCurrentPlacePageObject);
 
