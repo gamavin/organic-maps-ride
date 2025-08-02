@@ -151,13 +151,24 @@
         android:layout_marginTop="8dp"
         android:gravity="center_vertical">
 
-      <com.google.android.material.switchmaterial.SwitchMaterial
-          android:id="@+id/switch_payment"
+      <com.google.android.material.button.MaterialButtonToggleGroup
+          android:id="@+id/toggle_payment"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:textOff="Cash"
-          android:textOn="QRIS"
-          android:showText="true" />
+          app:singleSelection="true">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cash"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cash" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_qris"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="QRIS" />
+      </com.google.android.material.button.MaterialButtonToggleGroup>
 
       <View
           android:layout_width="0dp"
