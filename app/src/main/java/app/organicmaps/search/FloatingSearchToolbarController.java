@@ -32,6 +32,12 @@ public class FloatingSearchToolbarController extends SearchToolbarController
   }
 
   @Override
+  protected boolean showBackButton()
+  {
+    return false;
+  }
+
+  @Override
   public void onUpClick()
   {
     if (mListener != null)
