@@ -14,6 +14,10 @@
     android:layout_height="match_parent"
     android:visibility="gone"
     tools:visibility="visible" />
+  <include
+    layout="@layout/map_buttons_back"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" />
   <androidx.constraintlayout.widget.ConstraintLayout
     android:id="@+id/map_buttons_inner_left"
     android:layout_width="wrap_content"
