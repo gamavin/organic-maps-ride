@@ -262,10 +262,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private TextView mMotorcyclePrice;
   private View mCarOption;
   private View mMotorcycleOption;
-  private SwitchMaterial mPaymentSwitch;
+  private com.google.android.material.button.MaterialButtonToggleGroup mPaymentToggle;
   private SwitchMaterial mTollSwitch;
   private TextInputEditText mNoteEditText;
   private com.google.android.material.button.MaterialButton mBitARideButton;
+  @NonNull private String mPaymentType = "Cash";
   private View mRoutingProgressOverlay;
   @Nullable private Router mSelectedRouter;
 
@@ -629,7 +630,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mMotorcyclePrice = mRoutingSummaryPanel.findViewById(R.id.tv_motorcycle_price);
     mCarOption = mRoutingSummaryPanel.findViewById(R.id.btn_use_car);
     mMotorcycleOption = mRoutingSummaryPanel.findViewById(R.id.btn_use_motorcycle);
-    mPaymentSwitch = mRoutingSummaryPanel.findViewById(R.id.switch_payment);
+    mPaymentToggle = mRoutingSummaryPanel.findViewById(R.id.toggle_payment);
     mTollSwitch = mRoutingSummaryPanel.findViewById(R.id.switch_toll);
     mNoteEditText = mRoutingSummaryPanel.findViewById(R.id.et_note);
     mBitARideButton = mRoutingSummaryPanel.findViewById(R.id.btn_bit_a_ride);
@@ -668,6 +669,15 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mTollSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
       // Update tampilan rute saat switch tol diubah
       updateRouteSelection();
+    });
+
+    mPaymentToggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+      if (!isChecked)
+        return;
+      if (checkedId == R.id.btn_cash)
+        mPaymentType = "Cash";
+      else if (checkedId == R.id.btn_qris)
+        mPaymentType = "QRIS";
     });
 
     mBitARideButton.setOnClickListener(v -> {
@@ -1952,7 +1962,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
             .format(mMotorcyclePriceValue));
     mTollSwitch.setChecked(false);
     mTollSwitch.setVisibility(View.GONE);
-    mPaymentSwitch.setChecked(false);
+    mPaymentToggle.check(R.id.btn_cash);
+    mPaymentType = "Cash";
     mNoteEditText.setText(null);
 
     // Atur pilihan default ke mobil saat panel pertama kali muncul
