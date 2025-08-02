@@ -128,6 +128,7 @@ import app.organicmaps.widget.placepage.PlacePageController;
 import app.organicmaps.widget.placepage.PlacePageViewModel;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import app.organicmaps.sdk.routing.RoutingInfo;
 
@@ -2061,9 +2062,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onCommonBuildError(int lastResultCode, @NonNull String[] lastMissingMaps)
   {
+    Logger.e(TAG, "Routing build error: code=" + lastResultCode + ", missingMaps=" + Arrays.toString(lastMissingMaps));
     RoutingErrorDialogFragment fragment = RoutingErrorDialogFragment.create(
         getSupportFragmentManager().getFragmentFactory(), getApplicationContext(), lastResultCode, lastMissingMaps);
     fragment.show(getSupportFragmentManager(), RoutingErrorDialogFragment.class.getSimpleName());
+    mCalculationState = CalculationState.NONE;
+    UiUtils.hide(mRoutingProgressOverlay);
   }
 
   @Override
