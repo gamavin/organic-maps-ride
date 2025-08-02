@@ -168,7 +168,7 @@
           android:id="@+id/toggle_payment"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          style="@style/Widget.Material3.MaterialButtonToggleGroup"
+          style="@style/Widget.MaterialComponents.MaterialButtonToggleGroup"
           app:singleSelection="true">
 
         <com.google.android.material.button.MaterialButton
@@ -177,7 +177,7 @@
             android:layout_height="wrap_content"
             android:checkable="true"
             android:text="Cash"
-            style="@style/Widget.Material3.Button.SegmentedButton" />
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_qris"
@@ -185,7 +185,7 @@
             android:layout_height="wrap_content"
             android:checkable="true"
             android:text="QRIS"
-            style="@style/Widget.Material3.Button.SegmentedButton" />
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
       </com.google.android.material.button.MaterialButtonToggleGroup>
 
       <View
