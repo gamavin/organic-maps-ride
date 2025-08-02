@@ -168,19 +168,24 @@
           android:id="@+id/toggle_payment"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
+          style="@style/Widget.Material3.MaterialButtonToggleGroup"
           app:singleSelection="true">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_cash"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cash" />
+            android:checkable="true"
+            android:text="Cash"
+            style="@style/Widget.Material3.Button.SegmentedButton" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_qris"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="QRIS" />
+            android:checkable="true"
+            android:text="QRIS"
+            style="@style/Widget.Material3.Button.SegmentedButton" />
       </com.google.android.material.button.MaterialButtonToggleGroup>
 
       <View

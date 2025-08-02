@@ -1958,8 +1958,10 @@ public class MwmActivity extends BaseMwmFragmentActivity
     Logger.d(TAG, "showRoutingSummary: motorcycle distance=" + mMotorcycleRouteDistance +
             " price=" + mMotorcyclePriceValue);
 
-    mMotorcyclePrice.setText(java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"))
-            .format(mMotorcyclePriceValue));
+    java.text.NumberFormat format =
+        java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
+    mMotorcyclePrice.setText(format.format(mMotorcyclePriceValue));
+    mCarPrice.setText(format.format(mCarNoTollPriceValue));
     mTollSwitch.setChecked(false);
     mPaymentToggle.check(R.id.btn_cash);
     mPaymentType = "Cash";
