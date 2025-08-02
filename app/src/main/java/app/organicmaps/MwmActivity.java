@@ -1930,7 +1930,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void showRoutingSummary()
   {
-    // Sembunyikan semua tombol di peta (zoom, my location, dll)
+    // Hide all map buttons (zoom, my location, etc.)
     mMapButtonsViewModel.setButtonsHidden(true);
 
     mCarTollPriceValue = calculateFare(mCarTollRouteDistance, 5000);
@@ -1947,68 +1947,64 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mMotorcyclePrice.setText(java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"))
             .format(mMotorcyclePriceValue));
     mTollSwitch.setChecked(false);
-    mTollSwitch.setVisibility(View.GONE);
     mPaymentSwitch.setChecked(false);
     mNoteEditText.setText(null);
 
-    // Atur pilihan default ke mobil saat panel pertama kali muncul
-    mSelectedRouter = Router.Vehicle;
-    mCarOption.setSelected(true);
-    mMotorcycleOption.setSelected(false);
+    // Use bicycle routing by default and select motorcycle option
+    mSelectedRouter = Router.Bicycle;
+    mMotorcycleOption.setSelected(true);
+    mCarOption.setSelected(false);
+    mTollSwitch.setVisibility(View.GONE);
 
-    // PERBAIKAN: Panggil method baru untuk mengatur tampilan awal
+    // Update route after configuring default selections
     updateRouteSelection();
 
-    // Tampilkan panel ringkasan rute
+    // Show routing summary panel
     UiUtils.show(mRoutingSummaryPanel);
   }
-
-  // Di dalam file MwmActivity.java
-
-  // Di dalam file MwmActivity.java
-
+ 
   private void updateRouteSelection()
   {
     RoutingController controller = RoutingController.get();
 
     if (mSelectedRouter == Router.Vehicle)
     {
-      // Cek apakah tipe router saat ini BUKAN Vehicle. Jika bukan, ganti.
-      // Ini untuk menghindari pemicu build yang tidak perlu jika pengguna hanya menekan tombol mobil berulang kali.
+      // Check if current router type is NOT Vehicle to avoid unnecessary rebuilds
+      // when the user presses the car button repeatedly.
       if (controller.getLastRouterType() != Router.Vehicle)
       {
         controller.setRouterType(Router.Vehicle);
-        // setRouterType sudah otomatis memicu build, jadi kita bisa langsung keluar.
-        // Namun, harga di UI belum ter-update, jadi kita biarkan kode di bawah tetap berjalan.
+        // setRouterType triggers a rebuild automatically, but UI prices
+        // may not update yet, so let the code below continue.
       }
 
       long price;
       if (mTollSwitch.isChecked())
       {
         price = mCarTollPriceValue;
-        // Perintahkan untuk menghitung ulang dengan opsi TOL DIAKTIFKAN
+        // Request recalculation with toll option enabled
         RoutingOptions.addOption(RoadType.Toll);
       }
       else
       {
         price = mCarNoTollPriceValue;
-        // Perintahkan untuk menghitung ulang dengan opsi TOL DINONAKTIFKAN
+        // Request recalculation with toll option disabled
         RoutingOptions.removeOption(RoadType.Toll);
       }
 
-      // Perbarui teks harga
+      // Update price text
       java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
       mCarPrice.setText(format.format(price));
 
-      // Picu perhitungan ulang yang cepat agar rute di peta diperbarui
+      // Trigger a quick rebuild so the route on the map updates
       controller.rebuild();
     }
     else if (mSelectedRouter == Router.Bicycle)
     {
-      // Cek apakah tipe router saat ini BUKAN Bicycle untuk menghindari build ulang yang tidak perlu.
+      // Check if current router type is NOT Bicycle to avoid unnecessary rebuilds
       if (controller.getLastRouterType() != Router.Bicycle)
       {
-        // Atur tipe router ke motor. Method ini sudah otomatis memicu perhitungan ulang.
+        // Set router type to bicycle; this method already triggers recalculation
         controller.setRouterType(Router.Bicycle);
       }
     }
@@ -2016,8 +2012,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private long calculateFare(double distanceKm, int ratePerKm)
   {
-    // PERBAIKAN: Variabel 'distanceKm' sudah dalam satuan kilometer,
-    // jadi tidak perlu dibagi 1000 lagi.
+    // NOTE: 'distanceKm' is already in kilometers, so no need to divide by 1000
     double finalKm = distanceKm;
 
     if (finalKm < 3.0)
