@@ -89,10 +89,10 @@
         android:padding="12dp">
 
       <ImageView
-          android:layout_width="24dp"
-          android:layout_height="24dp"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
           android:src="@drawable/ic_bike"
-          android:tint="@color/base_green" />
+          app:tint="@color/base_green" />
 
       <TextView
           android:layout_width="0dp"
@@ -122,10 +122,10 @@
         android:layout_marginTop="8dp">
 
       <ImageView
-          android:layout_width="24dp"
-          android:layout_height="24dp"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
           android:src="@drawable/ic_car"
-          android:tint="@color/base_green" />
+          app:tint="@color/base_green" />
 
       <TextView
           android:layout_width="0dp"
