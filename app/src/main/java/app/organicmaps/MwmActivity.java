@@ -1958,18 +1958,20 @@ public class MwmActivity extends BaseMwmFragmentActivity
     Logger.d(TAG, "showRoutingSummary: motorcycle distance=" + mMotorcycleRouteDistance +
             " price=" + mMotorcyclePriceValue);
 
-    mMotorcyclePrice.setText(java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"))
-            .format(mMotorcyclePriceValue));
+    java.text.NumberFormat format =
+        java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
+    mMotorcyclePrice.setText(format.format(mMotorcyclePriceValue));
+    mCarPrice.setText(format.format(mCarNoTollPriceValue));
     mTollSwitch.setChecked(false);
-    mTollSwitch.setVisibility(View.GONE);
     mPaymentToggle.check(R.id.btn_cash);
     mPaymentType = "Cash";
     mNoteEditText.setText(null);
 
-    // Atur pilihan default ke mobil saat panel pertama kali muncul
-    mSelectedRouter = Router.Vehicle;
-    mCarOption.setSelected(true);
-    mMotorcycleOption.setSelected(false);
+    // Atur pilihan default ke motor saat panel pertama kali muncul
+    mSelectedRouter = Router.Bicycle;
+    mMotorcycleOption.setSelected(true);
+    mCarOption.setSelected(false);
+    mTollSwitch.setVisibility(View.GONE);
 
     // PERBAIKAN: Panggil method baru untuk mengatur tampilan awal
     updateRouteSelection();
