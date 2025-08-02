@@ -320,6 +320,21 @@ public class RoutingController
     prepare(getStartPoint(), getEndPoint());
   }
 
+  // ===================================================================
+  // TAMBAHKAN BLOK BARU DI BAWAH INI
+  // ===================================================================
+  /**
+   * Rebuilds the route without closing the current routing session.
+   * This is much faster for sequential calculations with different options.
+   */
+  public void rebuild()
+  {
+    build();
+  }
+  // ===================================================================
+  // AKHIR DARI BLOK BARU
+  // ===================================================================
+
   public void prepare(@Nullable MapObject startPoint, @Nullable MapObject endPoint)
   {
     Logger.d(TAG, "prepare (" + (endPoint == null ? "route)" : "p2p)"));

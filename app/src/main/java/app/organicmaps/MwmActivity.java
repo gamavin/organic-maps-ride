@@ -639,11 +639,16 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (!RoutingOptions.hasOption(RoadType.Motorway))
       RoutingOptions.addOption(RoadType.Motorway);
 
+    // Di dalam file MwmActivity.java, method onSafeCreate()
+
     mCarOption.setOnClickListener(v -> {
       mSelectedRouter = Router.Vehicle;
       mTollSwitch.setVisibility(View.VISIBLE);
       mCarOption.setSelected(true);
       mMotorcycleOption.setSelected(false);
+
+      // Update tampilan rute berdasarkan status switch tol saat ini
+      updateRouteSelection();
     });
 
     mMotorcycleOption.setOnClickListener(v -> {
@@ -651,9 +656,15 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mTollSwitch.setVisibility(View.GONE);
       mMotorcycleOption.setSelected(true);
       mCarOption.setSelected(false);
+
+      // Update tampilan rute untuk motor
+      updateRouteSelection();
     });
 
-    mTollSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateCarPriceDisplay());
+    mTollSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+      // Update tampilan rute saat switch tol diubah
+      updateRouteSelection();
+    });
 
     mBitARideButton.setOnClickListener(v -> {
       if (mSelectedRouter == null)
@@ -1520,6 +1531,15 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void updateMenu()
   {
+    // ================== PERUBAHAN KRUSIAL #2 ==================
+    // Jika sedang dalam mode ride-hailing, jangan perbarui menu apa pun.
+    // Biarkan UI dikontrol oleh logika kalkulasi tarif.
+    if (mIsInRideHailingMode)
+    {
+      return;
+    }
+    // ==========================================================
+
     final RoutingController controller = RoutingController.get();
 
     if (controller.isNavigating())
@@ -1855,50 +1875,52 @@ public class MwmActivity extends BaseMwmFragmentActivity
       return;
     }
 
+    // Log ini sangat berguna untuk debugging
     Logger.d(TAG, "onBuiltRoute: mCalculationState=" + mCalculationState +
-                 ", distance=" + info.distToTarget.mDistance);
+            ", router=" + controller.getLastRouterType() +
+            ", distance=" + info.distToTarget.mDistance);
 
     // Cek state saat ini
     if (mCalculationState == CalculationState.CALCULATING_CAR_TOLL)
     {
-      if (controller.getLastRouterType() == Router.Vehicle)
-      {
-        mCarTollInfo = info;
-        mCarTollRouteDistance = info.distToTarget.mDistance;
-        RoutingOptions.addOption(RoadType.Toll);
-        setCalculationState(CalculationState.CALCULATING_CAR_NO_TOLL);
-        Logger.d(TAG, "onBuiltRoute: trigger rebuild for car without toll");
-        controller.rebuildLastRoute();
-      }
+      mCarTollInfo = info;
+      mCarTollRouteDistance = info.distToTarget.mDistance;
+
+      // Persiapan untuk kalkulasi berikutnya: HAPUS opsi tol
+      RoutingOptions.removeOption(RoadType.Toll);
+
+      setCalculationState(CalculationState.CALCULATING_CAR_NO_TOLL);
+      Logger.d(TAG, "onBuiltRoute: trigger light rebuild for car without toll");
+
+      // PERBAIKAN PERFORMA: Gunakan method rebuild() yang efisien
+      controller.rebuild();
     }
     else if (mCalculationState == CalculationState.CALCULATING_CAR_NO_TOLL)
     {
-      if (controller.getLastRouterType() == Router.Vehicle)
-      {
-        mCarNoTollInfo = info;
-        mCarNoTollRouteDistance = info.distToTarget.mDistance;
-        setCalculationState(CalculationState.CALCULATING_BIKE);
-        controller.setRouterType(Router.Bicycle);
-        Logger.d(TAG, "onBuiltRoute: trigger rebuild for bike route");
-        controller.rebuildLastRoute();
-      }
+      // PERBAIKAN STUCK: Hapus pengecekan 'getLastRouterType()' yang tidak andal.
+      mCarNoTollInfo = info;
+      mCarNoTollRouteDistance = info.distToTarget.mDistance;
+
+      setCalculationState(CalculationState.CALCULATING_BIKE);
+      Logger.d(TAG, "onBuiltRoute: trigger build for bike route");
+      controller.setRouterType(Router.Bicycle);
     }
     else if (mCalculationState == CalculationState.CALCULATING_BIKE)
     {
+      // Pengecekan terakhir sebelum menampilkan hasil
       if (controller.getLastRouterType() == Router.Bicycle)
       {
         mMotorcycleInfo = info;
         mMotorcycleRouteDistance = info.distToTarget.mDistance;
-        setCalculationState(CalculationState.NONE);
+        setCalculationState(CalculationState.NONE); // Selesai
         UiUtils.hide(mRoutingProgressOverlay);
         Logger.d(TAG, "onBuiltRoute: entering showRoutingSummary()");
         showRoutingSummary();
-        Logger.d(TAG, "onBuiltRoute: prices after showRoutingSummary: car (toll)=" + mCarTollPriceValue +
-                     ", car (no toll)=" + mCarNoTollPriceValue +
-                     ", motorcycle=" + mMotorcyclePriceValue);
       }
     }
   }
+
+  // Di dalam file MwmActivity.java
 
   private void showRoutingSummary()
   {
@@ -1910,40 +1932,94 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mMotorcyclePriceValue = calculateFare(mMotorcycleRouteDistance, 3000);
 
     Logger.d(TAG, "showRoutingSummary: car (toll) distance=" + mCarTollRouteDistance +
-                 " price=" + mCarTollPriceValue);
+            " price=" + mCarTollPriceValue);
     Logger.d(TAG, "showRoutingSummary: car (no toll) distance=" + mCarNoTollRouteDistance +
-                 " price=" + mCarNoTollPriceValue);
+            " price=" + mCarNoTollPriceValue);
     Logger.d(TAG, "showRoutingSummary: motorcycle distance=" + mMotorcycleRouteDistance +
-                 " price=" + mMotorcyclePriceValue);
+            " price=" + mMotorcyclePriceValue);
 
     mMotorcyclePrice.setText(java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"))
-                                   .format(mMotorcyclePriceValue));
+            .format(mMotorcyclePriceValue));
     mTollSwitch.setChecked(false);
     mTollSwitch.setVisibility(View.GONE);
     mPaymentSwitch.setChecked(false);
     mNoteEditText.setText(null);
-    mSelectedRouter = null;
-    updateCarPriceDisplay();
+
+    // Atur pilihan default ke mobil saat panel pertama kali muncul
+    mSelectedRouter = Router.Vehicle;
+    mCarOption.setSelected(true);
+    mMotorcycleOption.setSelected(false);
+
+    // PERBAIKAN: Panggil method baru untuk mengatur tampilan awal
+    updateRouteSelection();
 
     // Tampilkan panel ringkasan rute
     UiUtils.show(mRoutingSummaryPanel);
   }
 
-  private void updateCarPriceDisplay()
+  // Di dalam file MwmActivity.java
+
+  // Di dalam file MwmActivity.java
+
+  private void updateRouteSelection()
   {
-    long price = mTollSwitch != null && mTollSwitch.isChecked() ? mCarTollPriceValue : mCarNoTollPriceValue;
-    java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
-    mCarPrice.setText(format.format(price));
+    RoutingController controller = RoutingController.get();
+
+    if (mSelectedRouter == Router.Vehicle)
+    {
+      // Cek apakah tipe router saat ini BUKAN Vehicle. Jika bukan, ganti.
+      // Ini untuk menghindari pemicu build yang tidak perlu jika pengguna hanya menekan tombol mobil berulang kali.
+      if (controller.getLastRouterType() != Router.Vehicle)
+      {
+        controller.setRouterType(Router.Vehicle);
+        // setRouterType sudah otomatis memicu build, jadi kita bisa langsung keluar.
+        // Namun, harga di UI belum ter-update, jadi kita biarkan kode di bawah tetap berjalan.
+      }
+
+      long price;
+      if (mTollSwitch.isChecked())
+      {
+        price = mCarTollPriceValue;
+        // Perintahkan untuk menghitung ulang dengan opsi TOL DIAKTIFKAN
+        RoutingOptions.addOption(RoadType.Toll);
+      }
+      else
+      {
+        price = mCarNoTollPriceValue;
+        // Perintahkan untuk menghitung ulang dengan opsi TOL DINONAKTIFKAN
+        RoutingOptions.removeOption(RoadType.Toll);
+      }
+
+      // Perbarui teks harga
+      java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
+      mCarPrice.setText(format.format(price));
+
+      // Picu perhitungan ulang yang cepat agar rute di peta diperbarui
+      controller.rebuild();
+    }
+    else if (mSelectedRouter == Router.Bicycle)
+    {
+      // Cek apakah tipe router saat ini BUKAN Bicycle untuk menghindari build ulang yang tidak perlu.
+      if (controller.getLastRouterType() != Router.Bicycle)
+      {
+        // Atur tipe router ke motor. Method ini sudah otomatis memicu perhitungan ulang.
+        controller.setRouterType(Router.Bicycle);
+      }
+    }
   }
 
-  private long calculateFare(double distanceMeters, int ratePerKm)
+  private long calculateFare(double distanceKm, int ratePerKm)
   {
-    double km = distanceMeters / 1000.0;
-    if (km < 3.0)
-      km = 3.0;
-    long price = (long) (km * ratePerKm);
-    Logger.d(TAG, "calculateFare: distanceMeters=" + distanceMeters +
-                 ", ratePerKm=" + ratePerKm + ", price=" + price);
+    // PERBAIKAN: Variabel 'distanceKm' sudah dalam satuan kilometer,
+    // jadi tidak perlu dibagi 1000 lagi.
+    double finalKm = distanceKm;
+
+    if (finalKm < 3.0)
+      finalKm = 3.0;
+
+    long price = (long) (finalKm * ratePerKm);
+    Logger.d(TAG, "calculateFare: distanceKm=" + distanceKm +
+            ", ratePerKm=" + ratePerKm + ", price=" + price);
     return price;
   }
 
@@ -2429,16 +2505,16 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onManageRouteOpen()
   {
+    // JIKA KITA DALAM MODE RIDE-HAILING, KITA MENGONTROL ALUR UI SECARA MANUAL.
+    // JANGAN PERNAH TAMPILKAN "MANAGE ROUTE" BAWAAN.
     if (mIsInRideHailingMode)
     {
-      UiUtils.hide(mRoutingProgressOverlay);
-      setCalculationState(CalculationState.NONE);
-      if (mRoutingPlanInplaceController != null)
-        mRoutingPlanInplaceController.show(false);
+      // Cukup hentikan eksekusi di sini. Jangan lakukan apa-apa.
+      // Alur akan dilanjutkan oleh logika kustom di dalam onBuiltRoute().
       return;
     }
 
-    // Create and show 'Manage Route' Bottom Sheet panel.
+    // Jika tidak dalam mode ride-hailing, jalankan logika asli untuk menampilkan panel.
     mManageRouteBottomSheet = new ManageRouteBottomSheet();
     mManageRouteBottomSheet.setCancelable(false);
     mManageRouteBottomSheet.show(getSupportFragmentManager(), "ManageRouteBottomSheet");
@@ -2589,6 +2665,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     if (!mIsSelectingPickup)
     {
+      // ... (Logika untuk tahap pertama: memilih titik jemput)
+      // ... (Tidak ada perubahan di blok ini)
       closePlacePage();
 
       if (mCurrentPlacePageObject == null)
@@ -2615,11 +2693,17 @@ public class MwmActivity extends BaseMwmFragmentActivity
     }
     else
     {
+      // Tahap kedua: memulai kalkulasi tarif
       if (mPickupPoint == null)
       {
         Toast.makeText(this, R.string.pickup_not_selected, Toast.LENGTH_SHORT).show();
         return;
       }
+
+      // ================== PERUBAHAN KRUSIAL #1 ==================
+      // Paksa masuk ke mode ride-hailing di sini. Ini menjamin state selalu benar.
+      mIsInRideHailingMode = true;
+      // ==========================================================
 
       UiUtils.hide(mConfirmPickupButton);
       if (mManageRouteBottomSheet != null)
