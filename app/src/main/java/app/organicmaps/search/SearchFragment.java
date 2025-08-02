@@ -78,6 +78,12 @@ public class SearchFragment extends BaseMwmFragment implements SearchListener, C
     }
 
     @Override
+    protected boolean showBackButton()
+    {
+      return false;
+    }
+
+    @Override
     protected void onTextChanged(String query)
     {
       if (!isAdded())

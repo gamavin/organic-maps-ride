@@ -18,7 +18,8 @@
       app:srcCompat="?homeAsUpIndicator"
       android:scaleType="center"
       tools:src="@drawable/ic_down"
-      android:contentDescription="@string/back"/>
+      android:contentDescription="@string/back"
+      android:visibility="gone"/>
 
   <LinearLayout
       android:layout_width="0dp"
@@ -92,7 +93,7 @@
       android:id="@+id/voice_input"
       android:layout_width="?actionBarSize"
       android:layout_height="?actionBarSize"
-      android:layout_gravity="center_vertical"
+      android:layout_gravity="bottom"
       android:layout_weight="0"
       android:background="?attr/selectableItemBackgroundBorderless"
       android:contentDescription="@null"
