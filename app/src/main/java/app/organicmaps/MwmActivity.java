@@ -240,6 +240,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   // Variabel baru untuk alur Ride-Hailing
   private boolean mIsInRideHailingMode = false;
   private com.google.android.material.button.MaterialButton mConfirmPickupButton;
+  private View mPickupBackButton;
   @Nullable
   private MapObject mCurrentPlacePageObject;
   @Nullable
@@ -615,6 +616,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
     final Intent intent = getIntent();
     final boolean isLaunchByDeepLink = intent != null && !intent.hasCategory(Intent.CATEGORY_LAUNCHER);
     initViews(isLaunchByDeepLink);
+    mPickupBackButton = findViewById(R.id.pickup_back_button);
+    if (mPickupBackButton != null)
+      UiUtils.hide(mPickupBackButton);
     // Inisialisasi Tombol Konfirmasi Penjemputan
     mConfirmPickupButton = findViewById(R.id.confirm_pickup_button);
     mConfirmPickupButton.setOnClickListener(v -> onConfirmPickupClicked());
@@ -1321,13 +1325,31 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onBackPressed()
   {
-    resetRoutingController();
-    if (UiUtils.isVisible(mRoutingSummaryPanel) || UiUtils.isVisible(mConfirmPickupButton))
+    if (UiUtils.isVisible(mRoutingSummaryPanel))
     {
+      resetRoutingController();
+      UiUtils.hide(mRoutingSummaryPanel);
+      UiUtils.show(mConfirmPickupButton);
+      mConfirmPickupButton.setText(R.string.choose_this_pickup);
+      mIsSelectingPickup = true;
+      return;
+    }
+    if (mIsSelectingPickup)
+    {
+      mIsSelectingPickup = false;
+      mPickupPoint = null;
+      UiUtils.show(mConfirmPickupButton);
+      mConfirmPickupButton.setText(R.string.choose_this_destination);
+      return;
+    }
+    if (mIsInRideHailingMode)
+    {
+      resetRoutingController();
       exitRideHailingMode();
       showSearch("");
       return;
     }
+    resetRoutingController();
     final RoutingController routingController = RoutingController.get();
     if (!closeBottomSheet(MAIN_MENU_ID) && !collapseNavMenu() && !closePlacePage()
         && !closeSearchToolbar(true, true) && !closeSidePanel() && !closePositionChooser()
@@ -1412,6 +1434,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
         mCurrentPlacePageObject = mapObject; // Simpan objek destinasi
         Framework.nativeSetViewportCenter(mapObject.getLat(), mapObject.getLon(), Framework.nativeGetDrawScale());
         showConfirmPickupButton(true, mapObject);
+        if (mPickupBackButton != null)
+          UiUtils.show(mPickupBackButton);
       }
     }
 
@@ -1931,9 +1955,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void showRoutingSummary()
   {
-    // Sembunyikan semua tombol di peta (zoom, my location, dll)
-    mMapButtonsViewModel.setButtonsHidden(true);
-
     mCarTollPriceValue = calculateFare(mCarTollRouteDistance, 5000);
     mCarNoTollPriceValue = calculateFare(mCarNoTollRouteDistance, 5000);
     mMotorcyclePriceValue = calculateFare(mMotorcycleRouteDistance, 3000);
@@ -1965,6 +1986,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     // Tampilkan panel ringkasan rute
     UiUtils.show(mRoutingSummaryPanel);
+    if (mPickupBackButton != null)
+      UiUtils.show(mPickupBackButton);
   }
 
   // Di dalam file MwmActivity.java
@@ -2060,6 +2083,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     UiUtils.hide(mConfirmPickupButton);
     UiUtils.hide(mRoutingSummaryPanel);
     UiUtils.hide(mRoutingProgressOverlay);
+    if (mPickupBackButton != null)
+      UiUtils.hide(mPickupBackButton);
     mMapButtonsViewModel.setButtonsHidden(false);
   }
 
