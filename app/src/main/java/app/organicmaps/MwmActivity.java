@@ -1331,6 +1331,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       UiUtils.hide(mRoutingSummaryPanel);
       UiUtils.show(mConfirmPickupButton);
       mConfirmPickupButton.setText(R.string.choose_this_pickup);
+      showBottomButtons(false);
       mIsSelectingPickup = true;
       return;
     }
@@ -1340,6 +1341,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mPickupPoint = null;
       UiUtils.show(mConfirmPickupButton);
       mConfirmPickupButton.setText(R.string.choose_this_destination);
+      showBottomButtons(false);
       return;
     }
     if (mIsInRideHailingMode)
@@ -1427,6 +1429,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
         mPickupPoint = mapObject;
         closePlacePage();
         UiUtils.show(mConfirmPickupButton);
+        showBottomButtons(false);
       }
       else
       {
@@ -2086,6 +2089,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (mPickupBackButton != null)
       UiUtils.hide(mPickupBackButton);
     mMapButtonsViewModel.setButtonsHidden(false);
+    showBottomButtons(true);
   }
 
   @Override
@@ -2728,6 +2732,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mIsSelectingPickup = true;
       mConfirmPickupButton.setText(R.string.choose_this_pickup);
       UiUtils.show(mConfirmPickupButton);
+      showBottomButtons(false);
       Toast.makeText(this, R.string.tap_to_choose_pickup, Toast.LENGTH_SHORT).show();
     }
     else
@@ -2745,6 +2750,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       // ==========================================================
 
       UiUtils.hide(mConfirmPickupButton);
+      showBottomButtons(true);
       if (mManageRouteBottomSheet != null)
         mManageRouteBottomSheet.dismiss();
       mManageRouteBottomSheet = null;
@@ -2779,11 +2785,20 @@ public class MwmActivity extends BaseMwmFragmentActivity
     return mIsInRideHailingMode;
   }
 
+  private void showBottomButtons(boolean show)
+  {
+    MapButtonsController controller =
+        (MapButtonsController) getSupportFragmentManager().findFragmentById(R.id.map_buttons);
+    if (controller != null)
+      controller.showBottomButtons(show);
+  }
+
   // Fungsi ini akan dipanggil oleh PlacePageController untuk menampilkan/menyembunyikan tombol
   public void showConfirmPickupButton(boolean show, @Nullable MapObject target)
   {
     mCurrentPlacePageObject = target;
     UiUtils.showIf(show, mConfirmPickupButton);
+    showBottomButtons(!show);
   }
 
   public void onAddPlaceOptionSelected()

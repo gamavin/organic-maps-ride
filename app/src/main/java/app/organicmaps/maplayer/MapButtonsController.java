@@ -190,6 +190,13 @@ public class MapButtonsController extends Fragment
     }
   }
 
+  public void showBottomButtons(boolean show)
+  {
+    if (mBottomButtonsFrame != null)
+      UiUtils.showIf(show, mBottomButtonsFrame);
+    mMapButtonsViewModel.setBottomButtonsHeight(getBottomButtonsHeight());
+  }
+
   void animateIconBlinking(boolean show, @NonNull FloatingActionButton button)
   {
     if (show)
