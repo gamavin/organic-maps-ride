@@ -1321,6 +1321,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public void onBackPressed()
   {
     resetRoutingController();
+    if (UiUtils.isVisible(mRoutingSummaryPanel) || UiUtils.isVisible(mConfirmPickupButton))
+    {
+      exitRideHailingMode();
+      showSearch("");
+      return;
+    }
     final RoutingController routingController = RoutingController.get();
     if (!closeBottomSheet(MAIN_MENU_ID) && !closeBottomSheet(LAYERS_MENU_ID) && !collapseNavMenu() && !closePlacePage()
         && !closeSearchToolbar(true, true) && !closeSidePanel() && !closePositionChooser()
@@ -2043,7 +2049,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private void exitRideHailingMode()
   {
     mIsInRideHailingMode = false;
+    mIsSelectingPickup = false;
+    mPickupPoint = null;
+    mCurrentPlacePageObject = null;
     setCalculationState(CalculationState.NONE);
+    UiUtils.hide(mConfirmPickupButton);
     UiUtils.hide(mRoutingSummaryPanel);
     UiUtils.hide(mRoutingProgressOverlay);
     mMapButtonsViewModel.setButtonsHidden(false);
