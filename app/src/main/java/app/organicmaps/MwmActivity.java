@@ -630,6 +630,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mTollSwitch = mRoutingSummaryPanel.findViewById(R.id.switch_toll);
     mNoteEditText = mRoutingSummaryPanel.findViewById(R.id.et_note);
     mBitARideButton = mRoutingSummaryPanel.findViewById(R.id.btn_bit_a_ride);
+    mRoutingSummaryPanel.setOnTouchListener((v, event) -> true);
     mRoutingProgressOverlay = findViewById(R.id.routing_progress_overlay);
 
     if (!RoutingOptions.hasOption(RoadType.Dirty))
