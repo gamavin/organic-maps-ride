@@ -383,7 +383,6 @@ public class MapButtonsController extends Fragment
     super.onResume();
     mSearchWheel.onResume();
     updateMenuBadge();
-    updateLayerButton();
     final WindowInsetUtils.PaddingInsetsListener insetsListener =
         new WindowInsetUtils.PaddingInsetsListener.Builder()
             .setInsetsTypeMask(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout())
