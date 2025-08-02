@@ -1967,44 +1967,34 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     if (mSelectedRouter == Router.Vehicle)
     {
-      // Cek apakah tipe router saat ini BUKAN Vehicle. Jika bukan, ganti.
-      // Ini untuk menghindari pemicu build yang tidak perlu jika pengguna hanya menekan tombol mobil berulang kali.
-      if (controller.getLastRouterType() != Router.Vehicle)
-      {
-        controller.setRouterType(Router.Vehicle);
-        // setRouterType sudah otomatis memicu build, jadi kita bisa langsung keluar.
-        // Namun, harga di UI belum ter-update, jadi kita biarkan kode di bawah tetap berjalan.
-      }
-
       long price;
+      RoutingInfo routeToDisplay;
+
       if (mTollSwitch.isChecked())
       {
         price = mCarTollPriceValue;
-        // Perintahkan untuk menghitung ulang dengan opsi TOL DIAKTIFKAN
-        RoutingOptions.addOption(RoadType.Toll);
+        routeToDisplay = mCarTollInfo; // Ambil data rute tol yang sudah jadi
       }
       else
       {
         price = mCarNoTollPriceValue;
-        // Perintahkan untuk menghitung ulang dengan opsi TOL DINONAKTIFKAN
-        RoutingOptions.removeOption(RoadType.Toll);
+        routeToDisplay = mCarNoTollInfo; // Ambil data rute non-tol yang sudah jadi
       }
 
       // Perbarui teks harga
       java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
       mCarPrice.setText(format.format(price));
 
-      // Picu perhitungan ulang yang cepat agar rute di peta diperbarui
-      controller.rebuild();
+      // Tampilkan rute mobil yang dipilih secara instan
+      if (routeToDisplay != null)
+        controller.showCachedRoute(routeToDisplay, Router.Vehicle);
+
     }
     else if (mSelectedRouter == Router.Bicycle)
     {
-      // Cek apakah tipe router saat ini BUKAN Bicycle untuk menghindari build ulang yang tidak perlu.
-      if (controller.getLastRouterType() != Router.Bicycle)
-      {
-        // Atur tipe router ke motor. Method ini sudah otomatis memicu perhitungan ulang.
-        controller.setRouterType(Router.Bicycle);
-      }
+      // Tampilkan rute motor yang dipilih secara instan
+      if (mMotorcycleInfo != null)
+        controller.showCachedRoute(mMotorcycleInfo, Router.Bicycle);
     }
   }
 
