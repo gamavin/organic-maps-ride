@@ -70,7 +70,6 @@ import app.organicmaps.intent.IntentProcessor;
 import app.organicmaps.location.TrackRecordingService;
 import app.organicmaps.maplayer.MapButtonsController;
 import app.organicmaps.maplayer.MapButtonsViewModel;
-import app.organicmaps.maplayer.ToggleMapLayerFragment;
 import app.organicmaps.routing.ManageRouteBottomSheet;
 import app.organicmaps.routing.NavigationController;
 import app.organicmaps.routing.NavigationService;
@@ -165,7 +164,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       });
 
   private static final String MAIN_MENU_ID = "MAIN_MENU_BOTTOM_SHEET";
-  private static final String LAYERS_MENU_ID = "LAYERS_MENU_BOTTOM_SHEET";
 
   private static final String POWER_SAVE_DISCLAIMER_SHOWN = "POWER_SAVE_DISCLAIMER_SHOWN";
 
@@ -242,7 +240,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   // Variabel baru untuk alur Ride-Hailing
   private boolean mIsInRideHailingMode = false;
   private com.google.android.material.button.MaterialButton mConfirmPickupButton;
-  private View mPickupBackButton;
   @Nullable
   private MapObject mCurrentPlacePageObject;
   @Nullable
@@ -621,8 +618,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     // Inisialisasi Tombol Konfirmasi Penjemputan
     mConfirmPickupButton = findViewById(R.id.confirm_pickup_button);
     mConfirmPickupButton.setOnClickListener(v -> onConfirmPickupClicked());
-    mPickupBackButton = findViewById(R.id.pickup_back_button);
-    mPickupBackButton.setOnClickListener(v -> onBackPressed());
 
     // Inisialisasi Panel Ringkasan Rute
     mRoutingSummaryPanel = findViewById(R.id.routing_summary_panel);
@@ -948,7 +943,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       // Calls onMyPositionModeChanged(mode + 1).
       LocationState.nativeSwitchToNextMode();
     }
-    case toggleMapLayer -> toggleMapLayerBottomSheet();
     case bookmarks -> showBookmarks();
     case search -> showSearch("");
     case menu ->
@@ -973,12 +967,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private void showBottomSheet(String id)
   {
     MenuBottomSheetFragment.newInstance(id).show(getSupportFragmentManager(), id);
-  }
-
-  private void toggleMapLayerBottomSheet()
-  {
-    if (!closeBottomSheet(LAYERS_MENU_ID))
-      showBottomSheet(LAYERS_MENU_ID);
   }
 
   /**
@@ -1072,7 +1060,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   public void closeFloatingPanels()
   {
-    closeBottomSheet(LAYERS_MENU_ID);
     closeBottomSheet(MAIN_MENU_ID);
     closePlacePage();
   }
@@ -1342,7 +1329,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       return;
     }
     final RoutingController routingController = RoutingController.get();
-    if (!closeBottomSheet(MAIN_MENU_ID) && !closeBottomSheet(LAYERS_MENU_ID) && !collapseNavMenu() && !closePlacePage()
+    if (!closeBottomSheet(MAIN_MENU_ID) && !collapseNavMenu() && !closePlacePage()
         && !closeSearchToolbar(true, true) && !closeSidePanel() && !closePositionChooser()
         && !routingController.resetToPlanningStateIfNavigating())
     {
@@ -2071,7 +2058,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mCurrentPlacePageObject = null;
     setCalculationState(CalculationState.NONE);
     UiUtils.hide(mConfirmPickupButton);
-    UiUtils.hide(mPickupBackButton);
     UiUtils.hide(mRoutingSummaryPanel);
     UiUtils.hide(mRoutingProgressOverlay);
     mMapButtonsViewModel.setButtonsHidden(false);
@@ -2717,7 +2703,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mIsSelectingPickup = true;
       mConfirmPickupButton.setText(R.string.choose_this_pickup);
       UiUtils.show(mConfirmPickupButton);
-      UiUtils.show(mPickupBackButton);
       Toast.makeText(this, R.string.tap_to_choose_pickup, Toast.LENGTH_SHORT).show();
     }
     else
@@ -2735,7 +2720,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       // ==========================================================
 
       UiUtils.hide(mConfirmPickupButton);
-      UiUtils.hide(mPickupBackButton);
       if (mManageRouteBottomSheet != null)
         mManageRouteBottomSheet.dismiss();
       mManageRouteBottomSheet = null;
@@ -2925,8 +2909,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Nullable
   public Fragment getMenuBottomSheetFragment(String id)
   {
-    if (id.equals(LAYERS_MENU_ID))
-      return new ToggleMapLayerFragment();
     return null;
   }
 

@@ -22,13 +22,9 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import app.organicmaps.MwmActivity;
 import app.organicmaps.R;
-import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.downloader.MapManager;
 import app.organicmaps.sdk.downloader.UpdateInfo;
 import app.organicmaps.sdk.location.TrackRecorder;
-import app.organicmaps.sdk.maplayer.isolines.IsolinesManager;
-import app.organicmaps.sdk.maplayer.subway.SubwayManager;
-import app.organicmaps.sdk.maplayer.traffic.TrafficManager;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.sdk.util.UiUtils;
@@ -51,8 +47,6 @@ public class MapButtonsController extends Fragment
   private View mInnerRightButtonsFrame;
   @Nullable
   private View mBottomButtonsFrame;
-  @Nullable
-  private LayersButton mToggleMapLayerButton;
   @Nullable
   FloatingActionButton mTrackRecordingStatusButton;
 
@@ -123,13 +117,9 @@ public class MapButtonsController extends Fragment
         new MyPositionButton(myPosition, (v) -> mMapButtonClickListener.onMapButtonClick(MapButtons.myPosition));
 
     // Some buttons do not exist in navigation mode
-    mToggleMapLayerButton = mFrame.findViewById(R.id.layers_button);
-    if (mToggleMapLayerButton != null)
-    {
-      mToggleMapLayerButton.setOnClickListener(
-          view -> mMapButtonClickListener.onMapButtonClick(MapButtons.toggleMapLayer));
-      mToggleMapLayerButton.setVisibility(View.VISIBLE);
-    }
+    final View pickupBackButton = mFrame.findViewById(R.id.pickup_back_button);
+    if (pickupBackButton != null)
+      pickupBackButton.setOnClickListener(v -> requireActivity().onBackPressed());
     mMapButtonsViewModel.setTopButtonsMarginTop(-1);
     mTrackRecordingStatusButton = mFrame.findViewById(R.id.track_recording_status);
     if (mTrackRecordingStatusButton != null)
@@ -168,8 +158,6 @@ public class MapButtonsController extends Fragment
     mButtonsMap.put(MapButtons.bookmarks, bookmarksButton);
     mButtonsMap.put(MapButtons.search, searchButton);
 
-    if (mToggleMapLayerButton != null)
-      mButtonsMap.put(MapButtons.toggleMapLayer, mToggleMapLayerButton);
     if (menuButton != null)
       mButtonsMap.put(MapButtons.menu, menuButton);
     if (helpButton != null)
@@ -189,10 +177,6 @@ public class MapButtonsController extends Fragment
     switch (button)
     {
     case zoom: UiUtils.showIf(show && Config.showZoomButtons(), buttonView); break;
-    case toggleMapLayer:
-      if (mToggleMapLayerButton != null)
-        UiUtils.showIf(show && !isInNavigationMode(), mToggleMapLayerButton);
-      break;
     case myPosition:
       if (mNavMyPosition != null)
         mNavMyPosition.showButton(show);
@@ -280,15 +264,6 @@ public class MapButtonsController extends Fragment
     BadgeUtils.attachBadgeDrawable(mBadgeDrawable, menuButton);
 
     updateMenuBadge(TrackRecorder.nativeIsTrackRecordingEnabled());
-  }
-
-  public void updateLayerButton()
-  {
-    if (mToggleMapLayerButton == null)
-      return;
-    final boolean buttonSelected = TrafficManager.INSTANCE.isEnabled() || IsolinesManager.isEnabled()
-                                || SubwayManager.isEnabled() || Framework.nativeIsOutdoorsLayerEnabled();
-    mToggleMapLayerButton.setHasActiveLayers(buttonSelected);
   }
 
   private boolean isBehindPlacePage(View v)
@@ -454,7 +429,6 @@ public class MapButtonsController extends Fragment
   public enum MapButtons
   {
     myPosition,
-    toggleMapLayer,
     zoomIn,
     zoomOut,
     zoom,
