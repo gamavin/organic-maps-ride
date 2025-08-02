@@ -331,31 +331,6 @@ public class RoutingController
   {
     build();
   }
-
-  /**
-   * Instantly displays a pre-calculated route on the map without any recalculation.
-   * It manually sets the controller's state and tells the native engine to draw the route.
-   */
-  public void showCachedRoute(@NonNull RoutingInfo info, @NonNull Router router)
-  {
-    // 1. Set tipe router secara manual agar sesuai dengan rute yang akan ditampilkan
-    mLastRouterType = router;
-    Router.set(router);
-
-    // 2. "Suntikkan" data rute yang sudah jadi ke dalam cache controller
-    mCachedRoutingInfo = info;
-
-    // 3. Hapus rute lama dari peta
-    Framework.nativeRemoveRoute();
-
-    // 4. Atur state seolah-olah rute baru saja selesai dibangun
-    setBuildState(BuildState.BUILT);
-
-    // 5. Trik Kunci: Perintahkan engine untuk "mengikuti" rute (ini akan menggambarnya di peta),
-    //    lalu langsung batalkan mode "mengikuti" agar tidak masuk ke mode navigasi.
-    Framework.nativeFollowRoute();
-    Framework.nativeDisableFollowing();
-  }
   // ===================================================================
   // AKHIR DARI BLOK BARU
   // ===================================================================
