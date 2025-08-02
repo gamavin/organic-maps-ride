@@ -242,6 +242,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   // Variabel baru untuk alur Ride-Hailing
   private boolean mIsInRideHailingMode = false;
   private com.google.android.material.button.MaterialButton mConfirmPickupButton;
+  private View mPickupBackButton;
   @Nullable
   private MapObject mCurrentPlacePageObject;
   @Nullable
@@ -619,6 +620,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     // Inisialisasi Tombol Konfirmasi Penjemputan
     mConfirmPickupButton = findViewById(R.id.confirm_pickup_button);
     mConfirmPickupButton.setOnClickListener(v -> onConfirmPickupClicked());
+    mPickupBackButton = findViewById(R.id.pickup_back_button);
+    mPickupBackButton.setOnClickListener(v -> onBackPressed());
 
     // Inisialisasi Panel Ringkasan Rute
     mRoutingSummaryPanel = findViewById(R.id.routing_summary_panel);
@@ -2054,6 +2057,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mCurrentPlacePageObject = null;
     setCalculationState(CalculationState.NONE);
     UiUtils.hide(mConfirmPickupButton);
+    UiUtils.hide(mPickupBackButton);
     UiUtils.hide(mRoutingSummaryPanel);
     UiUtils.hide(mRoutingProgressOverlay);
     mMapButtonsViewModel.setButtonsHidden(false);
@@ -2699,6 +2703,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mIsSelectingPickup = true;
       mConfirmPickupButton.setText(R.string.choose_this_pickup);
       UiUtils.show(mConfirmPickupButton);
+      UiUtils.show(mPickupBackButton);
       Toast.makeText(this, R.string.tap_to_choose_pickup, Toast.LENGTH_SHORT).show();
     }
     else
@@ -2716,6 +2721,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       // ==========================================================
 
       UiUtils.hide(mConfirmPickupButton);
+      UiUtils.hide(mPickupBackButton);
       if (mManageRouteBottomSheet != null)
         mManageRouteBottomSheet.dismiss();
       mManageRouteBottomSheet = null;
