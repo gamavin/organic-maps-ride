@@ -1947,16 +1947,16 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mMotorcyclePrice.setText(java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"))
             .format(mMotorcyclePriceValue));
     mTollSwitch.setChecked(false);
-    mTollSwitch.setVisibility(View.GONE);
     mPaymentSwitch.setChecked(false);
     mNoteEditText.setText(null);
 
-    // Atur pilihan default ke mobil saat panel pertama kali muncul
-    mSelectedRouter = Router.Vehicle;
-    mCarOption.setSelected(true);
-    mMotorcycleOption.setSelected(false);
+    // Gunakan rute sepeda sebagai default dan pilih opsi sepeda motor
+    mSelectedRouter = Router.Bicycle;
+    mMotorcycleOption.setSelected(true);
+    mCarOption.setSelected(false);
+    mTollSwitch.setVisibility(View.GONE);
 
-    // PERBAIKAN: Panggil method baru untuk mengatur tampilan awal
+    // PERBARUI rute setelah pengaturan awal
     updateRouteSelection();
 
     // Tampilkan panel ringkasan rute
