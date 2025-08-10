@@ -1202,6 +1202,31 @@ JNIEXPORT void JNICALL Java_app_organicmaps_sdk_Framework_nativeRemoveRoute(JNIE
   frm()->GetRoutingManager().RemoveRoute(false /* deactivateFollowing */);
 }
 
+JNIEXPORT void JNICALL Java_app_organicmaps_sdk_Framework_nativeDisplayRouteFromGeometry(JNIEnv * env, jclass,
+                                                                                         jobjectArray jpoints)
+{
+  if (!jpoints)
+    return;
+
+  jsize const length = env->GetArrayLength(jpoints);
+  std::vector<geometry::PointWithAltitude> points;
+  points.reserve(length);
+
+  static jclass const pointClazz = jni::GetGlobalClassRef(env, "app/organicmaps/sdk/routing/JunctionInfo");
+  static jfieldID const latField = jni::GetFieldID(env, pointClazz, "mLat", "D");
+  static jfieldID const lonField = jni::GetFieldID(env, pointClazz, "mLon", "D");
+
+  for (jsize i = 0; i < length; ++i)
+  {
+    jni::ScopedLocalRef<jobject> const jPoint(env, env->GetObjectArrayElement(jpoints, i));
+    double const lat = env->GetDoubleField(jPoint.get(), latField);
+    double const lon = env->GetDoubleField(jPoint.get(), lonField);
+    points.emplace_back(mercator::FromLatLon(lat, lon), geometry::kDefaultAltitudeMeters);
+  }
+
+  frm()->GetRoutingManager().DisplayRouteFromGeometry(points);
+}
+
 JNIEXPORT void JNICALL Java_app_organicmaps_sdk_Framework_nativeFollowRoute(JNIEnv * env, jclass)
 {
   frm()->GetRoutingManager().FollowRoute();
