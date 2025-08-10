@@ -2037,8 +2037,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (geometry != null)
     {
       Framework.nativeRemoveRoute();
-      // TODO: gambar ulang rute dari geometry tanpa perhitungan ulang
-      controller.rebuild();
+      Framework.nativeDisplayRouteFromGeometry(geometry);
     }
     else
     {
