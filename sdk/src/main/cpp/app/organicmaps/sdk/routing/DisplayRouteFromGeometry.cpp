@@ -1,4 +1,6 @@
 #include "RoutingManager.hpp"
+
+// Menampilkan rute menggunakan kumpulan titik geometry yang diberikan.
 #include "drape_frontend/route_shape.hpp"
 #include "drape/pointers.hpp"
 #include "geometry/point_with_altitude.hpp"
