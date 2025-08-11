@@ -1213,8 +1213,8 @@ JNIEXPORT void JNICALL Java_app_organicmaps_sdk_Framework_nativeDisplayRouteFrom
   points.reserve(length);
 
   static jclass const pointClazz = jni::GetGlobalClassRef(env, "app/organicmaps/sdk/routing/JunctionInfo");
-  static jfieldID const latField = env->GetFieldID(pointClazz, "mLat", "D");
-  static jfieldID const lonField = env->GetFieldID(pointClazz, "mLon", "D");
+  static jfieldID const latField = jni::GetFieldID(env, pointClazz, "mLat", "D");
+  static jfieldID const lonField = jni::GetFieldID(env, pointClazz, "mLon", "D");
 
   for (jsize i = 0; i < length; ++i)
   {
