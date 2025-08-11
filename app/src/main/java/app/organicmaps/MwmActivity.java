@@ -78,7 +78,6 @@ import app.organicmaps.routing.RoutingErrorDialogFragment;
 import app.organicmaps.routing.RoutingPlanFragment;
 import app.organicmaps.routing.RoutingPlanInplaceController;
 import app.organicmaps.sdk.ChoosePositionMode;
-import app.organicmaps.sdk.routing.JunctionInfo;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.Map;
 import app.organicmaps.sdk.MapRenderingListener;
@@ -256,9 +255,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Nullable private RoutingInfo mCarTollInfo;
   @Nullable private RoutingInfo mCarNoTollInfo;
   @Nullable private RoutingInfo mMotorcycleInfo;
-  @Nullable private JunctionInfo[] mCarTollGeometry;
-  @Nullable private JunctionInfo[] mCarNoTollGeometry;
-  @Nullable private JunctionInfo[] mMotorcycleGeometry;
   private View mRoutingSummaryPanel;
   private TextView mCarPrice;
   private TextView mMotorcyclePrice;
@@ -1923,7 +1919,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       mCarTollInfo = info;
       mCarTollRouteDistance = info.distToTarget.mDistance;
-      mCarTollGeometry = Framework.nativeGetRouteJunctionPoints();
 
       // Persiapan untuk kalkulasi berikutnya: HAPUS opsi tol
       RoutingOptions.removeOption(RoadType.Toll);
@@ -1939,7 +1934,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       // PERBAIKAN STUCK: Hapus pengecekan 'getLastRouterType()' yang tidak andal.
       mCarNoTollInfo = info;
       mCarNoTollRouteDistance = info.distToTarget.mDistance;
-      mCarNoTollGeometry = Framework.nativeGetRouteJunctionPoints();
 
       setCalculationState(CalculationState.CALCULATING_BIKE);
       Logger.d(TAG, "onBuiltRoute: trigger build for bike route");
@@ -1952,7 +1946,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       {
         mMotorcycleInfo = info;
         mMotorcycleRouteDistance = info.distToTarget.mDistance;
-        mMotorcycleGeometry = Framework.nativeGetRouteJunctionPoints();
         setCalculationState(CalculationState.NONE); // Selesai
         UiUtils.hide(mRoutingProgressOverlay);
         Logger.d(TAG, "onBuiltRoute: entering showRoutingSummary()");
@@ -2006,44 +1999,48 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void updateRouteSelection()
   {
+    RoutingController controller = RoutingController.get();
+
     if (mSelectedRouter == Router.Vehicle)
     {
-      long price = mTollSwitch.isChecked() ? mCarTollPriceValue : mCarNoTollPriceValue;
-      if (mTollSwitch.isChecked())
-        RoutingOptions.addOption(RoadType.Toll);
-      else
-        RoutingOptions.removeOption(RoadType.Toll);
+      // Cek apakah tipe router saat ini BUKAN Vehicle. Jika bukan, ganti.
+      // Ini untuk menghindari pemicu build yang tidak perlu jika pengguna hanya menekan tombol mobil berulang kali.
+      if (controller.getLastRouterType() != Router.Vehicle)
+      {
+        controller.setRouterType(Router.Vehicle);
+        // setRouterType sudah otomatis memicu build, jadi kita bisa langsung keluar.
+        // Namun, harga di UI belum ter-update, jadi kita biarkan kode di bawah tetap berjalan.
+      }
 
+      long price;
+      if (mTollSwitch.isChecked())
+      {
+        price = mCarTollPriceValue;
+        // Perintahkan untuk menghitung ulang dengan opsi TOL DIAKTIFKAN
+        RoutingOptions.addOption(RoadType.Toll);
+      }
+      else
+      {
+        price = mCarNoTollPriceValue;
+        // Perintahkan untuk menghitung ulang dengan opsi TOL DINONAKTIFKAN
+        RoutingOptions.removeOption(RoadType.Toll);
+      }
+
+      // Perbarui teks harga
       java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
       mCarPrice.setText(format.format(price));
 
-      displayCachedRoute(Router.Vehicle);
+      // Picu perhitungan ulang yang cepat agar rute di peta diperbarui
+      controller.rebuild();
     }
     else if (mSelectedRouter == Router.Bicycle)
     {
-      displayCachedRoute(Router.Bicycle);
-    }
-  }
-
-  private void displayCachedRoute(@NonNull Router router)
-  {
-    RoutingController controller = RoutingController.get();
-    JunctionInfo[] geometry = null;
-    if (router == Router.Vehicle)
-      geometry = mTollSwitch.isChecked() ? mCarTollGeometry : mCarNoTollGeometry;
-    else if (router == Router.Bicycle)
-      geometry = mMotorcycleGeometry;
-
-    if (geometry != null)
-    {
-      Framework.nativeRemoveRoute();
-      // TODO: gambar ulang rute dari geometry tanpa perhitungan ulang
-      controller.rebuild();
-    }
-    else
-    {
-      controller.setRouterType(router);
-      controller.rebuild();
+      // Cek apakah tipe router saat ini BUKAN Bicycle untuk menghindari build ulang yang tidak perlu.
+      if (controller.getLastRouterType() != Router.Bicycle)
+      {
+        // Atur tipe router ke motor. Method ini sudah otomatis memicu perhitungan ulang.
+        controller.setRouterType(Router.Bicycle);
+      }
     }
   }
 
@@ -2065,7 +2062,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private void clearTariffCache()
   {
     mCarTollInfo = mCarNoTollInfo = mMotorcycleInfo = null;
-    mCarTollGeometry = mCarNoTollGeometry = mMotorcycleGeometry = null;
     mCarTollRouteDistance = mCarNoTollRouteDistance = mMotorcycleRouteDistance = 0;
     mCarTollPriceValue = mCarNoTollPriceValue = mMotorcyclePriceValue = 0;
   }
