@@ -32,7 +32,6 @@ set(SRC
   app/organicmaps/sdk/routing/RouteRecommendationType.hpp
   app/organicmaps/sdk/routing/RoutingInfo.hpp
   app/organicmaps/sdk/routing/RoutingOptions.cpp
-  app/organicmaps/sdk/routing/DisplayRouteFromGeometry.cpp
   app/organicmaps/sdk/routing/SingleLaneInfo.hpp
   app/organicmaps/sdk/routing/TransitRouteInfo.hpp
   app/organicmaps/sdk/routing/TransitStepInfo.hpp
