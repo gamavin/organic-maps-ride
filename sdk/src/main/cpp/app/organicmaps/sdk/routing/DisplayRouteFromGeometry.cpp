@@ -1,7 +1,6 @@
 #include "map/routing_manager.hpp"
 #include "drape_frontend/route_shape.hpp"
 #include "drape/pointers.hpp"
-#include "geometry/point_with_altitude.hpp"
 
 #include <mutex>
 #include <vector>
