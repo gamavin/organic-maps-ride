@@ -4,11 +4,10 @@
 
 #include <mutex>
 #include <vector>
-#include <utility>
 
 using namespace std;
 
-void RoutingManager::DisplayRouteFromGeometry(std::vector<geometry::PointWithAltitude> const & points)
+void RoutingManager::DisplayRouteFromGeometry(vector<geometry::PointWithAltitude> const & points)
 {
   if (points.size() < 2)
     return;
@@ -16,11 +15,11 @@ void RoutingManager::DisplayRouteFromGeometry(std::vector<geometry::PointWithAlt
   auto subroute = make_unique_dp<df::Subroute>();
   subroute->m_routeType = df::RouteType::Car;
 
-  std::vector<m2::PointD> poly;
+  vector<m2::PointD> poly;
   poly.reserve(points.size());
   for (auto const & p : points)
     poly.emplace_back(p.GetPoint());
-  subroute->m_polyline = m2::PolylineD(std::move(poly));
+  subroute->m_polyline = m2::PolylineD(move(poly));
   subroute->AddStyle(df::SubrouteStyle(df::kRouteColor, df::kRouteOutlineColor));
 
   auto const id =
