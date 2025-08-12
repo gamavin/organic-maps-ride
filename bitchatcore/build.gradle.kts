@@ -52,6 +52,4 @@ dependencies {
   implementation("org.bouncycastle:bcprov-jdk15on:1.70")
   implementation("com.google.crypto.tink:tink-android:1.12.0")
   implementation("org.lz4:lz4-java:1.8.0")
-  // (opsional) logging
-  implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 }
