@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent" android:layout_height="match_parent">
+  <LinearLayout android:orientation="vertical" android:padding="12dp"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    <LinearLayout android:orientation="horizontal"
+      android:layout_width="match_parent" android:layout_height="wrap_content">
+      <Button android:id="@+id/btnStart" android:text="Start Mesh" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+      <Button android:id="@+id/btnStop" android:text="Stop Mesh" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+    </LinearLayout>
+
+    <EditText android:id="@+id/edtChannelText" android:hint="Channel text" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <Button android:id="@+id/btnSendChannel" android:text="Send Channel" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <EditText android:id="@+id/edtPeerId" android:hint="Peer ID" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <EditText android:id="@+id/edtPrivateText" android:hint="Private text" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <Button android:id="@+id/btnSendPrivate" android:text="Send Private" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <LinearLayout android:orientation="horizontal"
+      android:layout_width="match_parent" android:layout_height="wrap_content">
+      <Button android:id="@+id/btnSendBR1" android:text="Send BR1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+      <Button android:id="@+id/btnSendRP1" android:text="Send RP1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+      <Button android:id="@+id/btnSendCF1" android:text="Send CF1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+    </LinearLayout>
+
+    <ListView android:id="@+id/listIncoming" android:layout_width="match_parent" android:layout_height="400dp"/>
+  </LinearLayout>
+</ScrollView>
