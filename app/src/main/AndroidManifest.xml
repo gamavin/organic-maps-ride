@@ -48,6 +48,17 @@
   //-->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+  <!-- BLE perms Android 12+ -->
+  <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+  <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+  <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+  <!-- Lokasi diperlukan untuk BLE scan di Android < 12 -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <!-- Foreground service -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <!-- Android 14+ service type -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
   <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES"/>
   <uses-permission android:name="androidx.car.app.ACCESS_SURFACE"/>
 
@@ -512,6 +523,12 @@
         android:resource="@xml/file_paths">
       </meta-data>
     </provider>
+
+    <service
+      android:name="app.organicmaps.bitride.mesh.MeshService"
+      android:exported="false"
+      android:foregroundServiceType="connectedDevice">
+    </service>
 
     <!-- Disable Google's checks for visited sites and loaded URLs in bookmarks description. -->
     <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="false" />
