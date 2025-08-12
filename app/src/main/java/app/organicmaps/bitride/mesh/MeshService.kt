@@ -12,12 +12,6 @@ import androidx.core.app.NotificationCompat
 import com.bitchat.android.mesh.BluetoothMeshDelegate
 import com.bitchat.android.mesh.BluetoothMeshService
 import com.bitchat.android.model.BitchatMessage
-import com.bitchat.android.ui.ChannelManager
-import com.bitchat.android.ui.ChatState
-import com.bitchat.android.ui.DataManager
-import com.bitchat.android.ui.MessageManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 /**
  * Foreground service pembungkus mesh.
@@ -41,10 +35,6 @@ class MeshService : Service() {
   private var listener: RideMeshListener? = null
   private var joinedChannel = false
   private var myPeerId: String = ""
-  private lateinit var chatState: com.bitchat.android.ui.ChatState
-  private lateinit var dataManager: com.bitchat.android.ui.DataManager
-  private lateinit var messageManager: com.bitchat.android.ui.MessageManager
-  private lateinit var channelManager: com.bitchat.android.ui.ChannelManager
 
   inner class MeshBinder : Binder() { val service get() = this@MeshService }
   private val binder = MeshBinder()
@@ -144,16 +134,9 @@ class MeshService : Service() {
 
     mesh.startServices()
     myPeerId = mesh.myPeerID
+    joinedChannel = true
     Log.d("MeshService", "myPeerId=$myPeerId")
-
-    if (!::chatState.isInitialized) {
-      chatState = ChatState()
-      dataManager = DataManager(applicationContext)
-      messageManager = MessageManager(chatState)
-      channelManager = ChannelManager(chatState, messageManager, dataManager, CoroutineScope(Dispatchers.IO))
-    }
-    joinedChannel = channelManager.joinChannel(channel, null, myPeerId)
-    Log.d("MeshService", "join $channel: $joinedChannel")
+    Log.d("MeshService", "join $channel")
   }
 
   fun stopMesh() {
@@ -169,13 +152,13 @@ class MeshService : Service() {
   fun sendChannelMessage(content: String) {
     if (!isRunning) return
     Log.d("MeshService", "send channel: $content")
-    mesh.sendMessage(content, emptyList(), "#bitride")
+    mesh.sendMessage(content, emptyList(), channel = "#bitride")
   }
 
   fun sendPrivateMessage(peerId: String, content: String) {
     if (!isRunning) return
     Log.d("MeshService", "send private to $peerId: $content")
-    mesh.sendPrivateMessage(content, peerId, peerId)
+    mesh.sendPrivateMessage(content, recipientPeerID = peerId, recipientNickname = peerId)
   }
 
   fun setListener(listener: RideMeshListener?) { this.listener = listener }
