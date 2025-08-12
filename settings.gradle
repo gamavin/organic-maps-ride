@@ -16,5 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = 'Organic Maps'
 include ':app'
 include ':sdk'
-include ':bitchat'
-project(':bitchat').projectDir = file('bitchat-android-0.8.2')
+include ':bitchatcore'
