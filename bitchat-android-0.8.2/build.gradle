@@ -1,0 +1,43 @@
+plugins {
+  id 'com.android.library'
+  id 'org.jetbrains.kotlin.android' version '2.2.0'
+  id 'org.jetbrains.kotlin.plugin.parcelize' version '2.2.0'
+}
+
+android {
+  namespace 'com.bitchat.android'
+  compileSdk 35
+
+  defaultConfig {
+    minSdk 21
+  }
+
+  sourceSets {
+    main {
+      manifest.srcFile 'app/src/main/AndroidManifest.xml'
+      java.srcDirs = ['app/src/main/java']
+      res.srcDirs = ['app/src/main/res']
+    }
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+  kotlinOptions {
+    jvmTarget = '1.8'
+  }
+}
+
+dependencies {
+  implementation 'androidx.core:core-ktx:1.16.0'
+  implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.1'
+  implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.1'
+  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+  implementation 'com.google.code.gson:gson:2.13.1'
+  implementation 'no.nordicsemi.android:ble:2.6.1'
+  implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+  implementation 'com.google.crypto.tink:tink-android:1.10.0'
+  implementation 'org.lz4:lz4-java:1.8.0'
+  implementation 'androidx.security:security-crypto:1.1.0-beta01'
+}
