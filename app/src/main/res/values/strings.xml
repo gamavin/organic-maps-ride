@@ -933,4 +933,8 @@
     <!-- add current location and search destination -->
     <string name="current_location">Current Location</string>
     <string name="search_destination">Search destination</string>
+    <string name="mesh_channel_name">Bitride Mesh</string>
+    <string name="mesh_channel_desc">Bluetooth mesh is running</string>
+    <string name="mesh_notif_title">Bitride mesh online</string>
+    <string name="mesh_notif_text">Discovering nearby riders &amp; drivers</string>
 </resources>
