@@ -1,3 +1,8 @@
+plugins {
+  id 'com.android.application'
+  id 'org.jetbrains.kotlin.android'
+}
+
 buildscript {
   repositories {
     google()
@@ -38,7 +43,6 @@ buildscript {
   }
 }
 
-apply plugin: 'com.android.application'
 if (googleFirebaseServicesEnabled) {
   apply plugin: 'com.google.gms.google-services'
   apply plugin: 'com.google.firebase.crashlytics'
@@ -265,7 +269,7 @@ android {
     targetCompatibility JavaVersion.VERSION_11
   }
   kotlinOptions {
-    jvmTarget = "11"
+    jvmTarget = '11'
   }
 }
 
