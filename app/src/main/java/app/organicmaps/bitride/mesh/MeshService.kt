@@ -41,6 +41,10 @@ class MeshService : Service() {
   private var listener: RideMeshListener? = null
   private var joinedChannel = false
   private var myPeerId: String = ""
+  private lateinit var chatState: com.bitchat.android.ui.ChatState
+  private lateinit var dataManager: com.bitchat.android.ui.DataManager
+  private lateinit var messageManager: com.bitchat.android.ui.MessageManager
+  private lateinit var channelManager: com.bitchat.android.ui.ChannelManager
 
   inner class MeshBinder : Binder() { val service get() = this@MeshService }
   private val binder = MeshBinder()
@@ -142,11 +146,13 @@ class MeshService : Service() {
     myPeerId = mesh.myPeerID
     Log.d("MeshService", "myPeerId=$myPeerId")
 
-    val state = ChatState()
-    val data = DataManager(applicationContext)
-    val mgr = MessageManager(state)
-    val cm = ChannelManager(state, mgr, data, CoroutineScope(Dispatchers.IO))
-    joinedChannel = cm.joinChannel(channel, null, myPeerId)
+    if (!::chatState.isInitialized) {
+      chatState = ChatState()
+      dataManager = DataManager(applicationContext)
+      messageManager = MessageManager(chatState)
+      channelManager = ChannelManager(chatState, messageManager, dataManager, CoroutineScope(Dispatchers.IO))
+    }
+    joinedChannel = channelManager.joinChannel(channel, null, myPeerId)
     Log.d("MeshService", "join $channel: $joinedChannel")
   }
 
@@ -173,6 +179,9 @@ class MeshService : Service() {
   }
 
   fun setListener(listener: RideMeshListener?) { this.listener = listener }
+
+  val peerId: String
+    get() = if (::mesh.isInitialized) myPeerId else ""
 
   val isRunning: Boolean
     get() = ::mesh.isInitialized && joinedChannel

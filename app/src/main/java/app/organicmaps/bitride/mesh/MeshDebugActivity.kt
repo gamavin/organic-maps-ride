@@ -29,6 +29,10 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     list = ArrayAdapter(this, android.R.layout.simple_list_item_1, msgs)
     findViewById<ListView>(R.id.listIncoming).adapter = list
 
+    val perms = BlePermissionHelper.requiredPermissions()
+    val need = perms.any { checkSelfPermission(it) != android.content.pm.PackageManager.PERMISSION_GRANTED }
+    if (need) requestPermissions(perms, 1001)
+
     findViewById<Button>(R.id.btnStart).setOnClickListener {
       MeshManager.start(this); bindService(Intent(this, MeshService::class.java), conn, BIND_AUTO_CREATE)
     }
@@ -78,6 +82,11 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     svc?.setListener(null)
     unbindSafe()
     super.onDestroy()
+  }
+
+  override fun onRequestPermissionsResult(code:Int, perms:Array<out String>, res:IntArray) {
+    super.onRequestPermissionsResult(code, perms, res)
+    // Tidak ada aksi khusus; user bisa tap Start Mesh lagi setelah grant.
   }
 
   private fun addLine(s: String) { msgs.add(0, s); list.notifyDataSetChanged() }
