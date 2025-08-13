@@ -1,19 +1,25 @@
 pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+  plugins {
+    id "org.jetbrains.kotlin.android" version "2.0.21"
+    id "org.jetbrains.kotlin.plugin.parcelize" version "2.0.21"
+  }
 }
+
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        google()
-        mavenCentral()
-        maven { url = 'https://www.jitpack.io' } // MPAndroidChart
-    }
+  repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+  repositories {
+    google()
+    mavenCentral()
+    maven { url = "https://www.jitpack.io" }
+  }
 }
-rootProject.name = 'Organic Maps'
-include ':app'
-include ':sdk'
-include ':bitchatcore'
+
+rootProject.name = "Organic Maps"
+include(":app")
+include(":sdk")
+include(":bitchatcore")

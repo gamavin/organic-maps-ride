@@ -1,4 +1,5 @@
-package app.organicmaps.bitride.mesh
+﻿package app.organicmaps.bitride.mesh
+import app.organicmaps.R
 
 import android.content.*
 import android.os.Bundle

@@ -1,17 +1,8 @@
-plugins {
-  id 'com.android.application'
-  id 'org.jetbrains.kotlin.android'
-}
-
 buildscript {
   repositories {
     google()
     mavenCentral()
   }
-  //
-  // The magic below is needed to disable Google Firebase Services during the build time.
-  // Unfortunately, the only way to disable Gradle plugins is to add these hardcore switches to buildscript().
-  //
 
   // Detect flavors from the task name.
   def taskName = getGradle().getStartParameter().getTaskRequests().toString().toLowerCase()
@@ -23,10 +14,11 @@ buildscript {
   // Enable Firebase for all beta flavors except fdroid only if google-services.json exists.
   def googleFirebaseServicesDefault = isBeta && !isFdroid && file("$projectDir/google-services.json").exists()
   ext.googleFirebaseServicesEnabled = googleFirebaseServicesFlag != null ?
-      googleFirebaseServicesFlag == '' || googleFirebaseServicesFlag.toBoolean() :
-      googleFirebaseServicesDefault
+          googleFirebaseServicesFlag == '' || googleFirebaseServicesFlag.toBoolean() :
+          googleFirebaseServicesDefault
 
   dependencies {
+    // AGP
     classpath 'com.android.tools.build:gradle:8.11.0'
 
     if (googleFirebaseServicesEnabled) {
@@ -43,6 +35,12 @@ buildscript {
   }
 }
 
+// --- plugins block ---
+plugins {
+  id 'com.android.application'
+  id 'org.jetbrains.kotlin.android'
+}
+
 if (googleFirebaseServicesEnabled) {
   apply plugin: 'com.google.gms.google-services'
   apply plugin: 'com.google.firebase.crashlytics'
@@ -50,7 +48,6 @@ if (googleFirebaseServicesEnabled) {
 }
 apply plugin: 'com.github.triplet.play'
 apply plugin: 'ru.cian.huawei-publish-gradle-plugin'
-
 
 import com.github.triplet.gradle.androidpublisher.ReleaseStatus
 
@@ -200,7 +197,7 @@ android {
 
   buildTypes {
     debug {
-      applicationIdSuffix '.debug'   // Allows to install debug and release builds together
+      applicationIdSuffix '.debug'
       versionNameSuffix '-debug'
       zipAlignEnabled true
       signingConfig = signingConfigs.debug
@@ -217,8 +214,6 @@ android {
       signingConfig = signingConfigs.release
       minifyEnabled true
       shrinkResources = true
-      // Includes the default ProGuard rules files that are packaged with the Android Gradle plugin.
-      // To learn more, go to the documentation section about R8 configuration files.
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       resValue 'string', 'app_name', project.ext.appName
 
@@ -235,8 +230,6 @@ android {
       signingConfig = signingConfigs.release
       minifyEnabled true
       shrinkResources = true
-      // Includes the default ProGuard rules files that are packaged with the Android Gradle plugin.
-      // To learn more, go to the documentation section about R8 configuration files.
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       matchingFallbacks = ['debug', 'release']
       resValue 'string', 'app_name', 'Beta Organic Maps'
@@ -246,30 +239,27 @@ android {
           nativeSymbolUploadEnabled true
         }
         firebaseAppDistribution {
-          // A new beta release is created for each commit.
-          // Use the last commit message for the release notes.
           releaseNotes = getCommitMessage()
-          groups = 'qa' // Notify only selected people.
+          groups = 'qa'
           serviceCredentialsFile = "$projectDir/firebase-app-distribution.json"
         }
       }
     }
   }
 
-  // We don't compress these extensions in assets/ because our random FileReader can't read zip-compressed files from apk.
-  // TODO: Load all minor files via separate call to ReadAsString which can correctly handle compressed files in zip containers.
   androidResources {
     ignoreAssetsPattern = '!.svn:!.git:!.DS_Store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~'
     noCompress = ['txt', 'bin', 'html', 'png', 'json', 'mwm', 'ttf', 'sdf', 'ui', 'config', 'csv', 'spv', 'obj']
   }
 
+  // ====== PENTING: Java/Kotlin 17 tanpa --release ======
   compileOptions {
     coreLibraryDesugaringEnabled = true
-    sourceCompatibility JavaVersion.VERSION_11
-    targetCompatibility JavaVersion.VERSION_11
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
   }
   kotlinOptions {
-    jvmTarget = '11'
+    jvmTarget = '17'
   }
 }
 
@@ -279,37 +269,21 @@ dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
   // Google Play Location Services
-  //
-  // Please add symlinks to google/java/app/organicmaps/location for each new gms-enabled flavor below:
-  // ```
-  // mkdir -p src/$flavor/java/app/organicmaps/
-  // ln -sf ../../../../google/java/app/organicmaps/location src/$flavor/java/app/organicmaps/
-  // ls -la src/$flavor/java/app/organicmaps/location/GoogleFusedLocationProvider.java
-  // ```
-  //
   webImplementation 'com.google.android.gms:play-services-location:21.3.0'
   googleImplementation 'com.google.android.gms:play-services-location:21.3.0'
   huaweiImplementation 'com.google.android.gms:play-services-location:21.3.0'
-  // This is the microG project's re-implementation which is permissible on
-  // F-droid because it's Apache-2.0.
   fdroidImplementation 'org.microg.gms:play-services-location:0.3.6.244735'
 
   // Google Firebase Services
   if (googleFirebaseServicesEnabled) {
-    // Import the BoM for the Firebase platform
     implementation platform('com.google.firebase:firebase-bom:33.16.0')
-    // Add the dependencies for the Crashlytics and Analytics libraries
-    // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-crashlytics-ndk'
   }
 
-  // This line is added as a workaround for duplicate classes error caused by some outdated dependency:
-  // > A failure occurred while executing com.android.build.gradle.internal.tasks.CheckDuplicatesRunnable
-  // We don't use Kotlin, but some dependencies are actively using it.
-  // See https://stackoverflow.com/a/75719642
+  // Workaround for duplicate classes
   implementation 'androidx.core:core:1.16.0'
-  implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.0'))
+  implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.0.21'))
   implementation 'androidx.annotation:annotation:1.9.1'
   implementation 'androidx.appcompat:appcompat:1.7.1'
   implementation 'androidx.car.app:app:1.8.0-alpha02'
@@ -321,14 +295,12 @@ dependencies {
   implementation 'androidx.work:work-runtime:2.10.2'
   implementation 'androidx.lifecycle:lifecycle-process:2.9.1'
   implementation 'com.google.android.material:material:1.12.0'
-  // Fix for app/organicmaps/util/FileUploadWorker.java:14: error: cannot access ListenableFuture
-  // https://github.com/organicmaps/organicmaps/issues/6106
   implementation 'com.google.guava:guava:33.4.8-android'
   implementation 'com.github.devnullorthrow:MPAndroidChart:3.2.0-alpha'
   implementation 'net.jcip:jcip-annotations:1.0'
   implementation project(':bitchatcore')
 
-  // Test Dependencies
+  // Tests
   androidTestImplementation 'androidx.test.ext:junit:1.2.1'
   testImplementation 'junit:junit:4.13.2'
   testImplementation 'org.mockito:mockito-core:5.18.0'
@@ -352,21 +324,17 @@ task prepareGoogleReleaseListing {
     final sourceDir = new File("${projectDir}/src/$sourceFlavor/play/listings")
     final targetDir = new File("${projectDir}/src/$targetFlavor/play/listings")
     final sourceFiles = fileTree(dir: sourceDir,
-        include: '**/*.txt', exclude: "**/*-${targetFlavor}.txt")
+            include: '**/*.txt', exclude: "**/*-${targetFlavor}.txt")
     sourceFiles.each { File sourceFile ->
       final locale = sourceFile.parentFile.getName()
       final targetLocaleDir = new File(targetDir, locale)
       if (!targetLocaleDir.isDirectory())
         targetLocaleDir.mkdirs()
       final targetFile = new File(targetLocaleDir, sourceFile.getName())
-      // Override Google-specific values by using ${name}-google.txt files.
       final overrideFile = new File(sourceFile.getPath().replace('.txt', "-${targetFlavor}.txt"))
       targetFile.text = overrideFile.exists() ? overrideFile.text : sourceFile.text
     }
-    copy {
-      from "${projectDir}/../../screenshots/android"
-      into targetDir
-    }
+    copy { from "${projectDir}/../../screenshots/android"; into targetDir }
   }
 }
 
@@ -386,18 +354,18 @@ huaweiPublish {
       deployType = 'draft' // confirm manually
       def releaseDescriptions = []
       def localeOverride = [
-          'am' : 'am-ET',
-          'gu': 'gu_IN',
-          'iw-IL': 'he_IL',
-          'kn-IN': 'kn_IN',
-          'ml-IN': 'ml_IN',
-          'mn-MN': 'mn_MN',
-          'mr-IN': 'mr_IN',
-          'ta-IN': 'ta_IN',
-          'te-IN': 'te_IN',
+              'am' : 'am-ET',
+              'gu': 'gu_IN',
+              'iw-IL': 'he_IL',
+              'kn-IN': 'kn_IN',
+              'ml-IN': 'ml_IN',
+              'mn-MN': 'mn_MN',
+              'mr-IN': 'mr_IN',
+              'ta-IN': 'ta_IN',
+              'te-IN': 'te_IN',
       ]
       def files = fileTree(dir: "$projectDir/src/fdroid/play/listings",
-          include: '**/release-notes.txt')
+              include: '**/release-notes.txt')
       files.each { File file ->
         def path = file.getPath()
         def locale = file.parentFile.getName()
