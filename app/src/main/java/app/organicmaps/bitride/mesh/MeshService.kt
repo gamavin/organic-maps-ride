@@ -65,18 +65,24 @@ class MeshService : Service() {
             if (!RideMeshCodec.isRideMessage(raw)) return
             when (RideMeshCodec.kindOf(raw)) {
               RideMessageKind.REQUEST -> {
-                RideMeshCodec.decodeRequest(raw)?.let {
-                  listener?.onRideRequestFromCustomer(it, message.senderPeerID)
+                RideMeshCodec.decodeRequest(raw)?.let { req ->
+                  message.senderPeerID?.let { sender ->
+                    listener?.onRideRequestFromCustomer(req, sender)
+                  }
                 }
               }
               RideMessageKind.REPLY -> {
-                RideMeshCodec.decodeDriverReply(raw)?.let {
-                  listener?.onDriverReply(it, message.senderPeerID)
+                RideMeshCodec.decodeDriverReply(raw)?.let { reply ->
+                  message.senderPeerID?.let { sender ->
+                    listener?.onDriverReply(reply, sender)
+                  }
                 }
               }
               RideMessageKind.CONFIRM -> {
-                RideMeshCodec.decodeConfirm(raw)?.let {
-                  listener?.onConfirm(it, message.senderPeerID)
+                RideMeshCodec.decodeConfirm(raw)?.let { confirm ->
+                  message.senderPeerID?.let { sender ->
+                    listener?.onConfirm(confirm, sender)
+                  }
                 }
               }
               else -> {}
