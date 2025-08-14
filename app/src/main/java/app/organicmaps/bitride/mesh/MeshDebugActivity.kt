@@ -181,7 +181,11 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     if (code == REQ_BLE) {
       if (BlePermissionHelper.hasAll(this)) {
         toast("Permissions granted. Starting mesh…")
-        startAndBindService()
+        if (svc != null) {
+          svc?.startMesh("#bitride")
+        } else {
+          startAndBindService()
+        }
       } else {
         if (BlePermissionHelper.somePermissionPermanentlyDenied(this)) {
           toast("Izin ditolak permanen. Buka Settings untuk mengaktifkan.")
