@@ -21,6 +21,13 @@ class MeshService : Service() {
     const val EXTRA_MISSING_PERMS = "app.organicmaps.bitride.mesh.EXTRA_MISSING_PERMS"
 
     fun start(context: Context) {
+      val missing = BlePermissionHelper.missingPermissions(context)
+      if (missing.isNotEmpty()) {
+        context.sendBroadcast(Intent(ACTION_PERMS_NEEDED).apply {
+          putExtra(EXTRA_MISSING_PERMS, missing.toTypedArray())
+        })
+        return
+      }
       context.startService(Intent(context, MeshService::class.java))
     }
 
@@ -98,6 +105,13 @@ class MeshService : Service() {
 
   fun startMesh(channel: String) {
     this.channel = channel
+    val missing = BlePermissionHelper.missingPermissions(this)
+    if (missing.isNotEmpty()) {
+      sendBroadcast(Intent(ACTION_PERMS_NEEDED).apply {
+        putExtra(EXTRA_MISSING_PERMS, missing.toTypedArray())
+      })
+      return
+    }
     mesh?.startServices()
   }
 
