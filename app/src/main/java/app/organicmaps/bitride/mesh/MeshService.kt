@@ -1,6 +1,10 @@
 package app.organicmaps.bitride.mesh
 
-import android.app.*
+import android.annotation.SuppressLint
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,6 +13,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.bitchat.android.mesh.BluetoothMeshDelegate
 import com.bitchat.android.mesh.BluetoothMeshService
 import com.bitchat.android.model.BitchatMessage
@@ -21,6 +26,7 @@ class MeshService : Service() {
   companion object {
     private const val CH_ID = "bitride_mesh_channel"
     private const val NOTIF_ID = 41
+    private const val DEFAULT_CHANNEL = "#bitride"
 
     fun start(ctx: Context) {
       val i = Intent(ctx, MeshService::class.java)
@@ -50,6 +56,7 @@ class MeshService : Service() {
   override fun onDestroy() {
     if (::mesh.isInitialized) {
       try { mesh.stopServices() } catch (_: Exception) {}
+      mesh.delegate = null
     }
     joinedChannel = false
     super.onDestroy()
@@ -81,19 +88,21 @@ class MeshService : Service() {
       .build()
   }
 
+  @SuppressLint("DiscouragedApi") // OK, fallback utk string dinamis di build debug/internal
   private fun getStringResource(name: String): String {
     val id = resources.getIdentifier(name, "string", packageName)
     return if (id != 0) getString(id) else name
   }
 
   // ------- API yang dipanggil UI/manager -------
-  fun startMesh(channel: String = "#bitride") {
+  fun startMesh(channel: String = DEFAULT_CHANNEL) {
     if (isRunning) return
     Log.d("MeshService", "startMesh")
+
     val missing = BlePermissionHelper.requiredPermissions().any {
-      checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+      ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
     }
-    if (missing) Log.w("MeshService", "permission not granted")
+    if (missing) Log.w("MeshService", "permission not granted (lanjut, UI yang akan handle)")
 
     mesh = BluetoothMeshService(applicationContext)
     mesh.delegate = object : BluetoothMeshDelegate {
@@ -110,16 +119,16 @@ class MeshService : Service() {
               RideMeshCodec.decodeConfirm(message.content)?.let {
                 listener?.onConfirm(it, from)
               }
-            else -> {}
+            else -> Unit
           }
-        } else if (message.channel == "#bitride") {
+        } else if (message.channel == DEFAULT_CHANNEL) {
           Log.d("MeshService", "recv channel from $from: ${message.content}")
           when (RideMeshCodec.kindOf(message.content)) {
             RideMessageKind.REQUEST ->
               RideMeshCodec.decodeRequest(message.content)?.let {
                 listener?.onRideRequestFromCustomer(it, from)
               }
-            else -> {}
+            else -> Unit
           }
         }
       }
@@ -134,9 +143,11 @@ class MeshService : Service() {
 
     mesh.startServices()
     myPeerId = mesh.myPeerID
-    joinedChannel = true
     Log.d("MeshService", "myPeerId=$myPeerId")
-    Log.d("MeshService", "join $channel")
+
+    // Tidak ada ChannelManager di lib saat ini; anggap join sukses untuk mengaktifkan UI.
+    joinedChannel = true
+    Log.d("MeshService", "join $channel (implicit)")
   }
 
   fun stopMesh() {
@@ -152,7 +163,7 @@ class MeshService : Service() {
   fun sendChannelMessage(content: String) {
     if (!isRunning) return
     Log.d("MeshService", "send channel: $content")
-    mesh.sendMessage(content, emptyList(), channel = "#bitride")
+    mesh.sendMessage(content, emptyList(), channel = DEFAULT_CHANNEL)
   }
 
   fun sendPrivateMessage(peerId: String, content: String) {

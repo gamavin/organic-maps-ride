@@ -1,11 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="match_parent" android:layout_height="match_parent">
-  <LinearLayout android:orientation="vertical" android:padding="12dp"
-    android:layout_width="match_parent" android:layout_height="wrap_content">
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+  <LinearLayout
+      android:orientation="vertical"
+      android:padding="12dp"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content">
+
+    <!-- Baris status peer id -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingBottom="8dp">
+
+      <TextView
+          android:id="@+id/txtMyPeerId"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="My Peer ID: -"
+          android:textSize="14sp"
+          android:ellipsize="end"
+          android:maxLines="1" />
+
+      <Button
+          android:id="@+id/btnCopyPeerId"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Copy"/>
+    </LinearLayout>
 
     <LinearLayout android:orientation="horizontal"
-      android:layout_width="match_parent" android:layout_height="wrap_content">
+        android:layout_width="match_parent" android:layout_height="wrap_content">
       <Button android:id="@+id/btnStart" android:text="Start Mesh" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
       <Button android:id="@+id/btnStop" android:text="Stop Mesh" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
     </LinearLayout>
@@ -18,7 +47,7 @@
     <Button android:id="@+id/btnSendPrivate" android:text="Send Private" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 
     <LinearLayout android:orientation="horizontal"
-      android:layout_width="match_parent" android:layout_height="wrap_content">
+        android:layout_width="match_parent" android:layout_height="wrap_content">
       <Button android:id="@+id/btnSendBR1" android:text="Send BR1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
       <Button android:id="@+id/btnSendRP1" android:text="Send RP1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
       <Button android:id="@+id/btnSendCF1" android:text="Send CF1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
