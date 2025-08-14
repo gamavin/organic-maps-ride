@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import android.util.Log
 import com.bitchat.android.mesh.BluetoothMeshDelegate
 import com.bitchat.android.mesh.BluetoothMeshService
 import com.bitchat.android.model.BitchatMessage
@@ -100,6 +101,7 @@ class MeshService : Service() {
         }
         startServices()
       }
+      restartBleScan()
     }
     return START_STICKY
   }
@@ -119,6 +121,7 @@ class MeshService : Service() {
       return
     }
     mesh?.startServices()
+    restartBleScan()
   }
 
   fun stopMesh() {
@@ -139,5 +142,27 @@ class MeshService : Service() {
     mesh?.stopServices()
     mesh = null
     super.onDestroy()
+  }
+
+  /**
+   * Memastikan pemindaian BLE dimulai setelah client manager aktif
+   * dengan memanggil restartScanning() melalui refleksi.
+   */
+  private fun restartBleScan() {
+    try {
+      val meshObj = mesh ?: return
+      val cmField = BluetoothMeshService::class.java.getDeclaredField("connectionManager")
+      cmField.isAccessible = true
+      val connManager = cmField.get(meshObj)
+      val clientField = connManager.javaClass.getDeclaredField("clientManager")
+      clientField.isAccessible = true
+      val clientManager = clientField.get(connManager)
+      val restartMethod = clientManager.javaClass.getDeclaredMethod("restartScanning")
+      restartMethod.isAccessible = true
+      restartMethod.invoke(clientManager)
+      Log.d("MeshService", "BLE scanning restarted via reflection")
+    } catch (e: Exception) {
+      Log.e("MeshService", "Gagal memulai ulang pemindaian BLE", e)
+    }
   }
 }
