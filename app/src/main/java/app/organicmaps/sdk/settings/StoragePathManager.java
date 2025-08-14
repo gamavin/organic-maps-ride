@@ -11,6 +11,7 @@ import android.os.storage.StorageVolume;
 import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import app.organicmaps.R;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.downloader.MapManager;
@@ -81,7 +82,8 @@ public class StoragePathManager
       }
     };
 
-    mContext.registerReceiver(mInternalReceiver, getMediaChangesIntentFilter());
+    ContextCompat.registerReceiver(mContext, mInternalReceiver,
+                                  getMediaChangesIntentFilter(), ContextCompat.RECEIVER_NOT_EXPORTED);
   }
 
   private static IntentFilter getMediaChangesIntentFilter()

@@ -30,7 +30,8 @@ public final class BatteryState
     IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
     // Because it's a sticky intent, you don't need to register a BroadcastReceiver
     // by simply calling registerReceiver passing in null
-    Intent batteryStatus = context.getApplicationContext().registerReceiver(null, filter);
+    Intent batteryStatus = context.getApplicationContext()
+                               .registerReceiver(null, filter, Context.RECEIVER_NOT_EXPORTED);
     if (batteryStatus == null)
       return new State(0, CHARGING_STATUS_UNKNOWN);
 
