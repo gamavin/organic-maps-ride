@@ -9,7 +9,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
@@ -163,12 +162,8 @@ public class TrackRecordingService extends Service implements LocationListener
     }
 
     Logger.i(TAG, "Starting Track Recording Foreground service");
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-      ServiceCompat.startForeground(this, TrackRecordingService.TRACK_REC_NOTIFICATION_ID,
-                                    getNotificationBuilder(this).build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
-    else
-      ServiceCompat.startForeground(this, TrackRecordingService.TRACK_REC_NOTIFICATION_ID,
-                                    getNotificationBuilder(this).build(), 0);
+    ServiceCompat.startForeground(this, TrackRecordingService.TRACK_REC_NOTIFICATION_ID,
+                                  getNotificationBuilder(this).build());
 
     final LocationHelper locationHelper = MwmApplication.from(this).getLocationHelper();
 
