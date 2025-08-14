@@ -1,38 +1,61 @@
 ﻿package app.organicmaps.bitride.mesh
 
 import app.organicmaps.R
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
 import android.content.*
 import android.os.Bundle
 import android.os.IBinder
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import android.Manifest.permission.*
-import android.content.pm.PackageManager
-import android.text.ClipboardManager
-import android.content.ClipData
-import android.content.ClipboardManager as NewClipboardManager
 
 class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
 
   private var svc: MeshService? = null
+  private var bound = false
+
   private val msgs = ArrayList<String>()
   private lateinit var list: ArrayAdapter<String>
 
   private lateinit var txtMyPeerId: TextView
   private var currentPeerId: String = ""
 
+  private val REQ_BLE = 1001
+
   private val conn = object : ServiceConnection {
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+      bound = true
       svc = (binder as MeshService.MeshBinder).service
       svc?.setListener(this@MeshDebugActivity)
+      // Service hanya start kalau izin sudah clear (alur dikunci di Activity)
       svc?.startMesh("#bitride")
       toast("Bound to MeshService")
-      // refresh peer id setelah service start
       txtMyPeerId.postDelayed({ refreshPeerId() }, 600)
     }
-    override fun onServiceDisconnected(name: ComponentName) { svc = null }
+    override fun onServiceDisconnected(name: ComponentName) { bound = false; svc = null }
+  }
+
+  // Dialog sistem: minta user menyalakan Bluetooth bila OFF
+  private val enableBtLauncher = registerForActivityResult(
+    ActivityResultContracts.StartActivityForResult()
+  ) { res ->
+    if (res.resultCode == Activity.RESULT_OK) continueAfterBtOn()
+    else toast("Bluetooth perlu dinyalakan agar mesh bekerja.")
+  }
+
+  // Receiver: Service minta Activity menampilkan dialog permission (backup)
+  private val permsReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      if (intent.action == MeshService.ACTION_PERMS_NEEDED) {
+        val missing = intent.getStringArrayExtra(MeshService.EXTRA_MISSING_PERMS) ?: emptyArray()
+        if (missing.isNotEmpty()) {
+          ActivityCompat.requestPermissions(this@MeshDebugActivity, missing, REQ_BLE)
+        }
+      }
+    }
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,43 +63,33 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     setContentView(R.layout.activity_mesh_debug)
 
     txtMyPeerId = findViewById(R.id.txtMyPeerId)
-
     list = ArrayAdapter(this, android.R.layout.simple_list_item_1, msgs)
     findViewById<ListView>(R.id.listIncoming).adapter = list
 
-    // Minta Nearby Devices runtime permission (Android 12+)
-    requestBlePermissionsIfNeeded()
-
-    // Copy Peer ID
+    // UI handlers
     findViewById<Button>(R.id.btnCopyPeerId).setOnClickListener {
       val id = currentPeerId.trim()
       if (id.isNotEmpty()) {
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as NewClipboardManager
-        cm.setPrimaryClip(ClipData.newPlainText("peerId", id))
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("peerId", id))
         toast("Peer ID copied")
-      }
+      } else toast("Peer ID kosong")
     }
-
-    findViewById<Button>(R.id.btnStart).setOnClickListener {
-      MeshManager.start(this)
-      bindService(Intent(this, MeshService::class.java), conn, BIND_AUTO_CREATE)
-    }
+    findViewById<Button>(R.id.btnStart).setOnClickListener { autoStart() }
     findViewById<Button>(R.id.btnStop).setOnClickListener {
-      svc?.stopMesh(); unbindSafe()
-      txtMyPeerId.text = "My Peer ID: -"
-      currentPeerId = ""
+      svc?.stopMesh(); unbindSafe(); txtMyPeerId.text = "My Peer ID: -"; currentPeerId = ""
     }
     findViewById<Button>(R.id.btnSendChannel).setOnClickListener {
       val t = findViewById<EditText>(R.id.edtChannelText).text.toString()
-      svc?.sendChannelMessage(t)
+      if (t.isNotEmpty()) svc?.sendChannelMessage(t) else toast("Channel text kosong")
     }
     findViewById<Button>(R.id.btnSendPrivate).setOnClickListener {
       val peer = findViewById<EditText>(R.id.edtPeerId).text.toString()
       val t = findViewById<EditText>(R.id.edtPrivateText).text.toString()
+      if (peer.isEmpty()) { toast("Peer ID kosong"); return@setOnClickListener }
+      if (t.isEmpty()) { toast("Private text kosong"); return@setOnClickListener }
       svc?.sendPrivateMessage(peer, t)
     }
-
-    // Tombol uji BR1/RP1/CF1
     findViewById<Button>(R.id.btnSendBR1).setOnClickListener {
       val req = RideRequest(
         hashHex = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
@@ -89,25 +102,68 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     }
     findViewById<Button>(R.id.btnSendRP1).setOnClickListener {
       val peer = findViewById<EditText>(R.id.edtPeerId).text.toString()
-      val r = DriverReply('D',
+      if (peer.isEmpty()) { toast("Peer ID kosong"); return@setOnClickListener }
+      val r = DriverReply(
+        'D',
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        VehicleType.CAR, 40000, ok = true)
+        VehicleType.CAR,
+        40000,
+        ok = true
+      )
       svc?.sendPrivateMessage(peer, RideMeshCodec.encodeDriverReply(r))
     }
     findViewById<Button>(R.id.btnSendCF1).setOnClickListener {
       val peer = findViewById<EditText>(R.id.edtPeerId).text.toString()
+      if (peer.isEmpty()) { toast("Peer ID kosong"); return@setOnClickListener }
       val c = RideConfirm("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", true)
       svc?.sendPrivateMessage(peer, RideMeshCodec.encodeConfirm(c))
     }
+
+    // Start otomatis on first open
+    autoStart()
   }
 
-  private fun requestBlePermissionsIfNeeded() {
-    val needs = BlePermissionHelper.requiredPermissions()
-      .filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
-      .toTypedArray()
-    if (needs.isNotEmpty()) {
-      ActivityCompat.requestPermissions(this, needs, 1001)
+  override fun onStart() {
+    super.onStart()
+    val filter = IntentFilter(MeshService.ACTION_PERMS_NEEDED)
+    // Pakai ContextCompat agar selalu ada flag & aman lint + runtime
+    ContextCompat.registerReceiver(this, permsReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+  }
+
+  override fun onStop() {
+    super.onStop()
+    try { unregisterReceiver(permsReceiver) } catch (_: Exception) {}
+  }
+
+  /** Alur otomatis: cek BT → cek permission → start service & bind. */
+  private fun autoStart() {
+    val bt = BluetoothAdapter.getDefaultAdapter()
+    if (bt == null) { toast("Perangkat tidak mendukung Bluetooth"); return }
+
+    if (!bt.isEnabled) {
+      enableBtLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+      return
     }
+
+    val missing = BlePermissionHelper.missingPermissions(this)
+    if (missing.isNotEmpty()) {
+      ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQ_BLE)
+      return
+    }
+
+    startAndBindService()
+  }
+
+  private fun continueAfterBtOn() {
+    val missing = BlePermissionHelper.missingPermissions(this)
+    if (missing.isNotEmpty()) {
+      ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQ_BLE)
+    } else startAndBindService()
+  }
+
+  private fun startAndBindService() {
+    MeshService.start(this)
+    bindService(Intent(this, MeshService::class.java), conn, BIND_AUTO_CREATE)
   }
 
   private fun refreshPeerId() {
@@ -116,19 +172,25 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     txtMyPeerId.text = if (id.isNotEmpty()) "My Peer ID: $id" else "My Peer ID: -"
   }
 
-  private fun unbindSafe() {
-    try { unbindService(conn) } catch (_: Exception) {}
-  }
+  private fun unbindSafe() { if (bound) try { unbindService(conn) } catch (_: Exception) {}.also { bound = false } }
 
-  override fun onDestroy() {
-    svc?.setListener(null)
-    unbindSafe()
-    super.onDestroy()
-  }
+  override fun onDestroy() { svc?.setListener(null); unbindSafe(); super.onDestroy() }
 
-  override fun onRequestPermissionsResult(code:Int, perms:Array<out String>, res:IntArray) {
+  override fun onRequestPermissionsResult(code: Int, perms: Array<out String>, res: IntArray) {
     super.onRequestPermissionsResult(code, perms, res)
-    // setelah grant, user bisa tap Start Mesh lagi
+    if (code == REQ_BLE) {
+      if (BlePermissionHelper.hasAll(this)) {
+        toast("Permissions granted. Starting mesh…")
+        startAndBindService()
+      } else {
+        if (BlePermissionHelper.somePermissionPermanentlyDenied(this)) {
+          toast("Izin ditolak permanen. Buka Settings untuk mengaktifkan.")
+          BlePermissionHelper.openAppDetailsSettings(this)
+        } else {
+          toast("Permissions ditolak. Nearby Devices/Location diperlukan.")
+        }
+      }
+    }
   }
 
   private fun addLine(s: String) { msgs.add(0, s); list.notifyDataSetChanged() }

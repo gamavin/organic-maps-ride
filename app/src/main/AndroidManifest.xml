@@ -446,7 +446,7 @@
     <service
         android:name="app.organicmaps.bitride.mesh.MeshService"
         android:exported="false"
-        android:foregroundServiceType="connectedDevice" />
+        android:foregroundServiceType="connectedDevice|dataSync" />
 
     <!-- Disable Google's checks for visited sites and loaded URLs in bookmarks description. -->
     <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="false" />
