@@ -17,6 +17,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
+import android.content.pm.ServiceInfo;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
@@ -225,7 +226,13 @@ public class NavigationService extends Service implements LocationListener
     }
 
     Logger.i(TAG, "Starting Navigation Foreground service");
-    ServiceCompat.startForeground(this, NavigationService.NOTIFICATION_ID, getNotificationBuilder(this).build());
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+      ServiceCompat.startForeground(this, NavigationService.NOTIFICATION_ID,
+                                    getNotificationBuilder(this).build(),
+                                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+    else
+      ServiceCompat.startForeground(this, NavigationService.NOTIFICATION_ID,
+                                    getNotificationBuilder(this).build(), 0);
 
     final LocationHelper locationHelper = MwmApplication.from(this).getLocationHelper();
 
