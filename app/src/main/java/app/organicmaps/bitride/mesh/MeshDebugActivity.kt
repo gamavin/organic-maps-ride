@@ -197,7 +197,11 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     }
   }
 
-  private fun addLine(s: String) { msgs.add(0, s); list.notifyDataSetChanged() }
+  private fun addLine(s: String) {
+    msgs.add(0, s)
+    list.notifyDataSetChanged()
+    toast(s)
+  }
   private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 
   // ------- RideMeshListener --------
@@ -209,5 +213,9 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
   }
   override fun onConfirm(confirm: RideConfirm, senderPeerId: String) {
     addLine("CF1 from ${senderPeerId.takeLast(6)} ok=${confirm.ok}")
+  }
+
+  override fun onChannelMessage(text: String, senderPeerId: String) {
+    addLine("CH from ${senderPeerId.takeLast(6)}: $text")
   }
 }
