@@ -63,30 +63,28 @@ class MeshService : Service() {
         delegate = object : BluetoothMeshDelegate {
           override fun didReceiveMessage(message: BitchatMessage) {
             val raw = message.content
-            if (!RideMeshCodec.isRideMessage(raw)) return
-            when (RideMeshCodec.kindOf(raw)) {
-              RideMessageKind.REQUEST -> {
-                RideMeshCodec.decodeRequest(raw)?.let { req ->
-                  message.senderPeerID?.let { sender ->
+            val sender = message.senderPeerID ?: return
+            if (RideMeshCodec.isRideMessage(raw)) {
+              when (RideMeshCodec.kindOf(raw)) {
+                RideMessageKind.REQUEST -> {
+                  RideMeshCodec.decodeRequest(raw)?.let { req ->
                     listener?.onRideRequestFromCustomer(req, sender)
                   }
                 }
-              }
-              RideMessageKind.REPLY -> {
-                RideMeshCodec.decodeDriverReply(raw)?.let { reply ->
-                  message.senderPeerID?.let { sender ->
+                RideMessageKind.REPLY -> {
+                  RideMeshCodec.decodeDriverReply(raw)?.let { reply ->
                     listener?.onDriverReply(reply, sender)
                   }
                 }
-              }
-              RideMessageKind.CONFIRM -> {
-                RideMeshCodec.decodeConfirm(raw)?.let { confirm ->
-                  message.senderPeerID?.let { sender ->
+                RideMessageKind.CONFIRM -> {
+                  RideMeshCodec.decodeConfirm(raw)?.let { confirm ->
                     listener?.onConfirm(confirm, sender)
                   }
                 }
+                else -> {}
               }
-              else -> {}
+            } else {
+              listener?.onChannelMessage(raw, sender)
             }
           }
 
