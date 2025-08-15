@@ -146,7 +146,20 @@ class MeshService : Service() {
     if (ch != null) mesh?.sendMessage(text, channel = ch)
   }
 
+  private fun ensureNoiseSession(peerId: String) {
+    mesh?.sendBroadcastAnnounce()
+    mesh?.broadcastNoiseIdentityAnnouncement()
+    if (mesh?.hasEstablishedSession(peerId) != true) {
+      mesh?.sendHandshakeRequest(peerId, 0u)
+    }
+  }
+
   fun sendPrivateMessage(peerId: String, text: String) {
+    ensureNoiseSession(peerId)
+    if (mesh?.hasEstablishedSession(peerId) != true) {
+      notifier.show("Gagal mengirim", "Handshake belum selesai")
+      return
+    }
     mesh?.sendPrivateMessage(text, peerId, peerId)
   }
 
