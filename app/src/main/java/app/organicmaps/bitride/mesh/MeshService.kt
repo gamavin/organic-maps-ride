@@ -113,7 +113,7 @@ class MeshService : Service() {
           override fun didReceiveReadReceipt(receipt: ReadReceipt) {}
           override fun decryptChannelMessage(encryptedContent: ByteArray, channel: String): String? =
             encryptedContent.toString(Charsets.UTF_8)
-          override fun getNickname(): String? = null
+          override fun getNickname(): String? = "customer"
           override fun isFavorite(peerID: String): Boolean = false
         }
         startServices()

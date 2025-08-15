@@ -41,6 +41,10 @@ object RideMeshCodec {
       append("ps=${x.positive};")
       append("ng=${x.negative};")
       append("ac=${x.askCancel}")
+      if (x.payment.isNotEmpty())
+        append(";pm=${x.payment}")
+      if (x.note.isNotEmpty())
+        append(";nt=${sanitize(x.note)}")
     }
     require(s.length <= MAX_LEN) { "payload too long (${s.length})" }
     return s
@@ -116,4 +120,7 @@ object RideMeshCodec {
     fun fmt(d: Double) = String.format(LOCALE, "%.6f", d).trimEnd('0').trimEnd('.')
     return "${fmt(p.lat)},${fmt(p.lon)}"
   }
+
+  private fun sanitize(s: String) =
+    s.replace(";", " ").replace("|", " ")
 }
