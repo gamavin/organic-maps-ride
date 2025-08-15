@@ -210,4 +210,8 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
   override fun onConfirm(confirm: RideConfirm, senderPeerId: String) {
     addLine("CF1 from ${senderPeerId.takeLast(6)} ok=${confirm.ok}")
   }
+
+  override fun onChannelMessage(text: String, senderPeerId: String) {
+    addLine("CH from ${senderPeerId.takeLast(6)}: $text")
+  }
 }
