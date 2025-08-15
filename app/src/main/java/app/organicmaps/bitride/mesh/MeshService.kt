@@ -41,6 +41,7 @@ class MeshService : Service() {
   private var mesh: BluetoothMeshService? = null
   private var listener: RideMeshListener? = null
   private var channel: String? = null
+  private val notifier by lazy { RideNotificationManager(this) }
 
   inner class MeshBinder : Binder() {
     val service: MeshService
@@ -69,22 +70,35 @@ class MeshService : Service() {
                 RideMessageKind.REQUEST -> {
                   RideMeshCodec.decodeRequest(raw)?.let { req ->
                     listener?.onRideRequestFromCustomer(req, sender)
+                    notifier.show(
+                      "BR1 dari ${sender.takeLast(6)}",
+                      "Rp${req.priceRp} ${req.vehicle}"
+                    )
                   }
                 }
                 RideMessageKind.REPLY -> {
                   RideMeshCodec.decodeDriverReply(raw)?.let { reply ->
                     listener?.onDriverReply(reply, sender)
+                    notifier.show(
+                      "RP1 dari ${sender.takeLast(6)}",
+                      "Rp${reply.priceRp} ok=${reply.ok}"
+                    )
                   }
                 }
                 RideMessageKind.CONFIRM -> {
                   RideMeshCodec.decodeConfirm(raw)?.let { confirm ->
                     listener?.onConfirm(confirm, sender)
+                    notifier.show(
+                      "CF1 dari ${sender.takeLast(6)}",
+                      "ok=${confirm.ok}"
+                    )
                   }
                 }
                 else -> {}
               }
             } else {
               listener?.onChannelMessage(raw, sender)
+              notifier.show("CH dari ${sender.takeLast(6)}", raw)
             }
           }
 
