@@ -198,11 +198,15 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
   }
 
   private fun addLine(s: String) {
-    msgs.add(0, s)
-    list.notifyDataSetChanged()
-    toast(s)
+    runOnUiThread {
+      msgs.add(0, s)
+      list.notifyDataSetChanged()
+      toast(s)
+    }
   }
-  private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+  private fun toast(s: String) = runOnUiThread {
+    Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+  }
 
   // ------- RideMeshListener --------
   override fun onRideRequestFromCustomer(req: RideRequest, senderPeerId: String) {
