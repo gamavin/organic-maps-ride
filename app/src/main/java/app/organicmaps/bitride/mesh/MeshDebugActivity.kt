@@ -197,7 +197,11 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     }
   }
 
-  private fun addLine(s: String) { msgs.add(0, s); list.notifyDataSetChanged() }
+  private fun addLine(s: String) {
+    msgs.add(0, s)
+    list.notifyDataSetChanged()
+    toast(s)
+  }
   private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 
   // ------- RideMeshListener --------
