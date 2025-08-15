@@ -4,7 +4,9 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import com.bitchat.android.mesh.BluetoothMeshDelegate
 import com.bitchat.android.mesh.BluetoothMeshService
@@ -42,6 +44,7 @@ class MeshService : Service() {
   private var listener: RideMeshListener? = null
   private var channel: String? = null
   private val notifier by lazy { RideNotificationManager(this) }
+  private val handler by lazy { Handler(Looper.getMainLooper()) }
 
   inner class MeshBinder : Binder() {
     val service: MeshService
@@ -102,7 +105,9 @@ class MeshService : Service() {
             }
           }
 
-          override fun didUpdatePeerList(peers: List<String>) {}
+          override fun didUpdatePeerList(peers: List<String>) {
+            listener?.onPeerListUpdated(peers)
+          }
           override fun didReceiveChannelLeave(channel: String, fromPeer: String) {}
           override fun didReceiveDeliveryAck(ack: DeliveryAck) {}
           override fun didReceiveReadReceipt(receipt: ReadReceipt) {}
@@ -150,7 +155,9 @@ class MeshService : Service() {
     mesh?.sendBroadcastAnnounce()
     mesh?.broadcastNoiseIdentityAnnouncement()
     if (mesh?.hasEstablishedSession(peerId) != true) {
+      Log.d("MeshService", "Initiating Noise handshake with $peerId")
       mesh?.sendHandshakeRequest(peerId, 0u)
+      waitHandshake(peerId)
     }
   }
 
@@ -161,6 +168,20 @@ class MeshService : Service() {
       return
     }
     mesh?.sendPrivateMessage(text, peerId, peerId)
+    Log.d("MeshService", "Encrypted and sent packet to $peerId")
+    notifier.show("Pesan terenkripsi", "ke ${peerId.takeLast(6)}")
+  }
+
+  private fun waitHandshake(peerId: String, retries: Int = 10) {
+    if (mesh?.hasEstablishedSession(peerId) == true) {
+      Log.i("MeshService", "Noise handshake completed with $peerId")
+      notifier.show("Handshake selesai", peerId.takeLast(6))
+      listener?.onHandshakeComplete(peerId)
+      return
+    }
+    if (retries > 0) {
+      handler.postDelayed({ waitHandshake(peerId, retries - 1) }, 1000)
+    }
   }
 
   override fun onDestroy() {

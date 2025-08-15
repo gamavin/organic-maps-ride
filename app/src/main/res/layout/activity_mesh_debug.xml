@@ -60,6 +60,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <!-- Peer list -->
+    <ListView
+        android:id="@+id/listPeers"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginTop="8dp" />
+
     <!-- Private message -->
     <EditText
         android:id="@+id/edtPeerId"
