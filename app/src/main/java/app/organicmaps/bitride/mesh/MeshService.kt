@@ -162,6 +162,7 @@ class MeshService : Service() {
   }
 
   fun sendPrivateMessage(peerId: String, text: String) {
+    if (peerId.isEmpty() || text.isEmpty()) return
     ensureNoiseSession(peerId)
     if (mesh?.hasEstablishedSession(peerId) != true) {
       notifier.show("Gagal mengirim", "Handshake belum selesai")

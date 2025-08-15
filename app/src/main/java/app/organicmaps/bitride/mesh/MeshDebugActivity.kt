@@ -23,6 +23,7 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
   private lateinit var peerAdapter: ArrayAdapter<String>
 
   private lateinit var txtMyPeerId: TextView
+  private lateinit var edtPeerId: EditText
   private var currentPeerId: String = ""
 
   private val REQ_BLE = 1001
@@ -65,13 +66,14 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     setContentView(R.layout.activity_mesh_debug)
 
     txtMyPeerId = findViewById(R.id.txtMyPeerId)
+    edtPeerId = findViewById(R.id.edtPeerId)
     list = ArrayAdapter(this, android.R.layout.simple_list_item_1, msgs)
     findViewById<ListView>(R.id.listIncoming).adapter = list
     peerAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, peers)
     findViewById<ListView>(R.id.listPeers).apply {
       adapter = peerAdapter
       setOnItemClickListener { _, _, pos, _ ->
-        findViewById<EditText>(R.id.edtPeerId).setText(peers[pos])
+        edtPeerId.setText(peers[pos])
       }
     }
 
