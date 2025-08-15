@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.*
 import android.os.Bundle
 import android.os.IBinder
+import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +23,9 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
 
   private lateinit var txtMyPeerId: TextView
   private var currentPeerId: String = ""
+  private lateinit var spnPeers: Spinner
+  private val peers = ArrayList<String>()
+  private lateinit var peersAdapter: ArrayAdapter<String>
 
   private val REQ_BLE = 1001
 
@@ -65,6 +69,17 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     txtMyPeerId = findViewById(R.id.txtMyPeerId)
     list = ArrayAdapter(this, android.R.layout.simple_list_item_1, msgs)
     findViewById<ListView>(R.id.listIncoming).adapter = list
+
+    spnPeers = findViewById(R.id.spnPeers)
+    peersAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, peers)
+    peersAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+    spnPeers.adapter = peersAdapter
+    spnPeers.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+      override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        findViewById<EditText>(R.id.edtPeerId).setText(peers[position])
+      }
+      override fun onNothingSelected(parent: AdapterView<*>?) {}
+    }
 
     // UI handlers
     findViewById<Button>(R.id.btnCopyPeerId).setOnClickListener {
@@ -221,5 +236,18 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
 
   override fun onChannelMessage(text: String, senderPeerId: String) {
     addLine("CH from ${senderPeerId.takeLast(6)}: $text")
+  }
+
+  override fun onPeerListUpdated(peers: List<String>) {
+    runOnUiThread {
+      this.peers.clear()
+      this.peers.addAll(peers)
+      peersAdapter.notifyDataSetChanged()
+    }
+  }
+
+  override fun onHandshakeStatus(peerId: String, success: Boolean) {
+    val status = if (success) "Handshake selesai" else "Handshake gagal"
+    addLine("$status dengan ${peerId.takeLast(6)}")
   }
 }

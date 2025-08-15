@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
+import android.os.Handler
+import android.os.Looper
 import com.bitchat.android.mesh.BluetoothMeshDelegate
 import com.bitchat.android.mesh.BluetoothMeshService
 import com.bitchat.android.model.BitchatMessage
@@ -42,6 +44,7 @@ class MeshService : Service() {
   private var listener: RideMeshListener? = null
   private var channel: String? = null
   private val notifier by lazy { RideNotificationManager(this) }
+  private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
   inner class MeshBinder : Binder() {
     val service: MeshService
@@ -102,7 +105,9 @@ class MeshService : Service() {
             }
           }
 
-          override fun didUpdatePeerList(peers: List<String>) {}
+          override fun didUpdatePeerList(peers: List<String>) {
+            listener?.onPeerListUpdated(peers)
+          }
           override fun didReceiveChannelLeave(channel: String, fromPeer: String) {}
           override fun didReceiveDeliveryAck(ack: DeliveryAck) {}
           override fun didReceiveReadReceipt(receipt: ReadReceipt) {}
@@ -147,7 +152,46 @@ class MeshService : Service() {
   }
 
   fun sendPrivateMessage(peerId: String, text: String) {
-    mesh?.sendPrivateMessage(text, peerId, peerId)
+    ensureNoiseSession(peerId) {
+      mesh?.sendPrivateMessage(text, peerId, peerId)
+    }
+  }
+
+  private fun ensureNoiseSession(peerId: String, onReady: () -> Unit) {
+    Thread {
+      val m = mesh ?: return@Thread
+      if (m.hasNoiseSession(peerId)) {
+        mainHandler.post {
+          listener?.onHandshakeStatus(peerId, true)
+          onReady()
+        }
+        return@Thread
+      }
+      try {
+        m.broadcastNoiseIdentityAnnouncement()
+        m.sendHandshakeRequest(peerId, 0u)
+        notifier.show("Handshake ${peerId.takeLast(6)}", "Mulai")
+      } catch (e: Exception) {
+        Log.e("MeshService", "Handshake init gagal", e)
+      }
+      var retry = 0
+      while (retry < 10) {
+        if (m.hasNoiseSession(peerId)) {
+          mainHandler.post {
+            notifier.show("Handshake ${peerId.takeLast(6)}", "Selesai")
+            listener?.onHandshakeStatus(peerId, true)
+            onReady()
+          }
+          return@Thread
+        }
+        Thread.sleep(500)
+        retry++
+      }
+      mainHandler.post {
+        notifier.show("Handshake ${peerId.takeLast(6)}", "Gagal")
+        listener?.onHandshakeStatus(peerId, false)
+      }
+    }.start()
   }
 
   override fun onDestroy() {

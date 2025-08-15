@@ -5,4 +5,6 @@ interface RideMeshListener {
   fun onDriverReply(resp: DriverReply, senderPeerId: String)
   fun onConfirm(confirm: RideConfirm, senderPeerId: String)
   fun onChannelMessage(text: String, senderPeerId: String)
+  fun onPeerListUpdated(peers: List<String>)
+  fun onHandshakeStatus(peerId: String, success: Boolean)
 }
