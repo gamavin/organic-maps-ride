@@ -19,8 +19,11 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
 
   private val msgs = ArrayList<String>()
   private lateinit var list: ArrayAdapter<String>
+  private val peers = ArrayList<String>()
+  private lateinit var peerAdapter: ArrayAdapter<String>
 
   private lateinit var txtMyPeerId: TextView
+  private lateinit var edtPeerId: EditText
   private var currentPeerId: String = ""
 
   private val REQ_BLE = 1001
@@ -63,8 +66,16 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
     setContentView(R.layout.activity_mesh_debug)
 
     txtMyPeerId = findViewById(R.id.txtMyPeerId)
+    edtPeerId = findViewById(R.id.edtPeerId)
     list = ArrayAdapter(this, android.R.layout.simple_list_item_1, msgs)
     findViewById<ListView>(R.id.listIncoming).adapter = list
+    peerAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, peers)
+    findViewById<ListView>(R.id.listPeers).apply {
+      adapter = peerAdapter
+      setOnItemClickListener { _, _, pos, _ ->
+        edtPeerId.setText(peers[pos])
+      }
+    }
 
     // UI handlers
     findViewById<Button>(R.id.btnCopyPeerId).setOnClickListener {
@@ -221,5 +232,17 @@ class MeshDebugActivity : AppCompatActivity(), RideMeshListener {
 
   override fun onChannelMessage(text: String, senderPeerId: String) {
     addLine("CH from ${senderPeerId.takeLast(6)}: $text")
+  }
+
+  override fun onPeerListUpdated(peers: List<String>) {
+    runOnUiThread {
+      this.peers.clear()
+      this.peers.addAll(peers)
+      peerAdapter.notifyDataSetChanged()
+    }
+  }
+
+  override fun onHandshakeComplete(peerId: String) {
+    addLine("Handshake with ${peerId.takeLast(6)} completed")
   }
 }
