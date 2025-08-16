@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1087548347259",
+    "project_id": "bitride-4a48e",
+    "storage_bucket": "bitride-4a48e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1087548347259:android:8611eca5cecb68c57ce3de",
+        "android_client_info": {
+          "package_name": "com.undefault.bitride"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByUQdjDImsPz9S-m-WK6VNPQWW66OndjE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
