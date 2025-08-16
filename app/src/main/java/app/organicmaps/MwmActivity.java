@@ -13,15 +13,18 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.view.KeyEvent;
@@ -77,6 +80,11 @@ import app.organicmaps.routing.RoutingBottomMenuListener;
 import app.organicmaps.routing.RoutingErrorDialogFragment;
 import app.organicmaps.routing.RoutingPlanFragment;
 import app.organicmaps.routing.RoutingPlanInplaceController;
+import app.organicmaps.bitride.mesh.MeshService;
+import app.organicmaps.bitride.mesh.RideMeshCodec;
+import app.organicmaps.bitride.mesh.RideRequest;
+import app.organicmaps.bitride.mesh.GeoPoint;
+import app.organicmaps.bitride.mesh.VehicleType;
 import app.organicmaps.sdk.ChoosePositionMode;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.Map;
@@ -118,6 +126,8 @@ import app.organicmaps.settings.SettingsActivity;
 import app.organicmaps.util.SharingUtils;
 import app.organicmaps.util.ThemeSwitcher;
 import app.organicmaps.util.ThemeUtils;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import app.organicmaps.util.Utils;
 import app.organicmaps.util.bottomsheet.MenuBottomSheetFragment;
 import app.organicmaps.util.bottomsheet.MenuBottomSheetItem;
@@ -267,6 +277,25 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @NonNull private String mPaymentType = "Cash";
   private View mRoutingProgressOverlay;
   @Nullable private Router mSelectedRouter;
+  private MeshService mMeshService;
+  private boolean mMeshBound = false;
+  private final ServiceConnection mMeshConn = new ServiceConnection() {
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service)
+    {
+      MeshService.MeshBinder binder = (MeshService.MeshBinder) service;
+      mMeshService = binder.getService();
+      mMeshService.startMesh("#bitride");
+      mMeshBound = true;
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name)
+    {
+      mMeshBound = false;
+      mMeshService = null;
+    }
+  };
 
   private enum CalculationState
   {
@@ -579,6 +608,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
       getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 
     setContentView(R.layout.activity_map);
+    MeshService.start(this);
+    bindService(new Intent(this, MeshService.class), mMeshConn, Context.BIND_AUTO_CREATE);
     makeNavigationBarTransparentInLightMode();
 
     mPlacePageViewModel = new ViewModelProvider(this).get(PlacePageViewModel.class);
@@ -685,13 +716,32 @@ public class MwmActivity extends BaseMwmFragmentActivity
         Toast.makeText(this, "Pilih kendaraan terlebih dahulu", Toast.LENGTH_SHORT).show();
         return;
       }
-      RoutingController controller = RoutingController.get();
-      RoutingOptions.removeOption(RoadType.Toll);
-      if (mSelectedRouter == Router.Vehicle && mTollSwitch.isChecked())
-        RoutingOptions.addOption(RoadType.Toll);
-      controller.setRouterType(mSelectedRouter);
-      onRoutingStart();
-      exitRideHailingMode();
+      if (mMeshService == null)
+      {
+        Toast.makeText(this, "Layanan mesh belum siap", Toast.LENGTH_SHORT).show();
+        return;
+      }
+      MapObject startPoint = RoutingController.get().getStartPoint();
+      MapObject endPoint = RoutingController.get().getEndPoint();
+      if (startPoint == null || endPoint == null)
+      {
+        Toast.makeText(this, "Titik rute belum lengkap", Toast.LENGTH_SHORT).show();
+        return;
+      }
+      VehicleType vehicle = (mSelectedRouter == Router.Vehicle) ? VehicleType.CAR : VehicleType.MOTOR;
+      int price;
+      if (vehicle == VehicleType.CAR)
+        price = (int)(mTollSwitch.isChecked() ? mCarTollPriceValue : mCarNoTollPriceValue);
+      else
+        price = (int)mMotorcyclePriceValue;
+      GeoPoint pickup = new GeoPoint(startPoint.getLat(), startPoint.getLon());
+      GeoPoint destination = new GeoPoint(endPoint.getLat(), endPoint.getLon());
+      String hash = sha256(mMeshService.getPeerId());
+      RideRequest req = new RideRequest('C', hash, vehicle, pickup, destination, price,
+                                        mTollSwitch.isChecked(), 0, 0, 0, 0, 0,
+                                        mPaymentType, mNoteEditText.getText() == null ? "" : mNoteEditText.getText().toString());
+      mMeshService.sendChannelMessage(RideMeshCodec.encodeRequest(req));
+      Toast.makeText(this, "Permintaan tumpangan dikirim", Toast.LENGTH_SHORT).show();
     });
 
     updateViewsInsets();
@@ -1320,6 +1370,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mPowerSaveSettings = null;
     if (mRemoveDisplayListener && !isChangingConfigurations())
       mDisplayManager.removeListener(DisplayType.Device);
+    if (mMeshBound)
+      unbindService(mMeshConn);
+    MeshService.stop(this);
   }
 
   @Override
@@ -2967,6 +3020,23 @@ public class MwmActivity extends BaseMwmFragmentActivity
     Logger.d(TAG, "trim memory, level = " + level);
     if (level >= TRIM_MEMORY_RUNNING_LOW)
       Framework.nativeMemoryWarning();
+  }
+
+  private static String sha256(String s)
+  {
+    try
+    {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(s.getBytes(StandardCharsets.UTF_8));
+      StringBuilder sb = new StringBuilder();
+      for (byte b : hash)
+        sb.append(String.format("%02x", b));
+      return sb.toString();
+    }
+    catch (Exception e)
+    {
+      return "";
+    }
   }
 
   private void makeNavigationBarTransparentInLightMode()
