@@ -32,6 +32,7 @@ import app.organicmaps.sdk.bookmarks.data.Track;
 import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.util.Graphics;
 import app.organicmaps.util.InputUtils;
+import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.PaddingInsetsListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -144,9 +145,11 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
     mIvColor = view.findViewById(R.id.iv__bookmark_color);
     mIvColor.setOnClickListener(this);
 
-    // For tracks an bookmarks same category is used so this portion is common for both
-    if (savedInstanceState != null && savedInstanceState.getParcelable(STATE_BOOKMARK_CATEGORY) != null)
-      mBookmarkCategory = savedInstanceState.getParcelable(STATE_BOOKMARK_CATEGORY);
+    // For tracks and bookmarks same category is used so this portion is common for both
+    BookmarkCategory category = savedInstanceState == null ? null
+        : Utils.getParcelable(savedInstanceState, STATE_BOOKMARK_CATEGORY, BookmarkCategory.class);
+    if (category != null)
+      mBookmarkCategory = category;
     else
     {
       long categoryId = args.getLong(EXTRA_CATEGORY_ID);
@@ -159,9 +162,9 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
     case TYPE_BOOKMARK ->
     {
       mBookmark = BookmarkManager.INSTANCE.getBookmarkInfo(id);
-      if (savedInstanceState != null && savedInstanceState.getParcelable(STATE_ICON) != null)
-        mIcon = savedInstanceState.getParcelable(STATE_ICON);
-      else if (mBookmark != null)
+      mIcon = savedInstanceState == null ? null
+          : Utils.getParcelable(savedInstanceState, STATE_ICON, Icon.class);
+      if (mIcon == null && mBookmark != null)
         mIcon = mBookmark.getIcon();
       refreshBookmark();
     }
