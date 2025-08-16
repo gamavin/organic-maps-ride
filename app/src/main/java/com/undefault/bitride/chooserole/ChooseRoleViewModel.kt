@@ -33,10 +33,12 @@ class ChooseRoleViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadUserRoles()
+        viewModelScope.launch {
+            loadUserRoles()
+        }
     }
 
-    private fun loadUserRoles() {
+    private suspend fun loadUserRoles() {
         val loggedInData = userPreferencesRepository.getLoggedInUser()
         val roles = loggedInData?.roles ?: emptyList()
         val hasDriverRole = roles.contains("DRIVER")

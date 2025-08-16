@@ -1,0 +1,22 @@
+{
+  "project_info": {
+    "project_number": "123456789012",
+    "project_id": "organic-maps-ride"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789012:android:abcdef123456",
+        "android_client_info": {
+          "package_name": "app.organicmaps"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "FAKE_API_KEY"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}
