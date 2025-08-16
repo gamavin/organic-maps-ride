@@ -297,6 +297,15 @@ public class MwmActivity extends BaseMwmFragmentActivity
     }
   };
 
+  private void startMeshService()
+  {
+    if (!mMeshBound)
+    {
+      MeshService.start(this);
+      bindService(new Intent(this, MeshService.class), mMeshConn, Context.BIND_AUTO_CREATE);
+    }
+  }
+
   private enum CalculationState
   {
     NONE,
@@ -608,8 +617,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 
     setContentView(R.layout.activity_map);
-    MeshService.start(this);
-    bindService(new Intent(this, MeshService.class), mMeshConn, Context.BIND_AUTO_CREATE);
     makeNavigationBarTransparentInLightMode();
 
     mPlacePageViewModel = new ViewModelProvider(this).get(PlacePageViewModel.class);
@@ -1487,6 +1494,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       else
       {
         mIsInRideHailingMode = true;
+        startMeshService();
         mCurrentPlacePageObject = mapObject; // Simpan objek destinasi
         Framework.nativeSetViewportCenter(mapObject.getLat(), mapObject.getLon(), Framework.nativeGetDrawScale());
         showConfirmPickupButton(true, mapObject);
@@ -2136,6 +2144,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mPickupPoint = null;
     mCurrentPlacePageObject = null;
     setCalculationState(CalculationState.NONE);
+    if (mMeshBound)
+    {
+      unbindService(mMeshConn);
+      mMeshBound = false;
+      mMeshService = null;
+    }
+    MeshService.stop(this);
     UiUtils.hide(mConfirmPickupButton);
     UiUtils.hide(mRoutingSummaryPanel);
     UiUtils.hide(mRoutingProgressOverlay);
@@ -2800,6 +2815,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       // ================== PERUBAHAN KRUSIAL #1 ==================
       // Paksa masuk ke mode ride-hailing di sini. Ini menjamin state selalu benar.
       mIsInRideHailingMode = true;
+      startMeshService();
       // ==========================================================
 
       UiUtils.hide(mConfirmPickupButton);

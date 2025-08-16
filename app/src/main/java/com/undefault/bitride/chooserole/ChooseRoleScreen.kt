@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+import app.organicmaps.bitride.mesh.MeshManager
 import com.undefault.bitride.navigation.Routes
 
 @Composable
@@ -20,6 +22,7 @@ fun ChooseRoleScreen(
     viewModel: ChooseRoleViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     val navigateToNextScreen = { destination: String ->
         navController.navigate(destination) {
@@ -39,13 +42,19 @@ fun ChooseRoleScreen(
             verticalArrangement = Arrangement.Center
         ) {
             if (uiState.canLoginAsCustomer) {
-                Button(onClick = { viewModel.checkDataAndGetNextRoute(navigateToNextScreen) }) {
+                Button(onClick = {
+                    MeshManager.start(context)
+                    viewModel.checkDataAndGetNextRoute(navigateToNextScreen)
+                }) {
                     Text("Masuk sebagai Customer")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
             if (uiState.canLoginAsDriver) {
-                Button(onClick = { navController.navigate(Routes.DRIVER_LOUNGE) }) {
+                Button(onClick = {
+                    MeshManager.start(context)
+                    navController.navigate(Routes.DRIVER_LOUNGE)
+                }) {
                     Text("Masuk sebagai Driver")
                 }
                 Spacer(modifier = Modifier.height(16.dp))

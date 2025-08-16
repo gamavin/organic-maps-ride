@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,6 +19,7 @@ import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormSc
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
 import com.undefault.bitride.driverlounge.DriverLoungeScreen
+import app.organicmaps.bitride.mesh.MeshManager
 
 /**
  * Menangani navigasi aplikasi BitRide.
@@ -25,12 +27,14 @@ import com.undefault.bitride.driverlounge.DriverLoungeScreen
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
     NavHost(navController = navController, startDestination = Routes.AUTH) {
         composable(Routes.AUTH) {
             AuthScreen(
                 onNavigateToChooseRole = { navController.navigate(Routes.CHOOSE_ROLE) },
                 onNavigateToNextScreen = {
+                    MeshManager.start(context)
                     navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
@@ -79,6 +83,7 @@ fun AppNavigation() {
                 initialNik = nik,
                 initialName = name,
                 onRegistrationComplete = {
+                    MeshManager.start(context)
                     navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
@@ -99,6 +104,7 @@ fun AppNavigation() {
                 initialNik = nik,
                 initialName = name,
                 onRegistrationComplete = {
+                    MeshManager.start(context)
                     navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import app.organicmaps.bitride.mesh.MeshManager
 
 private val Context.dataStore by preferencesDataStore(name = "bitride_prefs")
 
@@ -55,5 +56,6 @@ class DataStoreRepository @Inject constructor(
             prefs.remove(KEY_NIK_HASH)
             prefs.remove(KEY_ROLES)
         }
+        MeshManager.stop(context)
     }
 }
