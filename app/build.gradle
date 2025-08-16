@@ -9,12 +9,13 @@ buildscript {
   // Deteksi flavor dari nama task.
   def taskName = getGradle().getStartParameter().getTaskRequests().toString().toLowerCase()
   def isFdroid = taskName.contains('fdroid')
-  def isBeta = taskName.contains('beta')
 
   // Flag Firebase Crashlytics compile-time: -Pfirebase=true|false
   def googleFirebaseServicesFlag = findProperty('firebase')
-  // Enable Firebase utk semua beta (kecuali fdroid) hanya jika google-services.json ada.
-  def googleFirebaseServicesDefault = isBeta && !isFdroid && file("$projectDir/google-services.json").exists()
+
+  // Default: aktif kalau BUKAN fdroid DAN ada google-services.json
+  def googleFirebaseServicesDefault = !isFdroid && file("$projectDir/google-services.json").exists()
+
   ext.googleFirebaseServicesEnabled = googleFirebaseServicesFlag != null ?
           (googleFirebaseServicesFlag == '' || googleFirebaseServicesFlag.toBoolean()) :
           googleFirebaseServicesDefault
@@ -31,6 +32,7 @@ buildscript {
       println('Building without Google Firebase Services')
     }
 
+    // legacy-applied plugins
     classpath 'com.github.triplet.gradle:play-publisher:3.12.1'
     classpath 'ru.cian:huawei-publish-gradle-plugin:1.4.2'
   }
@@ -40,9 +42,9 @@ buildscript {
 plugins {
   id 'com.android.application'
   id 'org.jetbrains.kotlin.android'
-  id 'org.jetbrains.kotlin.plugin.compose'     // plugin Compose baru
-  id 'org.jetbrains.kotlin.kapt'              // untuk Hilt (kotlin)
-  id 'com.google.dagger.hilt.android'         // Hilt Gradle plugin (resmi)
+  id 'org.jetbrains.kotlin.plugin.compose'   // plugin Compose baru (NO composeOptions)
+  id 'com.google.devtools.ksp'              // KSP untuk Hilt compiler
+  id 'com.google.dagger.hilt.android'       // Hilt Gradle plugin
 }
 
 // Terapkan plugin Firebase hanya jika diaktifkan
@@ -64,12 +66,12 @@ project.ext.appId = 'app.organicmaps'
 project.ext.appName = 'Organic Maps'
 
 // -----------------------------------------------------------
-// Compose compiler via DSL resmi plugin Kotlin.
-// Tidak ada manipulasi -P/freeCompilerArgs manual.
+// Compose compiler via DSL resmi plugin Kotlin (2.2.10).
+// Tidak ada -P / composeOptions{} / freeCompilerArgs manual.
 // -----------------------------------------------------------
 composeCompiler {
-  // optionally: reportsDestination = layout.buildDirectory.dir("compose-reports")
-  // optionally: metricsDestination  = layout.buildDirectory.dir("compose-metrics")
+  // reportsDestination = layout.buildDirectory.dir("compose-reports")
+  // metricsDestination  = layout.buildDirectory.dir("compose-metrics")
 }
 
 android {
@@ -82,8 +84,10 @@ android {
     compose = true
   }
 
+  // Users complain needing re-download after language change — keep language split disabled.
   bundle { language { enableSplit = false } }
 
+  // All properties are read from gradle.properties file
   compileSdk = propCompileSdkVersion.toInteger()
 
   defaultConfig {
@@ -101,6 +105,7 @@ android {
     resourceConfigurations += [project.ext.supportedLocalizations]
 
     base.archivesName = appName.replaceAll('\\s','') + '-' + defaultConfig.versionCode
+
     ndk.debugSymbolLevel = 'full'
   }
 
@@ -152,9 +157,13 @@ android {
 
   lint {
     disable 'MissingTranslation'
+    // https://github.com/organicmaps/organicmaps/issues/3551
     disable 'MissingQuantity', 'UnusedQuantity'
+    // https://github.com/organicmaps/organicmaps/issues/3550
     disable 'ByteOrderMark'
+    // https://github.com/organicmaps/organicmaps/issues/1077
     disable 'CustomSplashScreen'
+    // https://github.com/organicmaps/organicmaps/issues/3610
     disable 'InsecureBaseConfiguration'
     abortOnError = true
   }
@@ -169,7 +178,9 @@ android {
   }
 
   def securityPropertiesFileExists = file('secure.properties').exists()
-  if (securityPropertiesFileExists) { apply from: 'secure.properties' }
+  if (securityPropertiesFileExists) {
+    apply from: 'secure.properties'
+  }
 
   signingConfigs {
     debug {
@@ -198,6 +209,7 @@ android {
       zipAlignEnabled true
       signingConfig = signingConfigs.debug
       resValue 'string', 'app_name', 'Debug Organic Maps'
+
       if (googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
@@ -209,6 +221,7 @@ android {
       shrinkResources = true
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       resValue 'string', 'app_name', project.ext.appName
+
       if (googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
@@ -223,6 +236,7 @@ android {
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       matchingFallbacks = ['debug', 'release']
       resValue 'string', 'app_name', 'Beta Organic Maps'
+
       if (googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
         firebaseAppDistribution {
@@ -255,6 +269,7 @@ configurations {
   }
 }
 
+// ===== Dependencies =====
 dependencies {
   implementation project(':sdk')
 
@@ -266,15 +281,16 @@ dependencies {
   huaweiImplementation 'com.google.android.gms:play-services-location:21.3.0'
   fdroidImplementation 'org.microg.gms:play-services-location:0.3.6.244735'
 
-  // Firebase (library) — hanya saat diaktifkan
+  // Firebase — hanya saat plugin aktif
   if (googleFirebaseServicesEnabled) {
     implementation platform('com.google.firebase:firebase-bom:34.1.0')
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-crashlytics-ndk'
     implementation 'com.google.firebase:firebase-firestore-ktx'
+    // (opsional) implementation 'com.google.firebase:firebase-analytics-ktx'
   }
 
-  // ML Kit: hanya untuk flavor yang memakai GMS
+  // ML Kit (khusus flavor GMS)
   googleImplementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
   webImplementation    'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
   huaweiImplementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
@@ -304,7 +320,7 @@ dependencies {
   implementation 'androidx.datastore:datastore-preferences:1.1.1'
   implementation 'io.coil-kt:coil-compose:2.7.0'
 
-  // Jetpack Compose BOM
+  // Jetpack Compose (BOM)
   implementation platform('androidx.compose:compose-bom:2025.08.00')
   implementation 'androidx.compose.ui:ui'
   implementation 'androidx.compose.ui:ui-tooling-preview'
@@ -314,20 +330,18 @@ dependencies {
   implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1'
   debugImplementation 'androidx.compose.ui:ui-tooling'
 
-  // ===== Tambahan untuk Bitride (khusus flavor non-FDroid) =====
-  // Navigation Compose (rilis resmi 2.8.9)
+  // ===== Bitride: Navigation + Hilt Compose untuk flavor non-FDroid =====
   googleImplementation 'androidx.navigation:navigation-compose:2.8.9'
   webImplementation    'androidx.navigation:navigation-compose:2.8.9'
-  huaweiImplementation 'androidx.navigation:navigation-compose:2.8.9' // jika juga dipakai
+  huaweiImplementation 'androidx.navigation:navigation-compose:2.8.9'
 
-  // Hilt Navigation Compose (stable 1.2.0)
   googleImplementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
   webImplementation    'androidx.hilt:hilt-navigation-compose:1.2.0'
   huaweiImplementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
 
-  // Dagger Hilt (core) — kapt global aman walau fdroid tak pakai anotasi Hilt
-  implementation 'com.google.dagger:hilt-android:2.56.2'
-  kapt          'com.google.dagger:hilt-compiler:2.56.2'
+  // Dagger Hilt (core) + compiler via KSP
+  implementation 'com.google.dagger:hilt-android:2.52'
+  ksp          'com.google.dagger:hilt-compiler:2.52'
 
   // Tests
   androidTestImplementation 'androidx.test.ext:junit:1.2.1'
@@ -336,9 +350,7 @@ dependencies {
   testImplementation 'org.mockito:mockito-inline:5.2.0'
 }
 
-kapt {
-  correctErrorTypes = true
-}
+// (Tidak ada kapt { } karena kita sudah pakai KSP)
 
 // Inject FILE_PROVIDER_* ke setiap varian
 android.applicationVariants.all { variant ->
