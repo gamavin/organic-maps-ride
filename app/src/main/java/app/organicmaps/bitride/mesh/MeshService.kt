@@ -23,6 +23,7 @@ class MeshService : Service() {
     const val ACTION_PERMS_NEEDED = "app.organicmaps.bitride.mesh.ACTION_PERMS_NEEDED"
     const val EXTRA_MISSING_PERMS = "app.organicmaps.bitride.mesh.EXTRA_MISSING_PERMS"
 
+    @JvmStatic
     fun start(context: Context) {
       val missing = BlePermissionHelper.missingPermissions(context)
       if (missing.isNotEmpty()) {
@@ -34,6 +35,7 @@ class MeshService : Service() {
       context.startService(Intent(context, MeshService::class.java))
     }
 
+    @JvmStatic
     fun stop(context: Context) {
       context.stopService(Intent(context, MeshService::class.java))
     }
@@ -113,7 +115,7 @@ class MeshService : Service() {
           override fun didReceiveReadReceipt(receipt: ReadReceipt) {}
           override fun decryptChannelMessage(encryptedContent: ByteArray, channel: String): String? =
             encryptedContent.toString(Charsets.UTF_8)
-          override fun getNickname(): String? = null
+          override fun getNickname(): String? = "customer"
           override fun isFavorite(peerID: String): Boolean = false
         }
         startServices()
