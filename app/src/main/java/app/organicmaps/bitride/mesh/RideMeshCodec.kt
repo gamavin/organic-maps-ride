@@ -82,7 +82,9 @@ object RideMeshCodec {
     val ps = map["ps"]?.toIntOrNull() ?: 0
     val ng = map["ng"]?.toIntOrNull() ?: 0
     val ac = map["ac"]?.toIntOrNull() ?: 0
-    return RideRequest('C', h, v!!, p, d, pr, t, tr, ud, ps, ng, ac)
+    val pm = map["pm"] ?: ""
+    val nt = map["nt"] ?: ""
+    return RideRequest('C', h, v!!, p, d, pr, t, tr, ud, ps, ng, ac, pm, nt)
   }
 
   fun decodeDriverReply(raw: String): DriverReply? {
