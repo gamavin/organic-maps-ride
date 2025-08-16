@@ -1,47 +1,50 @@
+// app/build.gradle — sinkron Agustus 2025 (Kotlin 2.2.10 + AGP 8.11.0)
+
 buildscript {
   repositories {
     google()
     mavenCentral()
   }
 
-  // Detect flavors from the task name.
+  // Deteksi flavor dari nama task.
   def taskName = getGradle().getStartParameter().getTaskRequests().toString().toLowerCase()
   def isFdroid = taskName.contains('fdroid')
   def isBeta = taskName.contains('beta')
 
-  // Firebase Crashlytics compile-time feature flag: -Pfirebase=true|false
+  // Flag Firebase Crashlytics compile-time: -Pfirebase=true|false
   def googleFirebaseServicesFlag = findProperty('firebase')
-  // Enable Firebase for all beta flavors except fdroid only if google-services.json exists.
+  // Enable Firebase utk semua beta (kecuali fdroid) hanya jika google-services.json ada.
   def googleFirebaseServicesDefault = isBeta && !isFdroid && file("$projectDir/google-services.json").exists()
   ext.googleFirebaseServicesEnabled = googleFirebaseServicesFlag != null ?
-          googleFirebaseServicesFlag == '' || googleFirebaseServicesFlag.toBoolean() :
+          (googleFirebaseServicesFlag == '' || googleFirebaseServicesFlag.toBoolean()) :
           googleFirebaseServicesDefault
 
   dependencies {
-    // AGP
     classpath 'com.android.tools.build:gradle:8.11.0'
 
     if (googleFirebaseServicesEnabled) {
       println('Building with Google Firebase Services')
-      classpath 'com.google.gms:google-services:4.4.2'
-      classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
-      classpath 'com.google.firebase:firebase-appdistribution-gradle:5.0.0'
+      classpath 'com.google.gms:google-services:4.4.3'
+      classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
+      classpath 'com.google.firebase:firebase-appdistribution-gradle:5.1.1'
     } else {
       println('Building without Google Firebase Services')
     }
 
-    classpath('com.github.triplet.gradle:play-publisher:3.12.1')
-    classpath('ru.cian:huawei-publish-gradle-plugin:1.4.2')
+    classpath 'com.github.triplet.gradle:play-publisher:3.12.1'
+    classpath 'ru.cian:huawei-publish-gradle-plugin:1.4.2'
   }
 }
 
-// --- plugins block ---
+// --- Plugins (versi disuplai oleh settings.gradle) ---
 plugins {
   id 'com.android.application'
   id 'org.jetbrains.kotlin.android'
-  id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10'
+  // Plugin Compose Kotlin baru — **tanpa** versi di sini, mengikuti settings.gradle
+  id 'org.jetbrains.kotlin.plugin.compose'
 }
 
+// Terapkan plugin Firebase hanya jika diaktifkan
 if (googleFirebaseServicesEnabled) {
   apply plugin: 'com.google.gms.google-services'
   apply plugin: 'com.google.firebase.crashlytics'
@@ -51,6 +54,7 @@ apply plugin: 'com.github.triplet.play'
 apply plugin: 'ru.cian.huawei-publish-gradle-plugin'
 
 import com.github.triplet.gradle.androidpublisher.ReleaseStatus
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 def getCommitMessage() {
   return run(['git', '--no-pager', 'show', '-s', '--format=%s%n%n%b', 'HEAD']).trim()
@@ -59,10 +63,20 @@ def getCommitMessage() {
 project.ext.appId = 'app.organicmaps'
 project.ext.appName = 'Organic Maps'
 
+// -----------------------------------------------------------
+// Compose compiler via DSL resmi plugin Kotlin (2.2.10).
+// Tidak ada manipulasi -P/freeCompilerArgs manual.
+// -----------------------------------------------------------
+composeCompiler {
+  // Biarkan default. Jika perlu:
+  // reportsDestination = layout.buildDirectory.dir("compose-reports")
+  // metricsDestination  = layout.buildDirectory.dir("compose-metrics")
+}
+
 android {
   namespace = 'app.organicmaps'
 
-  // TODO: it should not be here, but in sdk/build.gradle. But for some reason it should be specified here as well.
+  // TODO: ideally in :sdk/build.gradle too
   ndkVersion = '28.2.13676358'
 
   buildFeatures {
@@ -71,15 +85,11 @@ android {
     compose = true
   }
 
-  composeOptions {
-    kotlinCompilerExtensionVersion = '1.5.3'
-  }
+  // (Tidak ada composeOptions{} di sini — dikelola plugin Compose baru)
 
-  // Users are complaining that the app should be re-downloaded from the Play Store after changing the language.
+  // Users complain needing re-download after language change — keep language split disabled.
   bundle {
-    language {
-      enableSplit = false
-    }
+    language { enableSplit = false }
   }
 
   // All properties are read from gradle.properties file
@@ -90,11 +100,12 @@ android {
     versionName = rootProject.ext.versionName
     println('Version: ' + versionName)
     println('VersionCode: ' + versionCode)
+
     minSdk = propMinSdkVersion.toInteger()
     targetSdk = propTargetSdkVersion.toInteger()
+
     applicationId project.ext.appId
     buildConfigField 'String', 'SUPPORT_MAIL', '"android@organicmaps.app"'
-    // Should be customized in flavors.
     buildConfigField 'String', 'REVIEW_URL', '""'
     resourceConfigurations += [project.ext.supportedLocalizations]
 
@@ -139,14 +150,12 @@ android {
   }
 
   playConfigs {
-    googleRelease {
-      enabled.set(true)
-    }
+    googleRelease { enabled.set(true) }
   }
 
   splits.abi {
     boolean enabled = project.hasProperty('splitApk')
-    println ('Create separate apks: ' + enabled)
+    println('Create separate apks: ' + enabled)
     enable = enabled
     reset()
     include 'x86', 'armeabi-v7a', 'arm64-v8a', 'x86_64'
@@ -187,7 +196,6 @@ android {
       keyAlias 'debug'
       keyPassword '12345678'
     }
-
     release {
       if (securityPropertiesFileExists) {
         println('The release signing keys are available')
@@ -210,9 +218,7 @@ android {
       resValue 'string', 'app_name', 'Debug Organic Maps'
 
       if (googleFirebaseServicesEnabled) {
-        firebaseCrashlytics {
-          nativeSymbolUploadEnabled true
-        }
+        firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
     }
 
@@ -224,9 +230,7 @@ android {
       resValue 'string', 'app_name', project.ext.appName
 
       if (googleFirebaseServicesEnabled) {
-        firebaseCrashlytics {
-          nativeSymbolUploadEnabled true
-        }
+        firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
     }
 
@@ -241,9 +245,7 @@ android {
       resValue 'string', 'app_name', 'Beta Organic Maps'
 
       if (googleFirebaseServicesEnabled) {
-        firebaseCrashlytics {
-          nativeSymbolUploadEnabled true
-        }
+        firebaseCrashlytics { nativeSymbolUploadEnabled true }
         firebaseAppDistribution {
           releaseNotes = getCommitMessage()
           groups = 'qa'
@@ -258,39 +260,55 @@ android {
     noCompress = ['txt', 'bin', 'html', 'png', 'json', 'mwm', 'ttf', 'sdf', 'ui', 'config', 'csv', 'spv', 'obj']
   }
 
-  // ====== PENTING: Java/Kotlin 17 tanpa --release ======
+  // Java/Kotlin 17
   compileOptions {
     coreLibraryDesugaringEnabled = true
     sourceCompatibility JavaVersion.VERSION_17
     targetCompatibility JavaVersion.VERSION_17
   }
-  kotlinOptions {
-    jvmTarget = '17'
+  kotlinOptions { jvmTarget = '17' }
+}
+
+// ---------- EXCLUDE GMS DI FDROID ----------
+configurations {
+  fdroidImplementation {
+    exclude group: 'com.google.android.gms'
   }
 }
 
+// ===== Dependencies =====
 dependencies {
   implementation project(':sdk')
 
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
-  // Google Play Location Services
-  webImplementation 'com.google.android.gms:play-services-location:21.3.0'
+  // Google Play Location Services / microG by flavor
+  webImplementation    'com.google.android.gms:play-services-location:21.3.0'
   googleImplementation 'com.google.android.gms:play-services-location:21.3.0'
   huaweiImplementation 'com.google.android.gms:play-services-location:21.3.0'
   fdroidImplementation 'org.microg.gms:play-services-location:0.3.6.244735'
 
-  // Google Firebase Services
+  // Firebase (library) — hanya saat diaktifkan
   if (googleFirebaseServicesEnabled) {
-    implementation platform('com.google.firebase:firebase-bom:33.16.0')
+    implementation platform('com.google.firebase:firebase-bom:34.1.0')
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-crashlytics-ndk'
     implementation 'com.google.firebase:firebase-firestore-ktx'
   }
 
+  // ML Kit: hanya untuk flavor yang memakai GMS
+  googleImplementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
+  webImplementation    'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
+  huaweiImplementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
+
+  googleImplementation 'com.google.mlkit:text-recognition:16.0.1'
+  webImplementation    'com.google.mlkit:text-recognition:16.0.1'
+  huaweiImplementation 'com.google.mlkit:text-recognition:16.0.1'
+
   // Workaround for duplicate classes
   implementation 'androidx.core:core:1.16.0'
-  implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.0.21'))
+  // Sinkron dengan Kotlin 2.2.10
+  implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.10'))
   implementation 'androidx.annotation:annotation:1.9.1'
   implementation 'androidx.appcompat:appcompat:1.7.1'
   implementation 'androidx.car.app:app:1.8.0-alpha02'
@@ -307,22 +325,10 @@ dependencies {
   implementation 'net.jcip:jcip-annotations:1.0'
   implementation project(':bitchatcore')
   implementation 'androidx.datastore:datastore-preferences:1.1.1'
-  googleImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1'
-  webImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1'
-  huaweiImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1'
-  fdroidImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
-
-  // ML Kit dependencies for KTP scanning and OCR
-  googleImplementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
-  webImplementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
-  huaweiImplementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
-  googleImplementation 'com.google.mlkit:text-recognition:16.0.1'
-  webImplementation 'com.google.mlkit:text-recognition:16.0.1'
-  huaweiImplementation 'com.google.mlkit:text-recognition:16.0.1'
   implementation 'io.coil-kt:coil-compose:2.7.0'
 
-  // Jetpack Compose
-  implementation platform('androidx.compose:compose-bom:2024.05.00')
+  // Jetpack Compose (BOM Agustus 2025)
+  implementation platform('androidx.compose:compose-bom:2025.08.00')
   implementation 'androidx.compose.ui:ui'
   implementation 'androidx.compose.ui:ui-tooling-preview'
   implementation 'androidx.compose.material3:material3'
@@ -338,6 +344,7 @@ dependencies {
   testImplementation 'org.mockito:mockito-inline:5.2.0'
 }
 
+// Inject FILE_PROVIDER_* ke setiap varian
 android.applicationVariants.all { variant ->
   def authorityValue = variant.applicationId + ".provider"
   def authority = "\"" + authorityValue + "\""
@@ -347,20 +354,18 @@ android.applicationVariants.all { variant ->
   variant.resValue 'string', 'app_id', variant.applicationId
 }
 
+// Prepares Google Play metainfo from F-Droid metainfo.
 task prepareGoogleReleaseListing {
-  // Prepares Google Play metainfo from F-Droid metainfo.
   final sourceFlavor = 'fdroid'
   final targetFlavor = 'google'
   doLast {
     final sourceDir = new File("${projectDir}/src/$sourceFlavor/play/listings")
     final targetDir = new File("${projectDir}/src/$targetFlavor/play/listings")
-    final sourceFiles = fileTree(dir: sourceDir,
-            include: '**/*.txt', exclude: "**/*-${targetFlavor}.txt")
+    final sourceFiles = fileTree(dir: sourceDir, include: '**/*.txt', exclude: "**/*-${targetFlavor}.txt")
     sourceFiles.each { File sourceFile ->
       final locale = sourceFile.parentFile.getName()
       final targetLocaleDir = new File(targetDir, locale)
-      if (!targetLocaleDir.isDirectory())
-        targetLocaleDir.mkdirs()
+      if (!targetLocaleDir.isDirectory()) targetLocaleDir.mkdirs()
       final targetFile = new File(targetLocaleDir, sourceFile.getName())
       final overrideFile = new File(sourceFile.getPath().replace('.txt', "-${targetFlavor}.txt"))
       targetFile.text = overrideFile.exists() ? overrideFile.text : sourceFile.text
@@ -395,8 +400,7 @@ huaweiPublish {
               'ta-IN': 'ta_IN',
               'te-IN': 'te_IN',
       ]
-      def files = fileTree(dir: "$projectDir/src/fdroid/play/listings",
-              include: '**/release-notes.txt')
+      def files = fileTree(dir: "$projectDir/src/fdroid/play/listings", include: '**/release-notes.txt')
       files.each { File file ->
         def path = file.getPath()
         def locale = file.parentFile.getName()
@@ -411,3 +415,5 @@ huaweiPublish {
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
 }
+
+// *** Penting ***: Tidak ada lagi manipulasi kotlinOptions.freeCompilerArgs di fase eksekusi.
