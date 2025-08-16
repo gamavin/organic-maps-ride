@@ -736,7 +736,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
         price = (int)mMotorcyclePriceValue;
       GeoPoint pickup = new GeoPoint(startPoint.getLat(), startPoint.getLon());
       GeoPoint destination = new GeoPoint(endPoint.getLat(), endPoint.getLon());
-      String hash = sha256(mMeshService.getPeerId());
+      String hash = sha256Hex(mMeshService.getPeerId());
       RideRequest req = new RideRequest('C', hash, vehicle, pickup, destination, price,
                                         mTollSwitch.isChecked(), 0, 0, 0, 0, 0,
                                         mPaymentType, mNoteEditText.getText() == null ? "" : mNoteEditText.getText().toString());
@@ -3039,6 +3039,23 @@ public class MwmActivity extends BaseMwmFragmentActivity
   }
 
   private static String sha256(String s)
+  {
+    try
+    {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(s.getBytes(StandardCharsets.UTF_8));
+      StringBuilder sb = new StringBuilder();
+      for (byte b : hash)
+        sb.append(String.format("%02x", b));
+      return sb.toString();
+    }
+    catch (Exception e)
+    {
+      return "";
+    }
+  }
+
+  private static String sha256Hex(String s)
   {
     try
     {
