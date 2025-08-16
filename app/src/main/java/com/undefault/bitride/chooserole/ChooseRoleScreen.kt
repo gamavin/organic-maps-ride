@@ -45,10 +45,7 @@ fun ChooseRoleScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             if (uiState.canLoginAsDriver) {
-                Button(onClick = {
-                    // TODO: Logika untuk driver bisa sama atau berbeda
-                    viewModel.checkDataAndGetNextRoute(navigateToNextScreen)
-                }) {
+                Button(onClick = { navController.navigate(Routes.DRIVER_LOUNGE) }) {
                     Text("Masuk sebagai Driver")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
