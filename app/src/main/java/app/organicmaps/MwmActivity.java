@@ -3021,7 +3021,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (level >= TRIM_MEMORY_RUNNING_LOW)
       Framework.nativeMemoryWarning();
   }
-
   private static String sha256(String s)
   {
     try
