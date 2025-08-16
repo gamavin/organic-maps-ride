@@ -218,7 +218,7 @@ public class SplashActivity extends AppCompatActivity
 
     if (Factory.isStartedForApiResult(intent))
     {
-      // Wait for the result from MwmActivity for API callers.
+      // Wait for the result from AuthActivity for API callers.
       mApiRequest.launch(intent);
       return;
     }
