@@ -23,7 +23,11 @@ class RideMeshCodecTest {
       uniqueDrivers = 7,
       positive = 9,
       negative = 0,
-      askCancel = 1
+      askCancel = 1,
+      payment = "Cash",
+      note = "note",
+      pickupName = "Monas",
+      destinationName = "Sunda"
     )
 
     val s = RideMeshCodec.encodeRequest(req)
@@ -35,6 +39,8 @@ class RideMeshCodecTest {
     assertEquals(req.hashHex, p.hashHex)
     assertEquals(req.vehicle, p.vehicle)
     assertEquals(req.priceRp, p.priceRp)
+    assertEquals(req.pickupName, p.pickupName)
+    assertEquals(req.destinationName, p.destinationName)
   }
 
   @Test

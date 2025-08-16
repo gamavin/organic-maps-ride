@@ -42,6 +42,10 @@ object RideMeshCodec {
       append("ps=${x.positive};")
       append("ng=${x.negative};")
       append("ac=${x.askCancel}")
+      if (x.pickupName.isNotEmpty())
+        append(";pn=${sanitize(x.pickupName)}")
+      if (x.destinationName.isNotEmpty())
+        append(";dn=${sanitize(x.destinationName)}")
       if (x.payment.isNotEmpty())
         append(";pm=${x.payment}")
       if (x.note.isNotEmpty())
@@ -84,7 +88,9 @@ object RideMeshCodec {
     val ac = map["ac"]?.toIntOrNull() ?: 0
     val pm = map["pm"] ?: ""
     val nt = map["nt"] ?: ""
-    return RideRequest('C', h, v!!, p, d, pr, t, tr, ud, ps, ng, ac, pm, nt)
+    val pn = map["pn"] ?: ""
+    val dn = map["dn"] ?: ""
+    return RideRequest('C', h, v!!, p, d, pr, t, tr, ud, ps, ng, ac, pm, nt, pn, dn)
   }
 
   fun decodeDriverReply(raw: String): DriverReply? {

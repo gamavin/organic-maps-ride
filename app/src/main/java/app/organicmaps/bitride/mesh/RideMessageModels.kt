@@ -23,7 +23,9 @@ data class RideRequest(
   val negative: Int,
   val askCancel: Int,
   val payment: String = "",
-  val note: String = ""
+  val note: String = "",
+  val pickupName: String = "",
+  val destinationName: String = ""
 )
 
 data class DriverReply(

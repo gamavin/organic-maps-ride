@@ -744,9 +744,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
       GeoPoint pickup = new GeoPoint(startPoint.getLat(), startPoint.getLon());
       GeoPoint destination = new GeoPoint(endPoint.getLat(), endPoint.getLon());
       String hash = sha256Hex(mMeshService.getPeerId());
+      String pickupName = startPoint.getName();
+      String destinationName = endPoint.getName();
+      String note = mNoteEditText.getText() == null ? "" : mNoteEditText.getText().toString();
       RideRequest req = new RideRequest('C', hash, vehicle, pickup, destination, price,
                                         mTollSwitch.isChecked(), 0, 0, 0, 0, 0,
-                                        mPaymentType, mNoteEditText.getText() == null ? "" : mNoteEditText.getText().toString());
+                                        mPaymentType, note, pickupName, destinationName);
       mMeshService.sendChannelMessage(RideMeshCodec.encodeRequest(req));
       Toast.makeText(this, "Permintaan tumpangan dikirim", Toast.LENGTH_SHORT).show();
     });
