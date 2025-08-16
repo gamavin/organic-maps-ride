@@ -3038,23 +3038,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     }
   }
 
-  private static String sha256(String s)
-  {
-    try
-    {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(s.getBytes(StandardCharsets.UTF_8));
-      StringBuilder sb = new StringBuilder();
-      for (byte b : hash)
-        sb.append(String.format("%02x", b));
-      return sb.toString();
-    }
-    catch (Exception e)
-    {
-      return "";
-    }
-  }
-
   private static String sha256Hex(String s)
   {
     try
