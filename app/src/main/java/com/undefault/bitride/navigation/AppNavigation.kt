@@ -17,6 +17,7 @@ import com.undefault.bitride.chooserole.ChooseRoleScreen
 import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormScreen
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
+import com.undefault.bitride.driverlounge.DriverLoungeScreen
 
 /**
  * Menangani navigasi aplikasi BitRide.
@@ -38,6 +39,9 @@ fun AppNavigation() {
         }
         composable(Routes.CHOOSE_ROLE) {
             ChooseRoleScreen(navController)
+        }
+        composable(Routes.DRIVER_LOUNGE) {
+            DriverLoungeScreen()
         }
         composable(
             route = "${Routes.ID_CARD_SCAN}?role={role}&isRescan={isRescan}",

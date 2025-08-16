@@ -9,6 +9,7 @@ object Routes {
     const val ID_CARD_SCAN = "id_card_scan"
     const val CUSTOMER_REGISTRATION_FORM = "customer_registration_form"
     const val DRIVER_REGISTRATION_FORM = "driver_registration_form"
+    const val DRIVER_LOUNGE = "driver_lounge"
     const val MAIN = "main"
     const val IMPORT = "import"
 
