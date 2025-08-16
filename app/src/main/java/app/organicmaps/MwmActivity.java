@@ -1370,6 +1370,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mPowerSaveSettings = null;
     if (mRemoveDisplayListener && !isChangingConfigurations())
       mDisplayManager.removeListener(DisplayType.Device);
+    if (mMeshBound)
+      unbindService(mMeshConn);
+    MeshService.stop(this);
   }
 
   @Override
@@ -3018,16 +3021,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (level >= TRIM_MEMORY_RUNNING_LOW)
       Framework.nativeMemoryWarning();
   }
-
-  @Override
-  protected void onSafeDestroy()
-  {
-    if (mMeshBound)
-      unbindService(mMeshConn);
-    MeshService.stop(this);
-    super.onSafeDestroy();
-  }
-
   private static String sha256(String s)
   {
     try
