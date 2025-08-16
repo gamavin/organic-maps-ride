@@ -27,11 +27,13 @@ import app.organicmaps.sdk.bookmarks.data.BookmarkCategory;
 import app.organicmaps.sdk.bookmarks.data.BookmarkInfo;
 import app.organicmaps.sdk.bookmarks.data.BookmarkManager;
 import app.organicmaps.sdk.bookmarks.data.Icon;
+import app.organicmaps.sdk.bookmarks.data.BookmarkIcon;
 import app.organicmaps.sdk.bookmarks.data.PredefinedColors;
 import app.organicmaps.sdk.bookmarks.data.Track;
 import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.util.Graphics;
 import app.organicmaps.util.InputUtils;
+import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.PaddingInsetsListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -145,8 +147,8 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
     mIvColor.setOnClickListener(this);
 
     // For tracks an bookmarks same category is used so this portion is common for both
-    if (savedInstanceState != null && savedInstanceState.getParcelable(STATE_BOOKMARK_CATEGORY) != null)
-      mBookmarkCategory = savedInstanceState.getParcelable(STATE_BOOKMARK_CATEGORY);
+    if (savedInstanceState != null && Utils.getParcelable(savedInstanceState, STATE_BOOKMARK_CATEGORY, BookmarkCategory.class) != null)
+      mBookmarkCategory = Utils.getParcelable(savedInstanceState, STATE_BOOKMARK_CATEGORY, BookmarkCategory.class);
     else
     {
       long categoryId = args.getLong(EXTRA_CATEGORY_ID);
@@ -159,8 +161,8 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
     case TYPE_BOOKMARK ->
     {
       mBookmark = BookmarkManager.INSTANCE.getBookmarkInfo(id);
-      if (savedInstanceState != null && savedInstanceState.getParcelable(STATE_ICON) != null)
-        mIcon = savedInstanceState.getParcelable(STATE_ICON);
+      if (savedInstanceState != null && Utils.getParcelable(savedInstanceState, STATE_ICON, BookmarkIcon.class) != null)
+        mIcon = Utils.getParcelable(savedInstanceState, STATE_ICON, BookmarkIcon.class);
       else if (mBookmark != null)
         mIcon = mBookmark.getIcon();
       refreshBookmark();
