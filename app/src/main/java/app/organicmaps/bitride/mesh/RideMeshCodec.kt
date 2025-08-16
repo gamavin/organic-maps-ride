@@ -24,6 +24,7 @@ object RideMeshCodec {
     else -> RideMessageKind.UNKNOWN
   }
 
+  @JvmStatic
   fun encodeRequest(x: RideRequest): String {
     require(x.hashHex.matches(HEX64)) { "hashHex must be 64 hex" }
     val p = formatPoint(x.pickup)
@@ -50,6 +51,7 @@ object RideMeshCodec {
     return s
   }
 
+  @JvmStatic
   fun encodeDriverReply(x: DriverReply): String {
     require(x.hashHex.matches(HEX64)) { "hashHex must be 64 hex" }
     val s = "RP1|r=D;h=${x.hashHex};v=${x.vehicle.code};pr=${x.priceRp};ok=${if (x.ok) 1 else 0}"
@@ -57,6 +59,7 @@ object RideMeshCodec {
     return s
   }
 
+  @JvmStatic
   fun encodeConfirm(x: RideConfirm): String {
     require(x.hashHex.matches(HEX64)) { "hashHex must be 64 hex" }
     val s = "CF1|h=${x.hashHex};ok=${if (x.ok) 1 else 0}"

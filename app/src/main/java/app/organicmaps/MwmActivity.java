@@ -3020,11 +3020,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
   }
 
   @Override
-  protected void onDestroy()
+  protected void onSafeDestroy()
   {
     if (mMeshBound)
       unbindService(mMeshConn);
-    super.onDestroy();
+    MeshService.stop(this);
+    super.onSafeDestroy();
   }
 
   private static String sha256(String s)
