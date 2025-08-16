@@ -40,8 +40,9 @@ buildscript {
 plugins {
   id 'com.android.application'
   id 'org.jetbrains.kotlin.android'
-  // Plugin Compose Kotlin baru — **tanpa** versi di sini, mengikuti settings.gradle
-  id 'org.jetbrains.kotlin.plugin.compose'
+  id 'org.jetbrains.kotlin.plugin.compose'     // plugin Compose baru
+  id 'org.jetbrains.kotlin.kapt'              // untuk Hilt (kotlin)
+  id 'com.google.dagger.hilt.android'         // Hilt Gradle plugin (resmi)
 }
 
 // Terapkan plugin Firebase hanya jika diaktifkan
@@ -54,7 +55,6 @@ apply plugin: 'com.github.triplet.play'
 apply plugin: 'ru.cian.huawei-publish-gradle-plugin'
 
 import com.github.triplet.gradle.androidpublisher.ReleaseStatus
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 def getCommitMessage() {
   return run(['git', '--no-pager', 'show', '-s', '--format=%s%n%n%b', 'HEAD']).trim()
@@ -64,19 +64,16 @@ project.ext.appId = 'app.organicmaps'
 project.ext.appName = 'Organic Maps'
 
 // -----------------------------------------------------------
-// Compose compiler via DSL resmi plugin Kotlin (2.2.10).
+// Compose compiler via DSL resmi plugin Kotlin.
 // Tidak ada manipulasi -P/freeCompilerArgs manual.
 // -----------------------------------------------------------
 composeCompiler {
-  // Biarkan default. Jika perlu:
-  // reportsDestination = layout.buildDirectory.dir("compose-reports")
-  // metricsDestination  = layout.buildDirectory.dir("compose-metrics")
+  // optionally: reportsDestination = layout.buildDirectory.dir("compose-reports")
+  // optionally: metricsDestination  = layout.buildDirectory.dir("compose-metrics")
 }
 
 android {
   namespace = 'app.organicmaps'
-
-  // TODO: ideally in :sdk/build.gradle too
   ndkVersion = '28.2.13676358'
 
   buildFeatures {
@@ -85,14 +82,8 @@ android {
     compose = true
   }
 
-  // (Tidak ada composeOptions{} di sini — dikelola plugin Compose baru)
+  bundle { language { enableSplit = false } }
 
-  // Users complain needing re-download after language change — keep language split disabled.
-  bundle {
-    language { enableSplit = false }
-  }
-
-  // All properties are read from gradle.properties file
   compileSdk = propCompileSdkVersion.toInteger()
 
   defaultConfig {
@@ -110,7 +101,6 @@ android {
     resourceConfigurations += [project.ext.supportedLocalizations]
 
     base.archivesName = appName.replaceAll('\\s','') + '-' + defaultConfig.versionCode
-
     ndk.debugSymbolLevel = 'full'
   }
 
@@ -149,9 +139,7 @@ android {
     }
   }
 
-  playConfigs {
-    googleRelease { enabled.set(true) }
-  }
+  playConfigs { googleRelease { enabled.set(true) } }
 
   splits.abi {
     boolean enabled = project.hasProperty('splitApk')
@@ -164,13 +152,9 @@ android {
 
   lint {
     disable 'MissingTranslation'
-    // https://github.com/organicmaps/organicmaps/issues/3551
     disable 'MissingQuantity', 'UnusedQuantity'
-    // https://github.com/organicmaps/organicmaps/issues/3550
     disable 'ByteOrderMark'
-    // https://github.com/organicmaps/organicmaps/issues/1077
     disable 'CustomSplashScreen'
-    // https://github.com/organicmaps/organicmaps/issues/3610
     disable 'InsecureBaseConfiguration'
     abortOnError = true
   }
@@ -185,9 +169,7 @@ android {
   }
 
   def securityPropertiesFileExists = file('secure.properties').exists()
-  if (securityPropertiesFileExists) {
-    apply from: 'secure.properties'
-  }
+  if (securityPropertiesFileExists) { apply from: 'secure.properties' }
 
   signingConfigs {
     debug {
@@ -216,7 +198,6 @@ android {
       zipAlignEnabled true
       signingConfig = signingConfigs.debug
       resValue 'string', 'app_name', 'Debug Organic Maps'
-
       if (googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
@@ -228,7 +209,6 @@ android {
       shrinkResources = true
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       resValue 'string', 'app_name', project.ext.appName
-
       if (googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
@@ -243,7 +223,6 @@ android {
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       matchingFallbacks = ['debug', 'release']
       resValue 'string', 'app_name', 'Beta Organic Maps'
-
       if (googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
         firebaseAppDistribution {
@@ -276,7 +255,6 @@ configurations {
   }
 }
 
-// ===== Dependencies =====
 dependencies {
   implementation project(':sdk')
 
@@ -307,7 +285,6 @@ dependencies {
 
   // Workaround for duplicate classes
   implementation 'androidx.core:core:1.16.0'
-  // Sinkron dengan Kotlin 2.2.10
   implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.10'))
   implementation 'androidx.annotation:annotation:1.9.1'
   implementation 'androidx.appcompat:appcompat:1.7.1'
@@ -327,7 +304,7 @@ dependencies {
   implementation 'androidx.datastore:datastore-preferences:1.1.1'
   implementation 'io.coil-kt:coil-compose:2.7.0'
 
-  // Jetpack Compose (BOM Agustus 2025)
+  // Jetpack Compose BOM
   implementation platform('androidx.compose:compose-bom:2025.08.00')
   implementation 'androidx.compose.ui:ui'
   implementation 'androidx.compose.ui:ui-tooling-preview'
@@ -337,11 +314,30 @@ dependencies {
   implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1'
   debugImplementation 'androidx.compose.ui:ui-tooling'
 
+  // ===== Tambahan untuk Bitride (khusus flavor non-FDroid) =====
+  // Navigation Compose (rilis resmi 2.8.9)
+  googleImplementation 'androidx.navigation:navigation-compose:2.8.9'
+  webImplementation    'androidx.navigation:navigation-compose:2.8.9'
+  huaweiImplementation 'androidx.navigation:navigation-compose:2.8.9' // jika juga dipakai
+
+  // Hilt Navigation Compose (stable 1.2.0)
+  googleImplementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+  webImplementation    'androidx.hilt:hilt-navigation-compose:1.2.0'
+  huaweiImplementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+
+  // Dagger Hilt (core) — kapt global aman walau fdroid tak pakai anotasi Hilt
+  implementation 'com.google.dagger:hilt-android:2.56.2'
+  kapt          'com.google.dagger:hilt-compiler:2.56.2'
+
   // Tests
   androidTestImplementation 'androidx.test.ext:junit:1.2.1'
   testImplementation 'junit:junit:4.13.2'
   testImplementation 'org.mockito:mockito-core:5.18.0'
   testImplementation 'org.mockito:mockito-inline:5.2.0'
+}
+
+kapt {
+  correctErrorTypes = true
 }
 
 // Inject FILE_PROVIDER_* ke setiap varian
@@ -416,4 +412,4 @@ tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
 }
 
-// *** Penting ***: Tidak ada lagi manipulasi kotlinOptions.freeCompilerArgs di fase eksekusi.
+// *** Penting ***: Tidak ada manipulasi kotlinOptions.freeCompilerArgs di fase eksekusi.
