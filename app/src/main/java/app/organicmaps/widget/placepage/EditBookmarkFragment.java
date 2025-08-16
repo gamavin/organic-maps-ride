@@ -146,9 +146,11 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
     mIvColor = view.findViewById(R.id.iv__bookmark_color);
     mIvColor.setOnClickListener(this);
 
-    // For tracks an bookmarks same category is used so this portion is common for both
-    if (savedInstanceState != null && Utils.getParcelable(savedInstanceState, STATE_BOOKMARK_CATEGORY, BookmarkCategory.class) != null)
-      mBookmarkCategory = Utils.getParcelable(savedInstanceState, STATE_BOOKMARK_CATEGORY, BookmarkCategory.class);
+    // For tracks and bookmarks same category is used so this portion is common for both
+    BookmarkCategory category = savedInstanceState == null ? null
+        : Utils.getParcelable(savedInstanceState, STATE_BOOKMARK_CATEGORY, BookmarkCategory.class);
+    if (category != null)
+      mBookmarkCategory = category;
     else
     {
       long categoryId = args.getLong(EXTRA_CATEGORY_ID);
@@ -161,9 +163,9 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
     case TYPE_BOOKMARK ->
     {
       mBookmark = BookmarkManager.INSTANCE.getBookmarkInfo(id);
-      if (savedInstanceState != null && Utils.getParcelable(savedInstanceState, STATE_ICON, BookmarkIcon.class) != null)
-        mIcon = Utils.getParcelable(savedInstanceState, STATE_ICON, BookmarkIcon.class);
-      else if (mBookmark != null)
+      mIcon = savedInstanceState == null ? null
+          : Utils.getParcelable(savedInstanceState, STATE_ICON, Icon.class);
+      if (mIcon == null && mBookmark != null)
         mIcon = mBookmark.getIcon();
       refreshBookmark();
     }
