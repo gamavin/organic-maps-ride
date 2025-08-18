@@ -56,7 +56,7 @@ class ChooseRoleViewModel @Inject constructor(
         }
     }
 
-    fun checkDataAndGetNextRoute(onResult: (String) -> Unit) {
+    fun checkDataAndGetNextRoute(targetRoute: String, onResult: (String) -> Unit) {
         viewModelScope.launch {
             val mapFileStoredName = dataStoreRepository.activeMapFileNameFlow.firstOrNull()
             val dbFileStoredName = dataStoreRepository.activePoiDbNameFlow.firstOrNull()
@@ -69,7 +69,7 @@ class ChooseRoleViewModel @Inject constructor(
                     dbFile?.exists() == true &&
                     brouterDir.exists() && (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
 
-            val destination = if (allDataExists) Routes.DRIVER_LOUNGE else Routes.IMPORT
+            val destination = if (allDataExists) targetRoute else Routes.IMPORT
             onResult(destination)
         }
     }

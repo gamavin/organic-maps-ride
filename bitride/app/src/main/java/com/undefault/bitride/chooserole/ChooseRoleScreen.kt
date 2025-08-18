@@ -39,15 +39,14 @@ fun ChooseRoleScreen(
             verticalArrangement = Arrangement.Center
         ) {
             if (uiState.canLoginAsCustomer) {
-                Button(onClick = { viewModel.checkDataAndGetNextRoute(navigateToNextScreen) }) {
+                Button(onClick = { viewModel.checkDataAndGetNextRoute(Routes.MAIN, navigateToNextScreen) }) {
                     Text("Masuk sebagai Customer")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
             if (uiState.canLoginAsDriver) {
                 Button(onClick = {
-                    // TODO: Logika untuk driver bisa sama atau berbeda
-                    viewModel.checkDataAndGetNextRoute(navigateToNextScreen)
+                    viewModel.checkDataAndGetNextRoute(Routes.DRIVER_LOUNGE, navigateToNextScreen)
                 }) {
                     Text("Masuk sebagai Driver")
                 }
