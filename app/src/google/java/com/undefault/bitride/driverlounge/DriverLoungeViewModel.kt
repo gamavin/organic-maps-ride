@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import app.organicmaps.bitride.mesh.DriverReply
 import app.organicmaps.bitride.mesh.MeshService
@@ -28,6 +29,7 @@ class DriverLoungeViewModel(app: Application) : AndroidViewModel(app), RideMeshL
             meshService = binder.service
             meshService?.setListener(this@DriverLoungeViewModel)
             meshService?.startMesh("#bitride")
+            Log.d("DriverLoungeVM", "startMesh #bitride dipanggil")
             bound = true
         }
 
