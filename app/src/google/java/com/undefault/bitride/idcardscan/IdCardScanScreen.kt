@@ -13,13 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import java.io.File
 
 @Composable
 fun IdCardScanScreen(
-    viewModel: IdCardScanViewModel = viewModel(),
+    viewModel: IdCardScanViewModel = hiltViewModel(),
     onScanComplete: (KtpData?) -> Unit,
     isRescan: Boolean // New parameter
 ) {
