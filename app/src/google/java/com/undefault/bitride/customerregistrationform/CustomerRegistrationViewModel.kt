@@ -93,7 +93,8 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
                 return@launch
             }
 
-            val profile = CustomerProfile(name = _uiState.value.name)
+            // Profil awal hanya berisi statistik dengan nilai 0
+            val profile = CustomerProfile()
 
             val success = userRepository.createCustomerProfile(hashedNik, profile)
             if (success) {

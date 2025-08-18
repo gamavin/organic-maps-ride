@@ -20,8 +20,8 @@ class UserRepository @Inject constructor(
         false
     }
 
-    suspend fun createDriverProfile(nikHash: String, profile: DriverProfile): Boolean = try {
-        val data = mapOf("roles" to mapOf("driver" to profile))
+    suspend fun createDriverProfile(nikHash: String, stats: DriverProfile): Boolean = try {
+        val data = mapOf("roles" to mapOf("driver" to stats))
         firestore.collection("users").document(nikHash)
             .set(data, SetOptions.merge())
             .await()
@@ -30,8 +30,8 @@ class UserRepository @Inject constructor(
         false
     }
 
-    suspend fun createCustomerProfile(nikHash: String, profile: CustomerProfile): Boolean = try {
-        val data = mapOf("roles" to mapOf("customer" to profile))
+    suspend fun createCustomerProfile(nikHash: String, stats: CustomerProfile): Boolean = try {
+        val data = mapOf("roles" to mapOf("customer" to stats))
         firestore.collection("users").document(nikHash)
             .set(data, SetOptions.merge())
             .await()

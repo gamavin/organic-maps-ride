@@ -5,6 +5,7 @@ package com.undefault.bitride.data.repository
  */
 data class UserProfileStats(
     val totalRides: Int = 0,
+    val successful: Int = 0,
     val uniquePartners: Int = 0,
     val positive: Int = 0,
     val negative: Int = 0,

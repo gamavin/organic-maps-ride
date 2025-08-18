@@ -103,11 +103,8 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
                 return@launch
             }
 
-            val profile = DriverProfile(
-                name = _uiState.value.name,
-                bankName = _uiState.value.bankName,
-                bankAccountNumber = _uiState.value.bankAccountNumber
-            )
+            // Profil awal hanya berisi statistik dengan nilai 0
+            val profile = DriverProfile()
 
             val success = userRepository.createDriverProfile(hashedNik, profile)
             if (success) {
