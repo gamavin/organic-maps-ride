@@ -1,7 +1,6 @@
 package com.undefault.bitride.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,7 +12,6 @@ import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormSc
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
 import com.undefault.bitride.driverlounge.DriverLoungeScreen
-import app.organicmaps.bitride.mesh.MeshManager
 
 /**
  * Menangani navigasi aplikasi BitRide.
@@ -21,14 +19,11 @@ import app.organicmaps.bitride.mesh.MeshManager
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val context = LocalContext.current
-
     NavHost(navController = navController, startDestination = Routes.AUTH) {
         composable(Routes.AUTH) {
             AuthScreen(
                 onNavigateToChooseRole = { navController.navigate(Routes.CHOOSE_ROLE) },
                 onNavigateToNextScreen = {
-                    MeshManager.start(context)
                     navController.navigate(Routes.CHOOSE_ROLE) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
@@ -77,7 +72,6 @@ fun AppNavigation() {
                 initialNik = nik,
                 initialName = name,
                 onRegistrationComplete = {
-                    MeshManager.start(context)
                     navController.navigate(Routes.CHOOSE_ROLE) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
@@ -98,7 +92,6 @@ fun AppNavigation() {
                 initialNik = nik,
                 initialName = name,
                 onRegistrationComplete = {
-                    MeshManager.start(context)
                     navController.navigate(Routes.CHOOSE_ROLE) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
