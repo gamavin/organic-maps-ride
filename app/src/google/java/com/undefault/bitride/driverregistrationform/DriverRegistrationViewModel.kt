@@ -6,6 +6,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
+import com.undefault.bitride.data.repository.UserRepository
+import com.undefault.bitride.data.model.DriverProfile
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +34,7 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
 
     private val userPreferencesRepository = UserPreferencesRepository(application)
     private val dataStoreRepository = DataStoreRepository(application)
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
 
     fun onNikChange(nik: String) {
         _uiState.update { currentState ->
@@ -99,11 +103,24 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
                 return@launch
             }
 
-            dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
-            dataStoreRepository.saveBankInfo(_uiState.value.bankName, _uiState.value.bankAccountNumber)
-            userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
-            Log.d("DriverRegistrationVM", "Data driver disimpan ke storage lokal.")
-            _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+            val profile = DriverProfile(
+                name = _uiState.value.name,
+                bankName = _uiState.value.bankName,
+                bankAccountNumber = _uiState.value.bankAccountNumber
+            )
+
+            val success = userRepository.createDriverProfile(hashedNik, profile)
+            if (success) {
+                dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
+                dataStoreRepository.saveBankInfo(_uiState.value.bankName, _uiState.value.bankAccountNumber)
+                userPreferencesRepository.saveLoggedInUser(hashedNik, "driver")
+                Log.d("DriverRegistrationVM", "Data driver disimpan ke storage lokal dan Firestore.")
+                _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+            } else {
+                _uiState.update {
+                    it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.")
+                }
+            }
         }
     }
 
