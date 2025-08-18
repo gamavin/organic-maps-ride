@@ -9,9 +9,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import app.organicmaps.bitride.mesh.MeshManager
 import com.undefault.bitride.navigation.Routes
 
 @Composable
@@ -20,6 +22,7 @@ fun ChooseRoleScreen(
     viewModel: ChooseRoleViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     val navigateToNextScreen = { destination: String ->
         navController.navigate(destination) {
@@ -46,6 +49,7 @@ fun ChooseRoleScreen(
             }
             if (uiState.canLoginAsDriver) {
                 Button(onClick = {
+                    MeshManager.start(context)
                     viewModel.checkDataAndGetNextRoute(Routes.DRIVER_LOUNGE, navigateToNextScreen)
                 }) {
                     Text("Masuk sebagai Driver")
