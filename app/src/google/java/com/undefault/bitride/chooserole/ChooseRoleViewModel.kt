@@ -1,18 +1,13 @@
 package com.undefault.bitride.chooserole
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 data class ChooseRoleUiState(
@@ -24,9 +19,7 @@ data class ChooseRoleUiState(
 
 @HiltViewModel
 class ChooseRoleViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    private val userPreferencesRepository: UserPreferencesRepository,
-    private val dataStoreRepository: DataStoreRepository
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChooseRoleUiState())
@@ -58,19 +51,7 @@ class ChooseRoleViewModel @Inject constructor(
 
     fun checkDataAndGetNextRoute(onResult: (String) -> Unit) {
         viewModelScope.launch {
-            val mapFileStoredName = dataStoreRepository.activeMapFileNameFlow.firstOrNull()
-            val dbFileStoredName = dataStoreRepository.activePoiDbNameFlow.firstOrNull()
-
-            val mapFile = if (mapFileStoredName.isNullOrBlank()) null else File(context.filesDir, mapFileStoredName)
-            val dbFile = if (dbFileStoredName.isNullOrBlank()) null else File(context.filesDir, dbFileStoredName)
-            val brouterDir = File(context.filesDir, "brouter/segments4")
-
-            val allDataExists = mapFile?.exists() == true &&
-                    dbFile?.exists() == true &&
-                    brouterDir.exists() && (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
-
-            val destination = if (allDataExists) Routes.MAIN else Routes.IMPORT
-            onResult(destination)
+            onResult(Routes.IMPORT)
         }
     }
 }
