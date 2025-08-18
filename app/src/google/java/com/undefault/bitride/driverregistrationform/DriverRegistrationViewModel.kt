@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
+import com.undefault.bitride.data.model.DriverProfile
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,13 +102,19 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
                 return@launch
             }
 
-            val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
+            val roleExists = userRepository.doesRoleExist(hashedNik, "driver")
             if (roleExists) {
                 _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
                 return@launch
             }
 
-            val success = userRepository.createDriverProfile(hashedNik)
+            val profile = DriverProfile(
+                name = _uiState.value.name,
+                bankName = _uiState.value.bankName,
+                bankAccountNumber = _uiState.value.bankAccountNumber,
+                numberOfDifferentCustomers = 0L
+            )
+            val success = userRepository.createDriverProfile(hashedNik, profile)
             if (success) {
                 Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
                 userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")

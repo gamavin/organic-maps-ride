@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
+import com.undefault.bitride.data.model.CustomerProfile
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,13 +92,17 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
                 return@launch
             }
 
-            val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
+            val roleExists = userRepository.doesRoleExist(hashedNik, "customer")
             if (roleExists) {
                 _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
                 return@launch
             }
 
-            val success = userRepository.createCustomerProfile(hashedNik)
+            val profile = CustomerProfile(
+                name = _uiState.value.name,
+                numberOfDifferentDrivers = 0L
+            )
+            val success = userRepository.createCustomerProfile(hashedNik, profile)
             if (success) {
                 Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
                 userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
