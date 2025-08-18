@@ -891,7 +891,7 @@
     <string name="mastodon">Mastodon</string>
     <string name="facebook">Facebook</string>
     <string name="matrix">[Matrix]</string>
-    <string name="tts_info_link">https://organicmaps.app/fr/faq/voice/synth%C3%A8se-vocale-tts-sur-android/</string>
+    <string name="tts_info_link" formatted="false">https://organicmaps.app/fr/faq/voice/synth%C3%A8se-vocale-tts-sur-android/</string>
     <string name="telegram_url">https://t.me/OrganicMapsApp</string>
     <string name="wikimedia_commons">Wikimedia Commons</string>
     <string name="comma_separated_pair">%1$s, %2$s</string>

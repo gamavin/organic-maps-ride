@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,7 @@ data class CustomerRegistrationFormState(
     val validationError: String? = null,
     val showConfirmationDialog: Boolean = false,
     val isLoading: Boolean = false,
-    val registrationSuccess: Boolean = false // Diubah dari hashedNik
+    val registrationSuccess: Boolean = false
 )
 
 class CustomerRegistrationViewModel(application: Application) : AndroidViewModel(application) {
@@ -27,7 +28,8 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
     private val _uiState = MutableStateFlow(CustomerRegistrationFormState())
     val uiState: StateFlow<CustomerRegistrationFormState> = _uiState.asStateFlow()
 
-    private val userRepository = UserRepository()
+    // PASS Firestore ke constructor
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
     private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun processScannedData(scannedNik: String?, scannedName: String?) {
@@ -118,9 +120,7 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
             val bytes = input.toByteArray()
             val md = MessageDigest.getInstance("SHA-256")
             val digest = md.digest(bytes)
-            val result = digest.fold("") { str, it -> str + "%02x".format(it) }
-            Log.d("CustomerRegistrationVM", "Hashing berhasil, hasil: $result")
-            result
+            digest.fold("") { str, it -> str + "%02x".format(it) }
         } catch (e: Exception) {
             Log.e("CustomerRegistrationVM", "Error saat hashing SHA-256", e)
             ""

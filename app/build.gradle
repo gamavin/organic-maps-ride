@@ -1,54 +1,50 @@
-// app/build.gradle — sinkron Agustus 2025 (Kotlin 2.2.10 + AGP 8.11.0)
+import com.github.triplet.gradle.androidpublisher.ReleaseStatus
 
-buildscript {
-  repositories {
-    google()
-    mavenCentral()
-  }
+// app/build.gradle — Groovy (AGP 8.11.0, Kotlin 2.1.10 via settings.gradle)
 
-  // Deteksi flavor dari nama task.
-  def taskName = getGradle().getStartParameter().getTaskRequests().toString().toLowerCase()
-  def isFdroid = taskName.contains('fdroid')
-
-  // Flag Firebase Crashlytics compile-time: -Pfirebase=true|false
-  def googleFirebaseServicesFlag = findProperty('firebase')
-
-  // Default: aktif kalau BUKAN fdroid DAN ada google-services.json
-  def googleFirebaseServicesDefault = !isFdroid && file("$projectDir/google-services.json").exists()
-
-  ext.googleFirebaseServicesEnabled = googleFirebaseServicesFlag != null ?
-          (googleFirebaseServicesFlag == '' || googleFirebaseServicesFlag.toBoolean()) :
-          googleFirebaseServicesDefault
-
-  dependencies {
-    classpath 'com.android.tools.build:gradle:8.11.0'
-
-    if (googleFirebaseServicesEnabled) {
-      println('Building with Google Firebase Services')
-      classpath 'com.google.gms:google-services:4.4.3'
-      classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
-      classpath 'com.google.firebase:firebase-appdistribution-gradle:5.1.1'
-    } else {
-      println('Building without Google Firebase Services')
-    }
-
-    // legacy-applied plugins
-    classpath 'com.github.triplet.gradle:play-publisher:3.12.1'
-    classpath 'ru.cian:huawei-publish-gradle-plugin:1.4.2'
-  }
-}
-
-// --- Plugins (versi disuplai oleh settings.gradle) ---
 plugins {
   id 'com.android.application'
   id 'org.jetbrains.kotlin.android'
-  id 'org.jetbrains.kotlin.plugin.compose'   // plugin Compose baru (NO composeOptions)
-  id 'com.google.devtools.ksp'              // KSP untuk Hilt compiler
-  id 'com.google.dagger.hilt.android'       // Hilt Gradle plugin
+  id 'org.jetbrains.kotlin.plugin.compose'
+  id 'org.jetbrains.kotlin.kapt'
+  id 'com.google.dagger.hilt.android'
+
+  // Plugin yang diaplikasikan kondisional / belakangan
+  id 'com.google.gms.google-services' version '4.4.3' apply false
+  id 'com.google.firebase.crashlytics' version '3.0.6' apply false
+  id 'com.google.firebase.appdistribution' version '5.1.1' apply false
+  id 'com.github.triplet.play' version '3.12.1' apply false
+  id 'ru.cian.huawei-publish-gradle-plugin' version '1.5.0' apply false
 }
 
-// Terapkan plugin Firebase hanya jika diaktifkan
-if (googleFirebaseServicesEnabled) {
+hilt {
+  // Matikan task agregasi Hilt agar tidak menjalankan AggregateDepsTask
+  // yang memicu NoSuchMethodError pada JavaPoet (canonicalName()).
+  enableAggregatingTask = false
+}
+
+// ====== DETEKSI Firebase & JSON ======
+def taskName = gradle.startParameter.taskRequests.toString().toLowerCase()
+def isFdroid = taskName.contains('fdroid')
+
+// Bisa override via -Pfirebase=true|false
+def googleFirebaseServicesFlag = findProperty('firebase')
+
+// Best practice: satu file JSON saja di sourceSet "google"
+def jsonGoogle = file("$projectDir/src/google/google-services.json").exists()
+// Hanya untuk logging; folder ini memang tidak dipakai
+def jsonGoogleDebug = file("$projectDir/src/googleDebug/google-services.json").exists()
+
+ext.googleFirebaseServicesEnabled = (googleFirebaseServicesFlag != null)
+        ? (googleFirebaseServicesFlag == '' || googleFirebaseServicesFlag.toBoolean())
+        : (!isFdroid && (jsonGoogle || jsonGoogleDebug))
+
+println ext.googleFirebaseServicesEnabled
+        ? "Building with Google Firebase Services (jsonGoogle=${jsonGoogle}, jsonGoogleDebug=${jsonGoogleDebug})"
+        : "Building without Google Firebase Services"
+
+// Apply plugin kondisional
+if (project.ext.googleFirebaseServicesEnabled) {
   apply plugin: 'com.google.gms.google-services'
   apply plugin: 'com.google.firebase.crashlytics'
   apply plugin: 'com.google.firebase.appdistribution'
@@ -56,18 +52,12 @@ if (googleFirebaseServicesEnabled) {
 apply plugin: 'com.github.triplet.play'
 apply plugin: 'ru.cian.huawei-publish-gradle-plugin'
 
-import com.github.triplet.gradle.androidpublisher.ReleaseStatus
-
-def getCommitMessage() {
-  return run(['git', '--no-pager', 'show', '-s', '--format=%s%n%n%b', 'HEAD']).trim()
-}
-
+// App id & nama (dipakai di bawah)
 project.ext.appId = 'app.organicmaps'
 project.ext.appName = 'Organic Maps'
 
 // -----------------------------------------------------------
-// Compose compiler via DSL resmi plugin Kotlin (2.2.10).
-// Tidak ada -P / composeOptions{} / freeCompilerArgs manual.
+// Compose compiler via DSL resmi Kotlin plugin
 // -----------------------------------------------------------
 composeCompiler {
   // reportsDestination = layout.buildDirectory.dir("compose-reports")
@@ -84,10 +74,8 @@ android {
     compose = true
   }
 
-  // Users complain needing re-download after language change — keep language split disabled.
   bundle { language { enableSplit = false } }
 
-  // All properties are read from gradle.properties file
   compileSdk = propCompileSdkVersion.toInteger()
 
   defaultConfig {
@@ -104,19 +92,19 @@ android {
     buildConfigField 'String', 'REVIEW_URL', '""'
     resourceConfigurations += [project.ext.supportedLocalizations]
 
-    base.archivesName = appName.replaceAll('\\s','') + '-' + defaultConfig.versionCode
-
+    base.archivesName = project.ext.appName.replaceAll('\\s','') + '-' + defaultConfig.versionCode
     ndk.debugSymbolLevel = 'full'
   }
 
   flavorDimensions += 'default'
 
   productFlavors {
-    // 01 is a historical artefact, sorry.
     final int HUAWEI_VERSION_CODE_BASE = 01_00_00_00_00
 
     google {
       dimension 'default'
+      // Firestore minSdk >= 23
+      minSdk 23
       versionName = android.defaultConfig.versionName + '-Google'
       buildConfigField 'String', 'SUPPORT_MAIL', '"googleplay@organicmaps.app"'
       buildConfigField 'String', 'REVIEW_URL', '"market://details?id=app.organicmaps"'
@@ -124,6 +112,7 @@ android {
 
     web {
       dimension 'default'
+      minSdk 23
       applicationIdSuffix '.web'
       versionName = android.defaultConfig.versionName + '-Web'
       buildConfigField 'String', 'SUPPORT_MAIL', '"apk@organicmaps.app"'
@@ -131,16 +120,30 @@ android {
 
     fdroid {
       dimension 'default'
+      // Tanpa Firebase
+      minSdk 21
       versionName = android.defaultConfig.versionName + '-FDroid'
       buildConfigField 'String', 'SUPPORT_MAIL', '"fdroid@organicmaps.app"'
     }
 
     huawei {
       dimension 'default'
+      minSdk 23
       versionName = android.defaultConfig.versionName + '-Huawei'
       versionCode = HUAWEI_VERSION_CODE_BASE + android.defaultConfig.versionCode
       buildConfigField 'String', 'SUPPORT_MAIL', '"huawei@organicmaps.app"'
       buildConfigField 'String', 'REVIEW_URL', '"appmarket://details?id=app.organicmaps"'
+    }
+  }
+
+  // Pastikan FDroid tidak compile kelas-kelas GMS
+  sourceSets {
+    fdroid {
+      java {
+        exclude '**/GoogleFusedLocationProvider.*'
+        exclude '**/Google*Location*.kt'
+        exclude '**/Google*Location*.java'
+      }
     }
   }
 
@@ -157,22 +160,20 @@ android {
 
   lint {
     disable 'MissingTranslation'
-    // https://github.com/organicmaps/organicmaps/issues/3551
     disable 'MissingQuantity', 'UnusedQuantity'
-    // https://github.com/organicmaps/organicmaps/issues/3550
     disable 'ByteOrderMark'
-    // https://github.com/organicmaps/organicmaps/issues/1077
     disable 'CustomSplashScreen'
-    // https://github.com/organicmaps/organicmaps/issues/3610
     disable 'InsecureBaseConfiguration'
     abortOnError = true
   }
 
   gradle.projectsEvaluated {
-    android.applicationVariants.all { variant ->
+    android.applicationVariants.configureEach { variant ->
       def task = variant.name.capitalize()
       project.task(type: Exec, "run${task}", dependsOn: "install${task}") {
-        commandLine android.getAdbExe(), 'shell', 'am', 'start', '-n', "$applicationId/app.organicmaps.DownloadResourcesActivity", '-a', 'android.intent.action.MAIN', '-c', 'android.intent.category.LAUNCHER'
+        commandLine android.getAdbExe(), 'shell', 'am', 'start', '-n',
+                "$applicationId/app.organicmaps.DownloadResourcesActivity",
+                '-a', 'android.intent.action.MAIN', '-c', 'android.intent.category.LAUNCHER'
       }
     }
   }
@@ -209,8 +210,7 @@ android {
       zipAlignEnabled true
       signingConfig = signingConfigs.debug
       resValue 'string', 'app_name', 'Debug Organic Maps'
-
-      if (googleFirebaseServicesEnabled) {
+      if (project.ext.googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
     }
@@ -221,8 +221,7 @@ android {
       shrinkResources = true
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       resValue 'string', 'app_name', project.ext.appName
-
-      if (googleFirebaseServicesEnabled) {
+      if (project.ext.googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
       }
     }
@@ -236,11 +235,10 @@ android {
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
       matchingFallbacks = ['debug', 'release']
       resValue 'string', 'app_name', 'Beta Organic Maps'
-
-      if (googleFirebaseServicesEnabled) {
+      if (project.ext.googleFirebaseServicesEnabled) {
         firebaseCrashlytics { nativeSymbolUploadEnabled true }
         firebaseAppDistribution {
-          releaseNotes = getCommitMessage()
+          releaseNotes = run(['git', '--no-pager', 'show', '-s', '--format=%s%n%n%b', 'HEAD']).trim()
           groups = 'qa'
           serviceCredentialsFile = "$projectDir/firebase-app-distribution.json"
         }
@@ -269,6 +267,16 @@ configurations {
   }
 }
 
+// ---------- PIN JAVAPOET UNTUK HILT ----------
+configurations.configureEach {
+  resolutionStrategy.eachDependency { details ->
+    if (details.requested.group == 'com.squareup' && details.requested.name == 'javapoet') {
+      details.useVersion '1.13.0'
+      details.because 'Hilt/Dagger 2.57 expect JavaPoet 1.x; avoid NoSuchMethodError in hiltAggregateDeps'
+    }
+  }
+}
+
 // ===== Dependencies =====
 dependencies {
   implementation project(':sdk')
@@ -281,13 +289,24 @@ dependencies {
   huaweiImplementation 'com.google.android.gms:play-services-location:21.3.0'
   fdroidImplementation 'org.microg.gms:play-services-location:0.3.6.244735'
 
-  // Firebase — hanya saat plugin aktif
-  if (googleFirebaseServicesEnabled) {
-    implementation platform('com.google.firebase:firebase-bom:34.1.0')
-    implementation 'com.google.firebase:firebase-crashlytics'
-    implementation 'com.google.firebase:firebase-crashlytics-ndk'
-    implementation 'com.google.firebase:firebase-firestore-ktx'
-    // (opsional) implementation 'com.google.firebase:firebase-analytics-ktx'
+  // ===== Firebase — hanya untuk flavor non-FDroid =====
+  if (project.ext.googleFirebaseServicesEnabled) {
+    def fbBom = platform('com.google.firebase:firebase-bom:34.1.0')
+    googleImplementation fbBom
+    webImplementation    fbBom
+    huaweiImplementation fbBom
+
+    googleImplementation 'com.google.firebase:firebase-crashlytics'
+    googleImplementation 'com.google.firebase:firebase-crashlytics-ndk'
+    googleImplementation 'com.google.firebase:firebase-firestore'
+
+    webImplementation    'com.google.firebase:firebase-crashlytics'
+    webImplementation    'com.google.firebase:firebase-crashlytics-ndk'
+    webImplementation    'com.google.firebase:firebase-firestore'
+
+    huaweiImplementation 'com.google.firebase:firebase-crashlytics'
+    huaweiImplementation 'com.google.firebase:firebase-crashlytics-ndk'
+    huaweiImplementation 'com.google.firebase:firebase-firestore'
   }
 
   // ML Kit (khusus flavor GMS)
@@ -300,24 +319,24 @@ dependencies {
   huaweiImplementation 'com.google.mlkit:text-recognition:16.0.1'
 
   // Workaround for duplicate classes
-  implementation 'androidx.core:core:1.16.0'
+  implementation 'androidx.core:core-ktx:1.17.0'
   implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.10'))
   implementation 'androidx.annotation:annotation:1.9.1'
   implementation 'androidx.appcompat:appcompat:1.7.1'
   implementation 'androidx.car.app:app:1.8.0-alpha02'
   implementation 'androidx.car.app:app-projected:1.8.0-alpha02'
   implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-  implementation 'androidx.fragment:fragment:1.8.8'
-  implementation 'androidx.preference:preference:1.2.1'
+  implementation 'androidx.fragment:fragment-ktx:1.8.9'
+  implementation 'androidx.preference:preference-ktx:1.2.1'
   implementation 'androidx.recyclerview:recyclerview:1.4.0'
-  implementation 'androidx.work:work-runtime:2.10.2'
-  implementation 'androidx.lifecycle:lifecycle-process:2.9.1'
+  implementation 'androidx.work:work-runtime:2.10.3'
+  implementation 'androidx.lifecycle:lifecycle-process:2.9.2'
   implementation 'com.google.android.material:material:1.12.0'
   implementation 'com.google.guava:guava:33.4.8-android'
   implementation 'com.github.devnullorthrow:MPAndroidChart:3.2.0-alpha'
   implementation 'net.jcip:jcip-annotations:1.0'
   implementation project(':bitchatcore')
-  implementation 'androidx.datastore:datastore-preferences:1.1.1'
+  implementation 'androidx.datastore:datastore-preferences:1.1.7'
   implementation 'io.coil-kt:coil-compose:2.7.0'
 
   // Jetpack Compose (BOM)
@@ -325,35 +344,44 @@ dependencies {
   implementation 'androidx.compose.ui:ui'
   implementation 'androidx.compose.ui:ui-tooling-preview'
   implementation 'androidx.compose.material3:material3'
-  implementation 'androidx.activity:activity-compose:1.9.2'
-  implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.9.1'
-  implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1'
+  implementation 'androidx.activity:activity-compose:1.10.1'
+  implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.9.2'
+  implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.9.2'
   debugImplementation 'androidx.compose.ui:ui-tooling'
 
-  // ===== Bitride: Navigation + Hilt Compose untuk flavor non-FDroid =====
-  googleImplementation 'androidx.navigation:navigation-compose:2.8.9'
-  webImplementation    'androidx.navigation:navigation-compose:2.8.9'
-  huaweiImplementation 'androidx.navigation:navigation-compose:2.8.9'
+  // Bitride: Navigation + Hilt Compose untuk flavor non-FDroid
+  googleImplementation 'androidx.navigation:navigation-compose:2.9.3'
+  webImplementation    'androidx.navigation:navigation-compose:2.9.3'
+  huaweiImplementation 'androidx.navigation:navigation-compose:2.9.3'
 
   googleImplementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
   webImplementation    'androidx.hilt:hilt-navigation-compose:1.2.0'
   huaweiImplementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
 
-  // Dagger Hilt (core) + compiler via KSP
-  implementation 'com.google.dagger:hilt-android:2.52'
-  ksp          'com.google.dagger:hilt-compiler:2.52'
+  // Dagger Hilt — pakai KAPT
+  implementation 'com.google.dagger:hilt-android:2.57'
+  kapt          'com.google.dagger:hilt-compiler:2.57'
+
+  // Pin juga sebagai constraint agar tidak ikut ter-package
+  constraints {
+    implementation('com.squareup:javapoet:1.13.0') {
+      because 'Hilt/Dagger 2.57 expect JavaPoet 1.x; avoid NoSuchMethodError in hiltAggregateDeps'
+    }
+  }
 
   // Tests
-  androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+  androidTestImplementation 'androidx.test.ext:junit:1.3.0'
   testImplementation 'junit:junit:4.13.2'
   testImplementation 'org.mockito:mockito-core:5.18.0'
   testImplementation 'org.mockito:mockito-inline:5.2.0'
 }
 
-// (Tidak ada kapt { } karena kita sudah pakai KSP)
+kapt {
+  correctErrorTypes = true
+}
 
 // Inject FILE_PROVIDER_* ke setiap varian
-android.applicationVariants.all { variant ->
+android.applicationVariants.configureEach { variant ->
   def authorityValue = variant.applicationId + ".provider"
   def authority = "\"" + authorityValue + "\""
   variant.buildConfigField 'String', 'FILE_PROVIDER_AUTHORITY', authority
@@ -363,7 +391,7 @@ android.applicationVariants.all { variant ->
 }
 
 // Prepares Google Play metainfo from F-Droid metainfo.
-task prepareGoogleReleaseListing {
+tasks.register('prepareGoogleReleaseListing') {
   final sourceFlavor = 'fdroid'
   final targetFlavor = 'google'
   doLast {
@@ -395,18 +423,11 @@ huaweiPublish {
     huaweiRelease {
       credentialsPath = "$projectDir/huawei-appgallery.json"
       buildFormat = 'aab'
-      deployType = 'draft' // confirm manually
+      deployType = 'draft'
       def releaseDescriptions = []
       def localeOverride = [
-              'am' : 'am-ET',
-              'gu': 'gu_IN',
-              'iw-IL': 'he_IL',
-              'kn-IN': 'kn_IN',
-              'ml-IN': 'ml_IN',
-              'mn-MN': 'mn_MN',
-              'mr-IN': 'mr_IN',
-              'ta-IN': 'ta_IN',
-              'te-IN': 'te_IN',
+              'am':'am-ET','gu':'gu_IN','iw-IL':'he_IL','kn-IN':'kn_IN',
+              'ml-IN':'ml_IN','mn-MN':'mn_MN','mr-IN':'mr_IN','ta-IN':'ta_IN','te-IN':'te_IN',
       ]
       def files = fileTree(dir: "$projectDir/src/fdroid/play/listings", include: '**/release-notes.txt')
       files.each { File file ->
@@ -423,5 +444,3 @@ huaweiPublish {
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
 }
-
-// *** Penting ***: Tidak ada manipulasi kotlinOptions.freeCompilerArgs di fase eksekusi.

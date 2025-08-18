@@ -1,25 +1,29 @@
+// Root settings.gradle — sumber kebenaran versi plugin & repositori
+
 pluginManagement {
   repositories {
     google()
     mavenCentral()
     gradlePluginPortal()
   }
+  // Samakan versi plugin dengan yang dipakai di modul
   plugins {
-    // Kotlin & Compose (sinkron)
+    // Kotlin & Compose (sesuai header di app/build.gradle)
     id "org.jetbrains.kotlin.android"          version "2.2.10"
     id "org.jetbrains.kotlin.plugin.parcelize" version "2.2.10"
     id "org.jetbrains.kotlin.plugin.compose"   version "2.2.10"
 
-    // AGP
+    // Android Gradle Plugin
     id "com.android.application" version "8.11.0"
     id "com.android.library"     version "8.11.0"
 
-    // Google Services
-    id "com.google.gms.google-services"        version "4.4.3"
+    // Hilt plugin (harus sama dengan dependency 2.57)
+    id "com.google.dagger.hilt.android" version "2.57"
 
-    // Hilt + KSP (versi yang match Kotlin 2.2.10)
-    id "com.google.dagger.hilt.android"        version "2.52"
-    id "com.google.devtools.ksp"               version "2.2.10-1.0.25"
+    // Catatan:
+    // - com.google.gms.google-services, triplet-play, huawei-publish
+    //   sudah diberi version langsung di app/build.gradle (apply false),
+    //   jadi tidak perlu diduplikasi di sini.
   }
 }
 
@@ -33,6 +37,8 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Organic Maps"
+
+// Modul-modul project
 include(":app")
 include(":sdk")
 include(":bitchatcore")

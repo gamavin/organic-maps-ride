@@ -1,4 +1,15 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Overlay khusus flavor "google": ganti Application dan tambahkan komponen khusus flavor ini -->
     <application
-        android:name="app.organicmaps.BitrideHiltApp" />
+        android:name="app.organicmaps.BitrideHiltApp"
+        tools:replace="android:name">
+
+        <activity
+            android:name="com.undefault.bitride.auth.AuthActivity"
+            android:exported="false" />
+
+    </application>
 </manifest>

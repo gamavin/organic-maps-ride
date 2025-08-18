@@ -51,16 +51,16 @@ android {
 dependencies {
   // Dasar Kotlin/Android
   implementation("org.jetbrains.kotlin:kotlin-stdlib")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-  implementation("androidx.core:core-ktx:1.13.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+  implementation("androidx.core:core-ktx:1.17.0")
   implementation("androidx.annotation:annotation:1.9.1")
 
   // Komponen yang dipakai core BitChat
-  implementation("com.google.code.gson:gson:2.11.0")
+  implementation("com.google.code.gson:gson:2.13.1")
   implementation("org.bouncycastle:bcprov-jdk15on:1.70")
   implementation("com.google.crypto.tink:tink-android:1.12.0")
   implementation("org.lz4:lz4-java:1.8.0")
 
   // Secure storage (dipakai SecureIdentityStateManager)
-  implementation("androidx.security:security-crypto:1.1.0-alpha06")
+  implementation("androidx.security:security-crypto:1.1.0")
 }

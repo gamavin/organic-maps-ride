@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,8 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
     private val _uiState = MutableStateFlow(DriverRegistrationFormState())
     val uiState: StateFlow<DriverRegistrationFormState> = _uiState.asStateFlow()
 
-    private val userRepository = UserRepository()
+    // PASS Firestore ke constructor
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
     private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun onNikChange(nik: String) {
@@ -128,9 +130,7 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
             val bytes = input.toByteArray()
             val md = MessageDigest.getInstance("SHA-256")
             val digest = md.digest(bytes)
-            val result = digest.fold("") { str, it -> str + "%02x".format(it) }
-            Log.d("DriverRegistrationVM", "Hashing successful, result: $result")
-            result
+            digest.fold("") { str, it -> str + "%02x".format(it) }
         } catch (e: Exception) {
             Log.e("DriverRegistrationVM", "Error during SHA-256 hashing", e)
             ""

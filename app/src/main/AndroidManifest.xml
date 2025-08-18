@@ -299,9 +299,7 @@
         android:screenOrientation="fullUser"
         android:windowSoftInputMode="stateAlwaysHidden|adjustPan"/>
 
-    <activity
-        android:name="com.undefault.bitride.auth.AuthActivity"
-        android:exported="false" />
+    <!-- AuthActivity TIDAK dideklarasikan di main; hanya di flavor google -->
 
     <!-- ManageSpaceActivity nyata (bukan alias) -->
     <activity
