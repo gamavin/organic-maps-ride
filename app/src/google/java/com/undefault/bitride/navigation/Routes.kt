@@ -10,7 +10,6 @@ object Routes {
     const val CUSTOMER_REGISTRATION_FORM = "customer_registration_form"
     const val DRIVER_REGISTRATION_FORM = "driver_registration_form"
     const val DRIVER_LOUNGE = "driver_lounge"
-    const val MAIN = "main"
 
     /**
      * Rute untuk membuka layar pemindaian KTP.

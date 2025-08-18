@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
+import android.app.Activity
+import android.content.Intent
+import app.organicmaps.MwmActivity
 import app.organicmaps.bitride.mesh.MeshManager
 import com.undefault.bitride.navigation.Routes
 
@@ -46,7 +49,16 @@ fun ChooseRoleScreen(
         ) {
             if (uiState.canLoginAsCustomer) {
                 Button(onClick = {
-                    viewModel.checkDataAndGetNextRoute(Routes.MAIN, navigateToNextScreen)
+                    viewModel.checkDataAndGetNextRoute("peta lengkap") { destination ->
+                        if (destination == "peta lengkap") {
+                            context.startActivity(Intent(context, MwmActivity::class.java))
+                            if (context is Activity) {
+                                (context as Activity).finish()
+                            }
+                        } else {
+                            navigateToNextScreen(destination)
+                        }
+                    }
                 }) {
                     Text("Masuk sebagai Customer")
                 }
