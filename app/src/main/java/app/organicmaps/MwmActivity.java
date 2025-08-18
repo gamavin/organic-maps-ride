@@ -55,6 +55,7 @@ import androidx.fragment.app.FragmentFactory;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
+import dagger.hilt.android.AndroidEntryPoint;
 import app.organicmaps.api.Const;
 import app.organicmaps.base.BaseMwmFragmentActivity;
 import app.organicmaps.base.OnBackPressListener;
@@ -82,7 +83,9 @@ import app.organicmaps.routing.RoutingPlanFragment;
 import app.organicmaps.routing.RoutingPlanInplaceController;
 import app.organicmaps.bitride.mesh.MeshService;
 import app.organicmaps.bitride.mesh.RideMeshCodec;
+import app.organicmaps.bitride.RideRequestViewModel;
 import app.organicmaps.bitride.mesh.RideRequest;
+import com.undefault.bitride.data.repository.UserProfileStats;
 import app.organicmaps.bitride.mesh.GeoPoint;
 import app.organicmaps.bitride.mesh.VehicleType;
 import app.organicmaps.sdk.ChoosePositionMode;
@@ -140,6 +143,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import app.organicmaps.sdk.routing.RoutingInfo;
 
+@AndroidEntryPoint
 public class MwmActivity extends BaseMwmFragmentActivity
     implements PlacePageActivationListener, View.OnTouchListener, MapRenderingListener, RoutingController.Container,
                LocationListener, SensorListener, LocationState.ModeChangeListener,
@@ -278,6 +282,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private View mRoutingProgressOverlay;
   @Nullable private Router mSelectedRouter;
   private MeshService mMeshService;
+  private RideRequestViewModel mRideRequestViewModel;
   private boolean mMeshBound = false;
   private final ServiceConnection mMeshConn = new ServiceConnection() {
     @Override
@@ -621,6 +626,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     mPlacePageViewModel = new ViewModelProvider(this).get(PlacePageViewModel.class);
     mMapButtonsViewModel = new ViewModelProvider(this).get(MapButtonsViewModel.class);
+    mRideRequestViewModel = new ViewModelProvider(this).get(RideRequestViewModel.class);
     // We don't need to manually handle removing the observers it follows the activity lifecycle
     mMapButtonsViewModel.getBottomButtonsHeight().observe(this, this::onMapBottomButtonsHeightChange);
     mMapButtonsViewModel.getLayoutMode().observe(this, this::initNavigationButtons);
@@ -747,8 +753,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
       String pickupName = startPoint.getName();
       String destinationName = endPoint.getName();
       String note = mNoteEditText.getText() == null ? "" : mNoteEditText.getText().toString();
+      UserProfileStats stats = mRideRequestViewModel.getStatsBlocking();
       RideRequest req = new RideRequest('C', hash, vehicle, pickup, destination, price,
-                                        mTollSwitch.isChecked(), 0, 0, 0, 0, 0,
+                                        mTollSwitch.isChecked(), stats.getTotalRides(),
+                                        stats.getUniquePartners(), stats.getPositive(),
+                                        stats.getNegative(), stats.getAskCancel(),
                                         mPaymentType, note, pickupName, destinationName);
       mMeshService.sendChannelMessage(RideMeshCodec.encodeRequest(req));
       Toast.makeText(this, "Permintaan tumpangan dikirim", Toast.LENGTH_SHORT).show();
