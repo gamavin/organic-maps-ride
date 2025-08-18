@@ -1,5 +1,6 @@
 package com.undefault.bitride.data.repository
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.undefault.bitride.data.model.CustomerProfile
@@ -22,6 +23,7 @@ class UserRepository @Inject constructor(
 
     suspend fun createDriverProfile(nikHash: String, stats: DriverProfile): Boolean = try {
         val data = mapOf("roles" to mapOf("driver" to stats))
+        Log.d("UserRepository", "createDriverProfile payload: $data")
         firestore.collection("users").document(nikHash)
             .set(data, SetOptions.merge())
             .await()
@@ -32,6 +34,7 @@ class UserRepository @Inject constructor(
 
     suspend fun createCustomerProfile(nikHash: String, stats: CustomerProfile): Boolean = try {
         val data = mapOf("roles" to mapOf("customer" to stats))
+        Log.d("UserRepository", "createCustomerProfile payload: $data")
         firestore.collection("users").document(nikHash)
             .set(data, SetOptions.merge())
             .await()
