@@ -6,6 +6,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
+import com.undefault.bitride.data.repository.UserRepository
+import com.undefault.bitride.data.model.CustomerProfile
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +32,7 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
 
     private val userPreferencesRepository = UserPreferencesRepository(application)
     private val dataStoreRepository = DataStoreRepository(application)
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
 
     fun processScannedData(scannedNik: String?, scannedName: String?) {
         _uiState.update { currentState ->
@@ -89,10 +93,19 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
                 return@launch
             }
 
-            dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
-            userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
-            Log.d("CustomerRegistrationVM", "Data customer disimpan ke storage lokal.")
-            _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+            val profile = CustomerProfile(name = _uiState.value.name)
+
+            val success = userRepository.createCustomerProfile(hashedNik, profile)
+            if (success) {
+                dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
+                userPreferencesRepository.saveLoggedInUser(hashedNik, "customer")
+                Log.d("CustomerRegistrationVM", "Data customer disimpan ke storage lokal dan Firestore.")
+                _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+            } else {
+                _uiState.update {
+                    it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.")
+                }
+            }
         }
     }
 
