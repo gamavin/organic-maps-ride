@@ -25,6 +25,9 @@ fun ChooseRoleScreen(
     val context = LocalContext.current
 
     val navigateToNextScreen = { destination: String ->
+        if (destination == Routes.DRIVER_LOUNGE) {
+            MeshManager.start(context)
+        }
         navController.navigate(destination) {
             // Bersihkan semua layar sebelumnya sampai ke awal
             popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -52,7 +55,6 @@ fun ChooseRoleScreen(
             }
             if (uiState.canLoginAsDriver) {
                 Button(onClick = {
-                    MeshManager.start(context)
                     viewModel.checkDataAndGetNextRoute(Routes.DRIVER_LOUNGE, navigateToNextScreen)
                 }) {
                     Text("Masuk sebagai Driver")
