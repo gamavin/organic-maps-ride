@@ -23,17 +23,23 @@ class FirestoreUserProfileRepository @Inject constructor(
 
         fun getInt(field: String): Int = (snapshot.get("$base.$field") as? Long)?.toInt() ?: 0
 
-        val unique = if (role == "customer")
-            getInt("uniqueDrivers")
+        val success = if (role == "driver")
+            getInt("successfulRides")
         else
-            getInt("uniqueCustomers")
+            getInt("successfulPayments")
+
+        val unique = if (role == "customer")
+            getInt("numberOfDifferentDrivers")
+        else
+            getInt("numberOfDifferentCustomers")
 
         return UserProfileStats(
             totalRides = getInt("totalRides"),
+            successful = success,
             uniquePartners = unique,
-            positive = getInt("positive"),
-            negative = getInt("negative"),
-            askCancel = getInt("askCancel")
+            positive = getInt("positiveRate"),
+            negative = getInt("negativeRate"),
+            askCancel = getInt("askingCancel")
         )
     }
 }
