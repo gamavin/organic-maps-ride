@@ -6,13 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.navigation.Routes
+import app.organicmaps.downloader.DownloaderActivity
+import app.organicmaps.sdk.downloader.MapManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 data class ChooseRoleUiState(
@@ -58,19 +58,16 @@ class ChooseRoleViewModel @Inject constructor(
 
     fun checkDataAndGetNextRoute(destination: String, onResult: (String) -> Unit) {
         viewModelScope.launch {
-            val mapFileStoredName = dataStoreRepository.activeMapFileNameFlow.firstOrNull()
-            val dbFileStoredName = dataStoreRepository.activePoiDbNameFlow.firstOrNull()
+            val hasMaps = MapManager.nativeGetDownloadedCount() > 0
 
-            val mapFile = if (mapFileStoredName.isNullOrBlank()) null else File(context.filesDir, mapFileStoredName)
-            val dbFile = if (dbFileStoredName.isNullOrBlank()) null else File(context.filesDir, dbFileStoredName)
-            val brouterDir = File(context.filesDir, "brouter/segments4")
-
-            val allDataExists = mapFile?.exists() == true &&
-                dbFile?.exists() == true &&
-                brouterDir.exists() && (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
-
-            val nextRoute = if (allDataExists) destination else Routes.IMPORT
-            onResult(nextRoute)
+            if (hasMaps) {
+                // Simpan nama berkas ke DataStore jika belum ada.
+                dataStoreRepository.setActiveMapFileName("default.mwm")
+                dataStoreRepository.setActivePoiDbName("default.poi.db")
+                onResult(destination)
+            } else {
+                context.startActivity(android.content.Intent(context, DownloaderActivity::class.java))
+            }
         }
     }
 }
