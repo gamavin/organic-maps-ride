@@ -95,10 +95,11 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
 
             // Profil awal hanya berisi statistik dengan nilai 0
             val profile = CustomerProfile()
+            dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
+            dataStoreRepository.saveBankInfo("", "")
 
             val success = userRepository.createCustomerProfile(hashedNik, profile)
             if (success) {
-                dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
                 userPreferencesRepository.saveLoggedInUser(hashedNik, "customer")
                 Log.d("CustomerRegistrationVM", "Data customer disimpan ke storage lokal dan Firestore.")
                 _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }

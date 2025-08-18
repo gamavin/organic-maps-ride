@@ -105,11 +105,11 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
 
             // Profil awal hanya berisi statistik dengan nilai 0
             val profile = DriverProfile()
+            dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
+            dataStoreRepository.saveBankInfo(_uiState.value.bankName, _uiState.value.bankAccountNumber)
 
             val success = userRepository.createDriverProfile(hashedNik, profile)
             if (success) {
-                dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
-                dataStoreRepository.saveBankInfo(_uiState.value.bankName, _uiState.value.bankAccountNumber)
                 userPreferencesRepository.saveLoggedInUser(hashedNik, "driver")
                 Log.d("DriverRegistrationVM", "Data driver disimpan ke storage lokal dan Firestore.")
                 _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
