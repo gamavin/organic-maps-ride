@@ -69,7 +69,7 @@ class ChooseRoleViewModel @Inject constructor(
                     dbFile?.exists() == true &&
                     brouterDir.exists() && (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
 
-            val destination = if (allDataExists) Routes.DRIVER_LOUNGE else Routes.IMPORT
+            val destination = if (allDataExists) Routes.MAIN else Routes.IMPORT
             onResult(destination)
         }
     }
