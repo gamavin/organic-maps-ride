@@ -35,7 +35,7 @@ fun AppNavigation() {
                 onNavigateToChooseRole = { navController.navigate(Routes.CHOOSE_ROLE) },
                 onNavigateToNextScreen = {
                     MeshManager.start(context)
-                    navController.navigate(Routes.MAIN) {
+                    navController.navigate(Routes.CHOOSE_ROLE) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 }
@@ -84,7 +84,7 @@ fun AppNavigation() {
                 initialName = name,
                 onRegistrationComplete = {
                     MeshManager.start(context)
-                    navController.navigate(Routes.MAIN) {
+                    navController.navigate(Routes.CHOOSE_ROLE) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 },
@@ -105,14 +105,13 @@ fun AppNavigation() {
                 initialName = name,
                 onRegistrationComplete = {
                     MeshManager.start(context)
-                    navController.navigate(Routes.MAIN) {
+                    navController.navigate(Routes.CHOOSE_ROLE) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 },
                 onNavigateToScanKtp = { navController.navigate(Routes.idCardScanWithArgs("driver", true)) }
             )
         }
-        placeholderScreen(Routes.MAIN, "Layar Utama")
         placeholderScreen(Routes.IMPORT, "Impor Data")
     }
 }
