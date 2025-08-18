@@ -14,6 +14,15 @@ class UserRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
 
+    private fun logPayload(action: String, data: Any) {
+        val payloadString = data.toString().lowercase()
+        if (payloadString.contains("name") || payloadString.contains("nik") || payloadString.contains("bank")) {
+            Log.w("UserRepository", "$action payload contains personal info: $payloadString")
+        } else {
+            Log.d("UserRepository", "$action payload: $payloadString")
+        }
+    }
+
     suspend fun doesRoleExist(nikHash: String, role: String): Boolean = try {
         val snapshot = firestore.collection("users").document(nikHash).get().await()
         snapshot.get("roles.$role") != null
@@ -23,7 +32,7 @@ class UserRepository @Inject constructor(
 
     suspend fun createDriverProfile(nikHash: String, stats: DriverProfile): Boolean = try {
         val data = mapOf("roles" to mapOf("driver" to stats))
-        Log.d("UserRepository", "createDriverProfile payload: $data")
+        logPayload("createDriverProfile", data)
         firestore.collection("users").document(nikHash)
             .set(data, SetOptions.merge())
             .await()
@@ -34,7 +43,7 @@ class UserRepository @Inject constructor(
 
     suspend fun createCustomerProfile(nikHash: String, stats: CustomerProfile): Boolean = try {
         val data = mapOf("roles" to mapOf("customer" to stats))
-        Log.d("UserRepository", "createCustomerProfile payload: $data")
+        logPayload("createCustomerProfile", data)
         firestore.collection("users").document(nikHash)
             .set(data, SetOptions.merge())
             .await()
