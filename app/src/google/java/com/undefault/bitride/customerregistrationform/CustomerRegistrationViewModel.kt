@@ -4,10 +4,8 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.FirebaseFirestore
-import com.undefault.bitride.data.model.CustomerProfile
+import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
-import com.undefault.bitride.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,9 +27,8 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
     private val _uiState = MutableStateFlow(CustomerRegistrationFormState())
     val uiState: StateFlow<CustomerRegistrationFormState> = _uiState.asStateFlow()
 
-    // PASS Firestore ke constructor
-    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
     private val userPreferencesRepository = UserPreferencesRepository(application)
+    private val dataStoreRepository = DataStoreRepository(application)
 
     fun processScannedData(scannedNik: String?, scannedName: String?) {
         _uiState.update { currentState ->
@@ -84,34 +81,18 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
     fun onConfirmData() {
         _uiState.update { it.copy(showConfirmationDialog = false, isLoading = true, validationError = null) }
         viewModelScope.launch {
-            val nikToHash = _uiState.value.nik
-            val hashedNik = hashSha256(nikToHash)
+            val nik = _uiState.value.nik
+            val hashedNik = hashSha256(nik)
 
             if (hashedNik.isBlank()) {
                 _uiState.update { it.copy(isLoading = false, validationError = "Gagal melakukan hash NIK.") }
                 return@launch
             }
 
-            val roleExists = userRepository.doesRoleExist(hashedNik, "customer")
-            if (roleExists) {
-                _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
-                return@launch
-            }
-
-            val profile = CustomerProfile(
-                name = _uiState.value.name,
-                numberOfDifferentDrivers = 0L
-            )
-            val success = userRepository.createCustomerProfile(hashedNik, profile)
-            if (success) {
-                Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
-                userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
-                Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
-                _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
-            } else {
-                Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
-                _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
-            }
+            dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
+            userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
+            Log.d("CustomerRegistrationVM", "Data customer disimpan ke storage lokal.")
+            _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
         }
     }
 
