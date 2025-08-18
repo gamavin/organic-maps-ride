@@ -12,9 +12,7 @@ class UserPreferencesRepository @Inject constructor(
     constructor(context: Context) : this(DataStoreRepository(context))
 
     suspend fun saveLoggedInUser(nikHash: String, role: String) {
-        val roles = dataStoreRepository.rolesFlow.firstOrNull()?.toMutableSet() ?: mutableSetOf()
-        roles.add(role)
-        dataStoreRepository.saveLoggedInUser(nikHash, roles.toList())
+        dataStoreRepository.saveLoggedInUser(nikHash, role)
     }
 
     suspend fun getLoggedInUser(): LoggedInData? {

@@ -69,10 +69,13 @@ class DataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun saveLoggedInUser(nikHash: String, roles: List<String>) {
+    suspend fun saveLoggedInUser(nikHash: String, role: String) {
         dataStore.edit { prefs ->
             prefs[KEY_NIK_HASH] = nikHash
-            prefs[KEY_ROLES] = roles.toSet().joinToString(",")
+            val roles = prefs[KEY_ROLES]?.split(",")?.toMutableSet() ?: mutableSetOf()
+            if (roles.add(role)) {
+                prefs[KEY_ROLES] = roles.joinToString(",")
+            }
         }
     }
 
