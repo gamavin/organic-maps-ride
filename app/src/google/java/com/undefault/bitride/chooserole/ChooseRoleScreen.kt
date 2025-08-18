@@ -44,7 +44,7 @@ fun ChooseRoleScreen(
             if (uiState.canLoginAsCustomer) {
                 Button(onClick = {
                     MeshManager.start(context)
-                    viewModel.checkDataAndGetNextRoute(Routes.MAIN, navigateToNextScreen)
+                    viewModel.checkDataAndGetNextRoute(navigateToNextScreen)
                 }) {
                     Text("Masuk sebagai Customer")
                 }
@@ -53,7 +53,7 @@ fun ChooseRoleScreen(
             if (uiState.canLoginAsDriver) {
                 Button(onClick = {
                     MeshManager.start(context)
-                    viewModel.checkDataAndGetNextRoute(Routes.DRIVER_LOUNGE, navigateToNextScreen)
+                    navController.navigate(Routes.DRIVER_LOUNGE)
                 }) {
                     Text("Masuk sebagai Driver")
                 }
