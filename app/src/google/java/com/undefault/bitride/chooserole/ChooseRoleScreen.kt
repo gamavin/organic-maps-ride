@@ -46,7 +46,6 @@ fun ChooseRoleScreen(
         ) {
             if (uiState.canLoginAsCustomer) {
                 Button(onClick = {
-                    MeshManager.start(context)
                     viewModel.checkDataAndGetNextRoute(Routes.MAIN, navigateToNextScreen)
                 }) {
                     Text("Masuk sebagai Customer")
