@@ -85,7 +85,6 @@ import app.organicmaps.bitride.mesh.RideMeshCodec;
 import app.organicmaps.bitride.mesh.RideRequest;
 import app.organicmaps.bitride.mesh.GeoPoint;
 import app.organicmaps.bitride.mesh.VehicleType;
-import com.undefault.bitride.profile.UserProfileViewModel;
 import app.organicmaps.sdk.ChoosePositionMode;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.Map;
@@ -208,7 +207,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private PlacePageViewModel mPlacePageViewModel;
   private MapButtonsViewModel mMapButtonsViewModel;
   private MapButtonsController.LayoutMode mPreviousMapLayoutMode;
-  private UserProfileViewModel mUserProfileViewModel;
 
   @Nullable
   private WindowInsetsCompat mCurrentWindowInsets;
@@ -623,7 +621,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     mPlacePageViewModel = new ViewModelProvider(this).get(PlacePageViewModel.class);
     mMapButtonsViewModel = new ViewModelProvider(this).get(MapButtonsViewModel.class);
-    mUserProfileViewModel = new ViewModelProvider(this).get(UserProfileViewModel.class);
     // We don't need to manually handle removing the observers it follows the activity lifecycle
     mMapButtonsViewModel.getBottomButtonsHeight().observe(this, this::onMapBottomButtonsHeightChange);
     mMapButtonsViewModel.getLayoutMode().observe(this, this::initNavigationButtons);
@@ -738,31 +735,23 @@ public class MwmActivity extends BaseMwmFragmentActivity
         Toast.makeText(this, "Titik rute belum lengkap", Toast.LENGTH_SHORT).show();
         return;
       }
-      final VehicleType vehicle = (mSelectedRouter == Router.Vehicle) ? VehicleType.CAR : VehicleType.MOTOR;
-      final int price;
+      VehicleType vehicle = (mSelectedRouter == Router.Vehicle) ? VehicleType.CAR : VehicleType.MOTOR;
+      int price;
       if (vehicle == VehicleType.CAR)
         price = (int)(mTollSwitch.isChecked() ? mCarTollPriceValue : mCarNoTollPriceValue);
       else
         price = (int)mMotorcyclePriceValue;
-      final GeoPoint pickup = new GeoPoint(startPoint.getLat(), startPoint.getLon());
-      final GeoPoint destination = new GeoPoint(endPoint.getLat(), endPoint.getLon());
-      final String hash = sha256Hex(mMeshService.getPeerId());
-      final String pickupName = startPoint.getName();
-      final String destinationName = endPoint.getName();
-      final String note = mNoteEditText.getText() == null ? "" : mNoteEditText.getText().toString();
-      mUserProfileViewModel.fetchProfile("customer", profile -> {
-        int totalRides = profile != null ? profile.getTotalRides() : 0;
-        int uniqueDrivers = profile != null ? profile.getUniqueDrivers() : 0;
-        int positive = profile != null ? profile.getPositive() : 0;
-        int negative = profile != null ? profile.getNegative() : 0;
-        int askCancel = profile != null ? profile.getAskCancel() : 0;
-        RideRequest req = new RideRequest('C', hash, vehicle, pickup, destination, price,
-                                          mTollSwitch.isChecked(), totalRides, uniqueDrivers,
-                                          positive, negative, askCancel,
-                                          mPaymentType, note, pickupName, destinationName);
-        mMeshService.sendChannelMessage(RideMeshCodec.encodeRequest(req));
-        Toast.makeText(MwmActivity.this, "Permintaan tumpangan dikirim", Toast.LENGTH_SHORT).show();
-      });
+      GeoPoint pickup = new GeoPoint(startPoint.getLat(), startPoint.getLon());
+      GeoPoint destination = new GeoPoint(endPoint.getLat(), endPoint.getLon());
+      String hash = sha256Hex(mMeshService.getPeerId());
+      String pickupName = startPoint.getName();
+      String destinationName = endPoint.getName();
+      String note = mNoteEditText.getText() == null ? "" : mNoteEditText.getText().toString();
+      RideRequest req = new RideRequest('C', hash, vehicle, pickup, destination, price,
+                                        mTollSwitch.isChecked(), 0, 0, 0, 0, 0,
+                                        mPaymentType, note, pickupName, destinationName);
+      mMeshService.sendChannelMessage(RideMeshCodec.encodeRequest(req));
+      Toast.makeText(this, "Permintaan tumpangan dikirim", Toast.LENGTH_SHORT).show();
     });
 
     updateViewsInsets();
