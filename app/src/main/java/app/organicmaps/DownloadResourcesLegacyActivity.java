@@ -122,25 +122,9 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 
         mChbDownloadCountry.setText(checkBoxText);
       }
-
-      if (mAreResourcesDownloaded)
+      else if (mAreResourcesDownloaded)
       {
-        if (status != CountryItem.STATUS_DONE && mChbDownloadCountry.isChecked())
-        {
-          CountryItem item = CountryItem.fill(mCurrentCountry);
-          UiUtils.hide(mChbDownloadCountry);
-          mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
-          mProgress.setMax((int) item.totalSize);
-          mProgress.setProgressCompat(0, true);
-
-          mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
-          MapManager.startDownload(mCurrentCountry);
-          setAction(PROCEED_TO_MAP);
-        }
-        else
-        {
-          showMap();
-        }
+        showMap();
       }
 
       MwmApplication.from(DownloadResourcesLegacyActivity.this).getLocationHelper().removeListener(this);
@@ -216,16 +200,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
       finish();
     });
 
-    if (prepareFilesDownload(false))
-    {
-      Utils.keepScreenOn(true, getWindow());
-
-      setAction(DOWNLOAD);
-
-      return;
-    }
-
-    showMap();
+    setAction(DOWNLOAD);
   }
 
   @CallSuper
@@ -332,8 +307,37 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 
   private void onDownloadClicked()
   {
-    setAction(PAUSE);
-    doDownload();
+    if (!mAreResourcesDownloaded)
+    {
+      if (prepareFilesDownload(false))
+      {
+        Utils.keepScreenOn(true, getWindow());
+        setAction(PAUSE);
+        doDownload();
+      }
+      else
+      {
+        showMap();
+      }
+      return;
+    }
+
+    if (mCurrentCountry != null && mChbDownloadCountry.isChecked())
+    {
+      CountryItem item = CountryItem.fill(mCurrentCountry);
+      UiUtils.hide(mChbDownloadCountry);
+      mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
+      mProgress.setMax((int) item.totalSize);
+      mProgress.setProgressCompat(0, true);
+      Utils.keepScreenOn(true, getWindow());
+      mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
+      MapManager.startDownload(mCurrentCountry);
+      setAction(PROCEED_TO_MAP);
+    }
+    else
+    {
+      showMap();
+    }
   }
 
   private void onPauseClicked()
@@ -470,28 +474,19 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     {
       // World and WorldCoasts has been downloaded, we should register maps again to correctly add them to the model.
       Framework.nativeReloadWorldMaps();
-
-      if (mCurrentCountry != null && mChbDownloadCountry.isChecked())
+      mAreResourcesDownloaded = true;
+      if (mCurrentCountry == null)
       {
-        CountryItem item = CountryItem.fill(mCurrentCountry);
-        UiUtils.hide(mChbDownloadCountry);
-        mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
-        mProgress.setMax((int) item.totalSize);
-        mProgress.setProgressCompat(0, true);
-
-        mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
-        MapManager.startDownload(mCurrentCountry);
-        setAction(PROCEED_TO_MAP);
-      }
-      else if (mCurrentCountry == null)
-      {
-        mAreResourcesDownloaded = true;
         MwmApplication.from(this).getLocationHelper().addListener(mLocationListener);
+        setAction(DOWNLOAD);
       }
       else
       {
-        mAreResourcesDownloaded = true;
-        showMap();
+        int status = MapManager.nativeGetStatus(mCurrentCountry);
+        if (status == CountryItem.STATUS_DONE)
+          showMap();
+        else
+          setAction(DOWNLOAD);
       }
     }
     else
