@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
+import com.undefault.bitride.data.model.Roles
 import app.organicmaps.downloader.DownloaderActivity
 import app.organicmaps.sdk.downloader.MapManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,16 +35,18 @@ class ChooseRoleViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            loadUserRoles()
-        }
+        viewModelScope.launch { loadUserRoles() }
+    }
+
+    fun refreshRoles() {
+        viewModelScope.launch { loadUserRoles() }
     }
 
     private suspend fun loadUserRoles() {
         val loggedInData = userPreferencesRepository.getLoggedInUser()
-        val roles = loggedInData?.roles ?: emptyList()
-        val hasDriverRole = roles.contains("DRIVER")
-        val hasCustomerRole = roles.contains("CUSTOMER")
+        val roles = loggedInData?.roles?.map { it.uppercase() } ?: emptyList()
+        val hasDriverRole = roles.contains(Roles.DRIVER)
+        val hasCustomerRole = roles.contains(Roles.CUSTOMER)
 
         _uiState.value = if (loggedInData == null) {
             ChooseRoleUiState(canRegisterDriver = true, canRegisterCustomer = true)

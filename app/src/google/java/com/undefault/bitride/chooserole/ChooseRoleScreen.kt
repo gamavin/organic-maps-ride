@@ -5,6 +5,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,6 +19,7 @@ import android.content.Intent
 import app.organicmaps.MwmActivity
 import app.organicmaps.bitride.mesh.MeshManager
 import com.undefault.bitride.navigation.Routes
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun ChooseRoleScreen(
@@ -26,6 +28,14 @@ fun ChooseRoleScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    LaunchedEffect(navController) {
+        navController.currentBackStackEntryFlow.collect { backStackEntry ->
+            if (backStackEntry.destination.route == Routes.CHOOSE_ROLE) {
+                viewModel.refreshRoles()
+            }
+        }
+    }
 
     val navigateToNextScreen = { destination: String ->
         if (destination == Routes.DRIVER_LOUNGE) {
