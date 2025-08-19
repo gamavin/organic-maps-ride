@@ -59,8 +59,8 @@ fun ChooseRoleScreen(
         ) {
             if (uiState.canLoginAsCustomer) {
                 Button(onClick = {
-                    viewModel.checkDataAndGetNextRoute("peta lengkap") { destination ->
-                        if (destination == "peta lengkap") {
+                    viewModel.checkDataAndGetNextRoute(Routes.MAP_HOME) { destination ->
+                        if (destination == Routes.MAP_HOME) {
                             context.startActivity(Intent(context, MwmActivity::class.java))
                             if (context is Activity) {
                                 (context as Activity).finish()
