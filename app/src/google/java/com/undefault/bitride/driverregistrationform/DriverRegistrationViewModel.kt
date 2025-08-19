@@ -1,20 +1,22 @@
 package com.undefault.bitride.driverregistrationform
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.undefault.bitride.data.model.DriverProfile
+import com.undefault.bitride.data.model.Roles
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
-import com.undefault.bitride.data.model.DriverProfile
-import com.undefault.bitride.data.model.Roles
-import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 
 data class DriverRegistrationFormState(
@@ -28,14 +30,15 @@ data class DriverRegistrationFormState(
     val registrationSuccess: Boolean = false
 )
 
-class DriverRegistrationViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class DriverRegistrationViewModel @Inject constructor(
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val dataStoreRepository: DataStoreRepository,
+    private val userRepository: UserRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DriverRegistrationFormState())
     val uiState: StateFlow<DriverRegistrationFormState> = _uiState.asStateFlow()
-
-    private val userPreferencesRepository = UserPreferencesRepository(application)
-    private val dataStoreRepository = DataStoreRepository(application)
-    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
 
     fun onNikChange(nik: String) {
         _uiState.update { currentState ->
@@ -111,7 +114,9 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
 
             val success = userRepository.createDriverProfile(hashedNik, profile)
             if (success) {
-                userPreferencesRepository.saveLoggedInUser(hashedNik, Roles.DRIVER)
+                withContext(Dispatchers.IO) {
+                    userPreferencesRepository.saveLoggedInUser(hashedNik, Roles.DRIVER)
+                }
                 Log.d("DriverRegistrationVM", "Data driver disimpan ke storage lokal dan Firestore.")
                 _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
             } else {
