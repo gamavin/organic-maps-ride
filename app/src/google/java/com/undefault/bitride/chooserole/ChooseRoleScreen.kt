@@ -30,6 +30,7 @@ fun ChooseRoleScreen(
     val context = LocalContext.current
 
     LaunchedEffect(navController) {
+        viewModel.refreshRoles()
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             if (backStackEntry.destination.route == Routes.CHOOSE_ROLE) {
                 viewModel.refreshRoles()
