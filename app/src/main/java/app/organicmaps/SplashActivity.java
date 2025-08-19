@@ -33,6 +33,7 @@ import app.organicmaps.sdk.util.log.Logger;
 import app.organicmaps.util.SharingUtils;
 import app.organicmaps.util.ThemeUtils;
 import app.organicmaps.util.Utils;
+import com.undefault.bitride.navigation.Routes;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.io.IOException;
 import java.util.Objects;
@@ -208,6 +209,7 @@ public class SplashActivity extends AppCompatActivity
     else
     {
       intent.setComponent(new ComponentName(this, DownloadResourcesLegacyActivity.class));
+      intent.putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, Routes.AUTH);
     }
 
     // FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_RESET_TASK_IF_NEEDED break the cold start.
