@@ -8,6 +8,7 @@ import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
 import com.undefault.bitride.data.model.CustomerProfile
+import com.undefault.bitride.data.model.Roles
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -100,7 +101,7 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
 
             val success = userRepository.createCustomerProfile(hashedNik, profile)
             if (success) {
-                userPreferencesRepository.saveLoggedInUser(hashedNik, "customer")
+                userPreferencesRepository.saveLoggedInUser(hashedNik, Roles.CUSTOMER)
                 Log.d("CustomerRegistrationVM", "Data customer disimpan ke storage lokal dan Firestore.")
                 _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
             } else {

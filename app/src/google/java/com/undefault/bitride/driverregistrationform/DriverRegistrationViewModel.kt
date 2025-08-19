@@ -8,6 +8,7 @@ import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
 import com.undefault.bitride.data.model.DriverProfile
+import com.undefault.bitride.data.model.Roles
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -110,7 +111,7 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
 
             val success = userRepository.createDriverProfile(hashedNik, profile)
             if (success) {
-                userPreferencesRepository.saveLoggedInUser(hashedNik, "driver")
+                userPreferencesRepository.saveLoggedInUser(hashedNik, Roles.DRIVER)
                 Log.d("DriverRegistrationVM", "Data driver disimpan ke storage lokal dan Firestore.")
                 _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
             } else {
