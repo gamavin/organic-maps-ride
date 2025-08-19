@@ -7,7 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.model.Roles
-import app.organicmaps.downloader.DownloaderActivity
+import app.organicmaps.DownloadResourcesLegacyActivity
+import app.organicmaps.MwmApplication
+import app.organicmaps.sdk.downloader.CountryItem
 import app.organicmaps.sdk.downloader.MapManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -62,6 +64,20 @@ class ChooseRoleViewModel @Inject constructor(
 
     fun checkDataAndGetNextRoute(destination: String, onResult: (String) -> Unit) {
         viewModelScope.launch {
+            val loc = MwmApplication.from(context).locationHelper.savedLocation
+            val countryId = loc?.let { MapManager.nativeFindCountry(it.latitude, it.longitude) }
+
+            if (!countryId.isNullOrEmpty()) {
+                val status = MapManager.nativeGetStatus(countryId)
+                if (status != CountryItem.STATUS_DONE) {
+                    val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                    return@launch
+                }
+            }
+
             val mapsDownloaded = MapManager.nativeGetDownloadedCount() > 0
             val brouterDir = File(context.filesDir, "brouter/segments4")
             val brouterReady = brouterDir.exists() &&
@@ -74,7 +90,7 @@ class ChooseRoleViewModel @Inject constructor(
                 dbFile?.let { dataStoreRepository.setActivePoiDbName(it.name) }
                 onResult(destination)
             } else {
-                val intent = Intent(context, DownloaderActivity::class.java).apply {
+                val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)
