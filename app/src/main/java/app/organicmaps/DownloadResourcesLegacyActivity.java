@@ -42,6 +42,8 @@ import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.PaddingInsetsListener;
 import com.undefault.bitride.auth.AuthActivity;
+import com.undefault.bitride.navigation.Routes;
+import app.organicmaps.MwmActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import java.util.List;
@@ -51,6 +53,7 @@ import java.util.Objects;
 public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 {
   private static final String TAG = DownloadResourcesLegacyActivity.class.getSimpleName();
+  public static final String EXTRA_NEXT_ROUTE = "extra_next_route";
 
   private TextView mTvMessage;
   private LinearProgressIndicator mProgress;
@@ -338,7 +341,16 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     // Re-use original intent to retain all flags and payload.
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
-    intent.setComponent(new ComponentName(this, AuthActivity.class));
+    final String nextRoute = intent.getStringExtra(EXTRA_NEXT_ROUTE);
+    if (Routes.DRIVER_LOUNGE.equals(nextRoute))
+    {
+      intent.setComponent(new ComponentName(this, AuthActivity.class));
+      intent.putExtra(AuthActivity.EXTRA_START_DESTINATION, nextRoute);
+    }
+    else
+    {
+      intent.setComponent(new ComponentName(this, MwmActivity.class));
+    }
 
     // Disable animation because AuthActivity should appear exactly over this one
     intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_CLEAR_TOP);
