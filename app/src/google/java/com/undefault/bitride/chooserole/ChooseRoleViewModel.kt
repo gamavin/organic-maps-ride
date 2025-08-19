@@ -2,6 +2,7 @@ package com.undefault.bitride.chooserole
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
@@ -15,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -64,19 +66,26 @@ class ChooseRoleViewModel @Inject constructor(
 
     fun checkDataAndGetNextRoute(destination: String, onResult: (String) -> Unit) {
         viewModelScope.launch {
-            val loc = MwmApplication.from(context).locationHelper.savedLocation
+            val locationHelper = MwmApplication.from(context).locationHelper
+            val loc = locationHelper.savedLocation
             val countryId = loc?.let { MapManager.nativeFindCountry(it.latitude, it.longitude) }
 
-            if (!countryId.isNullOrEmpty()) {
-                val status = MapManager.nativeGetStatus(countryId)
-                if (status != CountryItem.STATUS_DONE) {
-                    val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, destination)
-                    }
-                    context.startActivity(intent)
-                    return@launch
+            if (loc == null || countryId.isNullOrEmpty()) {
+                Toast.makeText(context, "Aktifkan GPS dan coba lagi", Toast.LENGTH_LONG).show()
+                locationHelper.resumeLocationInForeground()
+                delay(1000)
+                checkDataAndGetNextRoute(destination, onResult)
+                return@launch
+            }
+
+            val status = MapManager.nativeGetStatus(countryId)
+            if (status != CountryItem.STATUS_DONE) {
+                val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, destination)
                 }
+                context.startActivity(intent)
+                return@launch
             }
 
             val mapsDownloaded = MapManager.nativeGetDownloadedCount() > 0
