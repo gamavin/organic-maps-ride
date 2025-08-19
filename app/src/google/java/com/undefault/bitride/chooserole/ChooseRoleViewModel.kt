@@ -12,6 +12,7 @@ import app.organicmaps.DownloadResourcesLegacyActivity
 import app.organicmaps.MwmApplication
 import app.organicmaps.sdk.downloader.CountryItem
 import app.organicmaps.sdk.downloader.MapManager
+import app.organicmaps.sdk.Framework
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,14 +89,15 @@ class ChooseRoleViewModel @Inject constructor(
                 return@launch
             }
 
+            val mapsDir = File(Framework.nativeGetWritableDir())
             val mapsDownloaded = MapManager.nativeGetDownloadedCount() > 0
-            val brouterDir = File(context.filesDir, "brouter/segments4")
+            val brouterDir = File(mapsDir, "brouter/segments4")
             val brouterReady = brouterDir.exists() &&
                 (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
 
             if (mapsDownloaded && brouterReady) {
-                val mapFile = context.filesDir.listFiles()?.firstOrNull { it.extension == "mwm" }
-                val dbFile = context.filesDir.listFiles()?.firstOrNull { it.extension == "db" }
+                val mapFile = mapsDir.listFiles()?.firstOrNull { it.extension == "mwm" }
+                val dbFile = mapsDir.listFiles()?.firstOrNull { it.extension == "db" }
                 mapFile?.let { dataStoreRepository.setActiveMapFileName(it.name) }
                 dbFile?.let { dataStoreRepository.setActivePoiDbName(it.name) }
                 onResult(destination)
