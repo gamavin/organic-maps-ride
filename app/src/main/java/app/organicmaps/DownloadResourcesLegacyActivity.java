@@ -438,19 +438,15 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
     final String nextRoute = intent.getStringExtra(EXTRA_NEXT_ROUTE);
-    if (Routes.DRIVER_LOUNGE.equals(nextRoute))
+    if (TextUtils.isEmpty(nextRoute) || Routes.MAP_HOME.equals(nextRoute))
     {
-      intent.setComponent(new ComponentName(this, AuthActivity.class));
-      intent.putExtra(AuthActivity.EXTRA_START_DESTINATION, nextRoute);
-    }
-    else if (!TextUtils.isEmpty(nextRoute))
-    {
-      intent.setComponent(new ComponentName(this, AuthActivity.class));
-      intent.putExtra(AuthActivity.EXTRA_START_DESTINATION, nextRoute);
+      intent.setComponent(new ComponentName(this, MwmActivity.class));
+      intent.removeExtra(AuthActivity.EXTRA_START_DESTINATION);
     }
     else
     {
-      intent.setComponent(new ComponentName(this, MwmActivity.class));
+      intent.setComponent(new ComponentName(this, AuthActivity.class));
+      intent.putExtra(AuthActivity.EXTRA_START_DESTINATION, nextRoute);
     }
 
     // Disable animation because AuthActivity should appear exactly over this one
