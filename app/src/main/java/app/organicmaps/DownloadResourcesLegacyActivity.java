@@ -31,7 +31,6 @@ import androidx.annotation.StyleRes;
 import androidx.core.view.ViewCompat;
 import app.organicmaps.base.BaseMwmFragmentActivity;
 import app.organicmaps.intent.Factory;
-import app.organicmaps.MwmActivity;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.downloader.CountryItem;
 import app.organicmaps.sdk.downloader.MapManager;
@@ -43,7 +42,6 @@ import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.PaddingInsetsListener;
 import com.undefault.bitride.auth.AuthActivity;
-import com.undefault.bitride.navigation.Routes;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import java.util.List;
@@ -53,7 +51,6 @@ import java.util.Objects;
 public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 {
   private static final String TAG = DownloadResourcesLegacyActivity.class.getSimpleName();
-  public static final String EXTRA_NEXT_ROUTE = "extra_next_route";
 
   private TextView mTvMessage;
   private LinearProgressIndicator mProgress;
@@ -341,27 +338,15 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     // Re-use original intent to retain all flags and payload.
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
-    final String route = intent.getStringExtra(EXTRA_NEXT_ROUTE);
+    intent.setComponent(new ComponentName(this, AuthActivity.class));
 
-    Class<?> target = AuthActivity.class;
-    if (Routes.DRIVER_LOUNGE.equals(route))
-    {
-      intent.putExtra(EXTRA_NEXT_ROUTE, route);
-    }
-    else if ("peta lengkap".equals(route))
-    {
-      target = MwmActivity.class;
-    }
-
-    intent.setComponent(new ComponentName(this, target));
-
-    // Disable animation because target activity should appear exactly over this one
+    // Disable animation because AuthActivity should appear exactly over this one
     intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
     // See {@link SplashActivity.processNavigation()}
     if (Factory.isStartedForApiResult(intent))
     {
-      // Wait for the result from target activity for API callers.
+      // Wait for the result from AuthActivity for API callers.
       mApiRequest.launch(intent);
       return;
     }

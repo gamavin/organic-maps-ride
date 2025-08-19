@@ -10,16 +10,16 @@ import com.undefault.bitride.auth.AuthScreen
 import com.undefault.bitride.chooserole.ChooseRoleScreen
 import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormScreen
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
-import com.undefault.bitride.driverlounge.DriverLoungeScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
+import com.undefault.bitride.driverlounge.DriverLoungeScreen
 
 /**
  * Menangani navigasi aplikasi BitRide.
  */
 @Composable
-fun AppNavigation(startDestination: String = Routes.AUTH) {
+fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = startDestination) {
+    NavHost(navController = navController, startDestination = Routes.AUTH) {
         composable(Routes.AUTH) {
             AuthScreen(
                 onNavigateToChooseRole = { navController.navigate(Routes.CHOOSE_ROLE) },
