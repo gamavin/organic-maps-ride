@@ -46,6 +46,14 @@ import com.undefault.bitride.navigation.Routes;
 import app.organicmaps.MwmActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 
@@ -81,6 +89,8 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   private String[] mBtnNames;
 
   private int mCountryDownloadListenerSlot;
+
+  private boolean mIsBrouterDownloading;
 
   private final LocationListener mLocationListener = new LocationListener() {
     @Override
@@ -337,7 +347,73 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   {
     if (!mAreResourcesDownloaded)
       return;
+    if (!areBrouterSegmentsReady())
+    {
+      downloadBrouterSegments();
+      return;
+    }
+    launchMap();
+  }
 
+  private boolean areBrouterSegmentsReady()
+  {
+    File dir = new File(getFilesDir(), "brouter/segments4");
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".rd5"));
+    return files != null && files.length > 0;
+  }
+
+  private void downloadBrouterSegments()
+  {
+    if (mIsBrouterDownloading)
+      return;
+    mIsBrouterDownloading = true;
+    mTvMessage.setText(R.string.downloading_brouter_segments);
+    mProgress.setIndeterminate(true);
+
+    new Thread(() -> {
+      boolean ok = false;
+      File dir = new File(getFilesDir(), "brouter/segments4");
+      if (!dir.exists())
+        dir.mkdirs();
+      File out = new File(dir, "E10_N10.rd5");
+      HttpURLConnection connection = null;
+      try
+      {
+        URL url = new URL("https://brouter.de/brouter/segments4/E10_N10.rd5");
+        connection = (HttpURLConnection) url.openConnection();
+        try (InputStream in = new BufferedInputStream(connection.getInputStream());
+             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(out)))
+        {
+          byte[] buffer = new byte[8192];
+          int len;
+          while ((len = in.read(buffer)) != -1)
+            bos.write(buffer, 0, len);
+          ok = true;
+        }
+      }
+      catch (IOException ignored)
+      {
+      }
+      finally
+      {
+        if (connection != null)
+          connection.disconnect();
+      }
+
+      boolean result = ok;
+      runOnUiThread(() -> {
+        mIsBrouterDownloading = false;
+        mProgress.setIndeterminate(false);
+        if (result)
+          showMap();
+        else
+          launchMap();
+      });
+    }).start();
+  }
+
+  private void launchMap()
+  {
     // Re-use original intent to retain all flags and payload.
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
