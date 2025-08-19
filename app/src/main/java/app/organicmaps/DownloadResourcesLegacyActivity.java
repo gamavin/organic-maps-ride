@@ -123,6 +123,26 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
         mChbDownloadCountry.setText(checkBoxText);
       }
 
+      if (mAreResourcesDownloaded)
+      {
+        if (status != CountryItem.STATUS_DONE && mChbDownloadCountry.isChecked())
+        {
+          CountryItem item = CountryItem.fill(mCurrentCountry);
+          UiUtils.hide(mChbDownloadCountry);
+          mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
+          mProgress.setMax((int) item.totalSize);
+          mProgress.setProgressCompat(0, true);
+
+          mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
+          MapManager.startDownload(mCurrentCountry);
+          setAction(PROCEED_TO_MAP);
+        }
+        else
+        {
+          showMap();
+        }
+      }
+
       MwmApplication.from(DownloadResourcesLegacyActivity.this).getLocationHelper().removeListener(this);
     }
   };
@@ -466,6 +486,11 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
         mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
         MapManager.startDownload(mCurrentCountry);
         setAction(PROCEED_TO_MAP);
+      }
+      else if (mCurrentCountry == null)
+      {
+        mAreResourcesDownloaded = true;
+        MwmApplication.from(this).getLocationHelper().addListener(mLocationListener);
       }
       else
       {
