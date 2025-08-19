@@ -72,7 +72,6 @@ class ChooseRoleViewModel @Inject constructor(
                 if (status != CountryItem.STATUS_DONE) {
                     val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, destination)
                     }
                     context.startActivity(intent)
                     return@launch
@@ -93,7 +92,6 @@ class ChooseRoleViewModel @Inject constructor(
             } else {
                 val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, destination)
                 }
                 context.startActivity(intent)
             }
