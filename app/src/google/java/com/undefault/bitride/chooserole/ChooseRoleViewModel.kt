@@ -8,11 +8,11 @@ import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.model.Roles
+import com.undefault.bitride.navigation.Routes
 import app.organicmaps.DownloadResourcesLegacyActivity
 import app.organicmaps.MwmApplication
 import app.organicmaps.sdk.downloader.CountryItem
 import app.organicmaps.sdk.downloader.MapManager
-import app.organicmaps.sdk.Framework
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,19 +79,24 @@ class ChooseRoleViewModel @Inject constructor(
                 return@launch
             }
 
+            val nextRoute = when (destination) {
+                Routes.DRIVER_LOUNGE -> Routes.DRIVER_LOUNGE
+                else -> Routes.MAP_HOME
+            }
+
             val status = MapManager.nativeGetStatus(countryId)
             if (status != CountryItem.STATUS_DONE) {
                 val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, destination)
+                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, nextRoute)
                 }
                 context.startActivity(intent)
                 return@launch
             }
 
-            val mapsDir = File(Framework.nativeGetWritableDir())
+            val mapsDir = context.filesDir
             val mapsDownloaded = MapManager.nativeGetDownloadedCount() > 0
-            val brouterDir = File(mapsDir, "brouter/segments4")
+            val brouterDir = File(context.filesDir, "brouter/segments4")
             val brouterReady = brouterDir.exists() &&
                 (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
 
@@ -100,11 +105,11 @@ class ChooseRoleViewModel @Inject constructor(
                 val dbFile = mapsDir.listFiles()?.firstOrNull { it.extension == "db" }
                 mapFile?.let { dataStoreRepository.setActiveMapFileName(it.name) }
                 dbFile?.let { dataStoreRepository.setActivePoiDbName(it.name) }
-                onResult(destination)
+                onResult(nextRoute)
             } else {
                 val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, destination)
+                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, nextRoute)
                 }
                 context.startActivity(intent)
             }
