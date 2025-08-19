@@ -423,6 +423,11 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
       intent.setComponent(new ComponentName(this, AuthActivity.class));
       intent.putExtra(AuthActivity.EXTRA_START_DESTINATION, nextRoute);
     }
+    else if (!TextUtils.isEmpty(nextRoute))
+    {
+      intent.setComponent(new ComponentName(this, AuthActivity.class));
+      intent.putExtra(AuthActivity.EXTRA_START_DESTINATION, nextRoute);
+    }
     else
     {
       intent.setComponent(new ComponentName(this, MwmActivity.class));
