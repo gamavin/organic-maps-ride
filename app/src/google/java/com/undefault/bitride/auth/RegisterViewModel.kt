@@ -18,7 +18,7 @@ class RegisterViewModel @Inject constructor(
 
     fun registerCustomer(nikHash: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            context.runWithGms(
+            context.runWithGms<Unit>(
                 onAvailable = {
                     val success = userRepository.createCustomerProfile(nikHash)
                     onResult(success)
@@ -32,7 +32,7 @@ class RegisterViewModel @Inject constructor(
 
     fun registerDriver(nikHash: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            context.runWithGms(
+            context.runWithGms<Unit>(
                 onAvailable = {
                     val success = userRepository.createDriverProfile(nikHash)
                     onResult(success)
