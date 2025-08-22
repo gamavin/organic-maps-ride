@@ -11,12 +11,11 @@ object GmsGuard {
     }
 }
 
-suspend fun <T> runWithGms(
-    context: Context,
+suspend fun <T> Context.runWithGms(
     onAvailable: suspend () -> T,
     onUnavailable: suspend () -> T
 ): T {
-    return if (GmsGuard.isGmsAvailable(context)) {
+    return if (GmsGuard.isGmsAvailable(this)) {
         onAvailable()
     } else {
         onUnavailable()

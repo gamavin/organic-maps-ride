@@ -105,26 +105,29 @@ class DriverRegistrationViewModel @Inject constructor(
                 return@launch
             }
 
-            runWithGms(context, {
-                val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
-                if (roleExists) {
-                    _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
-                    return@runWithGms
-                }
+            context.runWithGms(
+                onAvailable = {
+                    val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
+                    if (roleExists) {
+                        _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
+                        return@runWithGms
+                    }
 
-                val success = userRepository.createDriverProfile(hashedNik)
-                if (success) {
-                    Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
-                    userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
-                    Log.d("DriverRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
-                    _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
-                } else {
-                    Log.e("DriverRegistrationVM", "Pendaftaran profil Driver gagal!")
-                    _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+                    val success = userRepository.createDriverProfile(hashedNik)
+                    if (success) {
+                        Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
+                        userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
+                        Log.d("DriverRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
+                        _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+                    } else {
+                        Log.e("DriverRegistrationVM", "Pendaftaran profil Driver gagal!")
+                        _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+                    }
+                },
+                onUnavailable = {
+                    _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
                 }
-            }, {
-                _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
-            })
+            )
         }
     }
 
