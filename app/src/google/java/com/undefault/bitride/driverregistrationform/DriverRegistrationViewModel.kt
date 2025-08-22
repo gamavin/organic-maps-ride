@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
+import com.undefault.bitride.util.runWithGms
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +32,7 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
     val uiState: StateFlow<DriverRegistrationFormState> = _uiState.asStateFlow()
 
     // PASS Firestore ke constructor
-    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance(), application)
     private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun onNikChange(nik: String) {
@@ -101,22 +102,26 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
                 return@launch
             }
 
-            val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
-            if (roleExists) {
-                _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
-                return@launch
-            }
+            runWithGms(getApplication(), {
+                val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
+                if (roleExists) {
+                    _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
+                    return@runWithGms
+                }
 
-            val success = userRepository.createDriverProfile(hashedNik)
-            if (success) {
-                Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
-                userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
-                Log.d("DriverRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
-                _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
-            } else {
-                Log.e("DriverRegistrationVM", "Pendaftaran profil Driver gagal!")
-                _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
-            }
+                val success = userRepository.createDriverProfile(hashedNik)
+                if (success) {
+                    Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
+                    userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
+                    Log.d("DriverRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
+                    _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+                } else {
+                    Log.e("DriverRegistrationVM", "Pendaftaran profil Driver gagal!")
+                    _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+                }
+            }, {
+                _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
+            })
         }
     }
 
