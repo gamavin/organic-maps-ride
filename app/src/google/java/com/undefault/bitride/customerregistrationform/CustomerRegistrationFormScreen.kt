@@ -8,11 +8,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun CustomerRegistrationFormScreen(
-    viewModel: CustomerRegistrationViewModel = viewModel(),
+    viewModel: CustomerRegistrationViewModel = hiltViewModel(),
     initialNik: String? = null,
     initialName: String? = null,
     onRegistrationComplete: () -> Unit, // Tipe diubah, tidak perlu hash
