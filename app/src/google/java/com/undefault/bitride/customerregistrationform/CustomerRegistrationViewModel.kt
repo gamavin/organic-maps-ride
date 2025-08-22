@@ -1,13 +1,15 @@
 package com.undefault.bitride.customerregistrationform
 
-import android.app.Application
+import android.content.Context
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
 import com.undefault.bitride.util.runWithGms
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,14 +26,15 @@ data class CustomerRegistrationFormState(
     val registrationSuccess: Boolean = false
 )
 
-class CustomerRegistrationViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class CustomerRegistrationViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val userRepository: UserRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CustomerRegistrationFormState())
     val uiState: StateFlow<CustomerRegistrationFormState> = _uiState.asStateFlow()
-
-    // PASS Firestore ke constructor
-    private val userRepository = UserRepository(FirebaseFirestore.getInstance(), application)
-    private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun processScannedData(scannedNik: String?, scannedName: String?) {
         _uiState.update { currentState ->
@@ -92,7 +95,7 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
                 return@launch
             }
 
-            runWithGms(getApplication(), {
+            runWithGms(context, {
                 val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
                 if (roleExists) {
                     _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }

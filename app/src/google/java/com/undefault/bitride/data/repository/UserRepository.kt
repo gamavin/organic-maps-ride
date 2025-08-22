@@ -1,6 +1,7 @@
 package com.undefault.bitride.data.repository
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.undefault.bitride.util.runWithGms
@@ -11,7 +12,7 @@ import javax.inject.Singleton
 @Singleton
 class UserRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
 
     suspend fun doesRoleExist(nikHash: String, role: String): Boolean =
