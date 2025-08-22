@@ -15,21 +15,30 @@ class UserRepository @Inject constructor(
 ) {
 
     suspend fun doesRoleExist(nikHash: String, role: String): Boolean =
-        runWithGms(context, {
-            try {
-                val snapshot = firestore.collection("users").document(nikHash).get().await()
-                val roles = snapshot.get("roles") as? List<*>
-                roles?.contains(role) == true
-            } catch (_: Exception) {
-                false
-            }
-        }, { false })
+        context.runWithGms(
+            onAvailable = {
+                try {
+                    val snapshot = firestore.collection("users").document(nikHash).get().await()
+                    val roles = snapshot.get("roles") as? List<*>
+                    roles?.contains(role) == true
+                } catch (_: Exception) {
+                    false
+                }
+            },
+            onUnavailable = { false }
+        )
 
     suspend fun createDriverProfile(nikHash: String): Boolean =
-        runWithGms(context, { createRoleIfAbsent(nikHash, "DRIVER") }, { false })
+        context.runWithGms(
+            onAvailable = { createRoleIfAbsent(nikHash, "DRIVER") },
+            onUnavailable = { false }
+        )
 
     suspend fun createCustomerProfile(nikHash: String): Boolean =
-        runWithGms(context, { createRoleIfAbsent(nikHash, "CUSTOMER") }, { false })
+        context.runWithGms(
+            onAvailable = { createRoleIfAbsent(nikHash, "CUSTOMER") },
+            onUnavailable = { false }
+        )
 
     private suspend fun createRoleIfAbsent(nikHash: String, role: String): Boolean = try {
         val doc = firestore.collection("users").document(nikHash)

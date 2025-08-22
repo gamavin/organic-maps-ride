@@ -95,26 +95,29 @@ class CustomerRegistrationViewModel @Inject constructor(
                 return@launch
             }
 
-            runWithGms(context, {
-                val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
-                if (roleExists) {
-                    _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
-                    return@runWithGms
-                }
+            context.runWithGms(
+                onAvailable = {
+                    val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
+                    if (roleExists) {
+                        _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
+                        return@runWithGms
+                    }
 
-                val success = userRepository.createCustomerProfile(hashedNik)
-                if (success) {
-                    Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
-                    userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
-                    Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
-                    _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
-                } else {
-                    Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
-                    _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+                    val success = userRepository.createCustomerProfile(hashedNik)
+                    if (success) {
+                        Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
+                        userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
+                        Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
+                        _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+                    } else {
+                        Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
+                        _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+                    }
+                },
+                onUnavailable = {
+                    _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
                 }
-            }, {
-                _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
-            })
+            )
         }
     }
 
