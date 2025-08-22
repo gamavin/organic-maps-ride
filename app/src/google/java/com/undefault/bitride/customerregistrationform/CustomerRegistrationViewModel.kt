@@ -4,12 +4,9 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.undefault.bitride.data.repository.DataStoreRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
-import com.undefault.bitride.data.model.CustomerProfile
-import com.undefault.bitride.data.model.Roles
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,9 +28,9 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
     private val _uiState = MutableStateFlow(CustomerRegistrationFormState())
     val uiState: StateFlow<CustomerRegistrationFormState> = _uiState.asStateFlow()
 
-    private val userPreferencesRepository = UserPreferencesRepository(application)
-    private val dataStoreRepository = DataStoreRepository(application)
+    // PASS Firestore ke constructor
     private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun processScannedData(scannedNik: String?, scannedName: String?) {
         _uiState.update { currentState ->
@@ -86,28 +83,29 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
     fun onConfirmData() {
         _uiState.update { it.copy(showConfirmationDialog = false, isLoading = true, validationError = null) }
         viewModelScope.launch {
-            val nik = _uiState.value.nik
-            val hashedNik = hashSha256(nik)
+            val nikToHash = _uiState.value.nik
+            val hashedNik = hashSha256(nikToHash)
 
             if (hashedNik.isBlank()) {
                 _uiState.update { it.copy(isLoading = false, validationError = "Gagal melakukan hash NIK.") }
                 return@launch
             }
 
-            // Profil awal hanya berisi statistik dengan nilai 0
-            val profile = CustomerProfile()
-            dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
-            dataStoreRepository.saveBankInfo("", "")
+            val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
+            if (roleExists) {
+                _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
+                return@launch
+            }
 
-            val success = userRepository.createCustomerProfile(hashedNik, profile)
+            val success = userRepository.createCustomerProfile(hashedNik)
             if (success) {
-                userPreferencesRepository.saveLoggedInUser(hashedNik, Roles.CUSTOMER)
-                Log.d("CustomerRegistrationVM", "Data customer disimpan ke storage lokal dan Firestore.")
+                Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
+                userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
+                Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
                 _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
             } else {
-                _uiState.update {
-                    it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.")
-                }
+                Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
+                _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
             }
         }
     }

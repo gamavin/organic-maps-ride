@@ -8,10 +8,6 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.undefault.bitride.data.repository.DataStoreRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import com.google.mlkit.vision.common.InputImage // Added for InputImage
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
@@ -20,12 +16,8 @@ import com.google.mlkit.vision.text.TextRecognition // Added for TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions // Added for TextRecognizerOptions
 import java.io.File
 import java.io.IOException // Added for IOException
-import kotlinx.coroutines.launch
 
-@HiltViewModel
-class IdCardScanViewModel @Inject constructor(
-    private val dataStoreRepository: DataStoreRepository
-) : ViewModel() {
+class IdCardScanViewModel : ViewModel() {
 
     fun startScan(activity: Activity, launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>) {
         val options = GmsDocumentScannerOptions.Builder()
@@ -59,10 +51,8 @@ class IdCardScanViewModel @Inject constructor(
         gmsResult?.pages?.let { pages ->
             val imageFiles = mutableListOf<File>()
             pages.forEachIndexed { index, page ->
-                val dir = File(context.filesDir, "id_cards")
-                if (!dir.exists()) dir.mkdirs()
-                val file = File(dir, "id_card_${System.currentTimeMillis()}_$index.jpg")
-                try {
+                val file = File(context.cacheDir, "id_card_scan_${System.currentTimeMillis()}_$index.jpg")
+                try { // Added try-catch for file operations
                     context.contentResolver.openInputStream(page.imageUri)?.use { inputStream ->
                         file.outputStream().use { outputStream ->
                             inputStream.copyTo(outputStream)
@@ -70,19 +60,17 @@ class IdCardScanViewModel @Inject constructor(
                     }
                     imageFiles.add(file)
                 } catch (e: IOException) {
-                    onScanFailure()
+                    // TODO: Handle file IO exception
+                    onScanFailure() // Propagate failure
                     return@handleScanResult
                 }
             }
             if (imageFiles.isNotEmpty()) {
-                viewModelScope.launch {
-                    dataStoreRepository.saveIdCardPhotoPath(imageFiles.first().absolutePath)
-                }
                 onScanSuccess(imageFiles)
             } else {
-                onScanFailure()
+                onScanFailure() // Call failure if no files were processed successfully
             }
-        } ?: onScanFailure()
+        } ?: onScanFailure() // Call onScanFailure if gmsResult is null
     }
 
     fun extractTextFromImage(

@@ -11,31 +11,17 @@ class UserPreferencesRepository @Inject constructor(
 ) {
     constructor(context: Context) : this(DataStoreRepository(context))
 
-    private val rolesCache = mutableSetOf<String>()
-
     suspend fun saveLoggedInUser(nikHash: String, role: String) {
-        val normalizedRole = role.uppercase()
-        if (rolesCache.isEmpty()) {
-            rolesCache.addAll(dataStoreRepository.rolesFlow.firstOrNull() ?: emptyList())
-        }
-        rolesCache.add(normalizedRole)
-        dataStoreRepository.saveLoggedInUser(nikHash, normalizedRole)
+        dataStoreRepository.saveLoggedInUser(nikHash, role)
     }
 
     suspend fun getLoggedInUser(): LoggedInData? {
         val nik = dataStoreRepository.nikHashFlow.firstOrNull()
-        val roles = if (rolesCache.isEmpty()) {
-            val stored = dataStoreRepository.rolesFlow.firstOrNull() ?: emptyList()
-            rolesCache.addAll(stored)
-            stored
-        } else {
-            rolesCache.toList()
-        }
+        val roles = dataStoreRepository.rolesFlow.firstOrNull() ?: emptyList()
         return if (nik != null) LoggedInData(nik, roles) else null
     }
 
     suspend fun clearLoggedInUser() {
         dataStoreRepository.clearLoggedInUser()
-        rolesCache.clear()
     }
 }

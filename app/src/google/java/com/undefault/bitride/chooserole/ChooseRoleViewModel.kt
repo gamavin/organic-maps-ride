@@ -1,23 +1,16 @@
 package com.undefault.bitride.chooserole
 
 import android.content.Context
-import android.content.Intent
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.undefault.bitride.data.repository.DataStoreRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
-import com.undefault.bitride.data.model.Roles
 import com.undefault.bitride.navigation.Routes
-import app.organicmaps.DownloadResourcesLegacyActivity
-import app.organicmaps.MwmApplication
-import app.organicmaps.sdk.downloader.CountryItem
-import app.organicmaps.sdk.downloader.MapManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -31,7 +24,7 @@ data class ChooseRoleUiState(
 
 @HiltViewModel
 class ChooseRoleViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val dataStoreRepository: DataStoreRepository
 ) : ViewModel() {
@@ -40,18 +33,16 @@ class ChooseRoleViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch { loadUserRoles() }
-    }
-
-    fun refreshRoles() {
-        viewModelScope.launch { loadUserRoles() }
+        viewModelScope.launch {
+            loadUserRoles()
+        }
     }
 
     private suspend fun loadUserRoles() {
         val loggedInData = userPreferencesRepository.getLoggedInUser()
-        val roles = loggedInData?.roles?.map { it.uppercase() } ?: emptyList()
-        val hasDriverRole = roles.contains(Roles.DRIVER)
-        val hasCustomerRole = roles.contains(Roles.CUSTOMER)
+        val roles = loggedInData?.roles ?: emptyList()
+        val hasDriverRole = roles.contains("DRIVER")
+        val hasCustomerRole = roles.contains("CUSTOMER")
 
         _uiState.value = if (loggedInData == null) {
             ChooseRoleUiState(canRegisterDriver = true, canRegisterCustomer = true)
@@ -65,54 +56,21 @@ class ChooseRoleViewModel @Inject constructor(
         }
     }
 
-    fun checkDataAndGetNextRoute(destination: String, onResult: (String) -> Unit) {
+    fun checkDataAndGetNextRoute(onResult: (String) -> Unit) {
         viewModelScope.launch {
-            val locationHelper = MwmApplication.from(context).locationHelper
-            val loc = locationHelper.savedLocation
-            val countryId = loc?.let { MapManager.nativeFindCountry(it.latitude, it.longitude) }
+            val mapFileStoredName = dataStoreRepository.activeMapFileNameFlow.firstOrNull()
+            val dbFileStoredName = dataStoreRepository.activePoiDbNameFlow.firstOrNull()
 
-            if (loc == null || countryId.isNullOrEmpty()) {
-                Toast.makeText(context, "Aktifkan GPS dan coba lagi", Toast.LENGTH_LONG).show()
-                locationHelper.resumeLocationInForeground()
-                delay(1000)
-                checkDataAndGetNextRoute(destination, onResult)
-                return@launch
-            }
-
-            val nextRoute = when (destination) {
-                Routes.DRIVER_LOUNGE -> Routes.DRIVER_LOUNGE
-                else -> Routes.MAP_HOME
-            }
-
-            val status = MapManager.nativeGetStatus(countryId)
-            if (status != CountryItem.STATUS_DONE) {
-                val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, nextRoute)
-                }
-                context.startActivity(intent)
-                return@launch
-            }
-
-            val mapsDir = context.filesDir
-            val mapsDownloaded = MapManager.nativeGetDownloadedCount() > 0
+            val mapFile = if (mapFileStoredName.isNullOrBlank()) null else File(context.filesDir, mapFileStoredName)
+            val dbFile = if (dbFileStoredName.isNullOrBlank()) null else File(context.filesDir, dbFileStoredName)
             val brouterDir = File(context.filesDir, "brouter/segments4")
-            val brouterReady = brouterDir.exists() &&
-                (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
 
-            if (mapsDownloaded && brouterReady) {
-                val mapFile = mapsDir.listFiles()?.firstOrNull { it.extension == "mwm" }
-                val dbFile = mapsDir.listFiles()?.firstOrNull { it.extension == "db" }
-                mapFile?.let { dataStoreRepository.setActiveMapFileName(it.name) }
-                dbFile?.let { dataStoreRepository.setActivePoiDbName(it.name) }
-                onResult(nextRoute)
-            } else {
-                val intent = Intent(context, DownloadResourcesLegacyActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(DownloadResourcesLegacyActivity.EXTRA_NEXT_ROUTE, nextRoute)
-                }
-                context.startActivity(intent)
-            }
+            val allDataExists = mapFile?.exists() == true &&
+                    dbFile?.exists() == true &&
+                    brouterDir.exists() && (brouterDir.listFiles()?.any { it.name.endsWith(".rd5") } == true)
+
+            val destination = if (allDataExists) Routes.MAIN else Routes.IMPORT
+            onResult(destination)
         }
     }
 }

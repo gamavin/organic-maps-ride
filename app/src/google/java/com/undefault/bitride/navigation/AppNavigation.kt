@@ -1,6 +1,13 @@
 package com.undefault.bitride.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,19 +19,23 @@ import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormSc
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
 import com.undefault.bitride.driverlounge.DriverLoungeScreen
+import app.organicmaps.bitride.mesh.MeshManager
 
 /**
  * Menangani navigasi aplikasi BitRide.
  */
 @Composable
-fun AppNavigation(startDestination: String = Routes.AUTH) {
+fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = startDestination) {
+    val context = LocalContext.current
+
+    NavHost(navController = navController, startDestination = Routes.AUTH) {
         composable(Routes.AUTH) {
             AuthScreen(
                 onNavigateToChooseRole = { navController.navigate(Routes.CHOOSE_ROLE) },
                 onNavigateToNextScreen = {
-                    navController.navigate(Routes.CHOOSE_ROLE) {
+                    MeshManager.start(context)
+                    navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 }
@@ -72,7 +83,8 @@ fun AppNavigation(startDestination: String = Routes.AUTH) {
                 initialNik = nik,
                 initialName = name,
                 onRegistrationComplete = {
-                    navController.navigate(Routes.CHOOSE_ROLE) {
+                    MeshManager.start(context)
+                    navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 },
@@ -92,12 +104,23 @@ fun AppNavigation(startDestination: String = Routes.AUTH) {
                 initialNik = nik,
                 initialName = name,
                 onRegistrationComplete = {
-                    navController.navigate(Routes.CHOOSE_ROLE) {
+                    MeshManager.start(context)
+                    navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 },
                 onNavigateToScanKtp = { navController.navigate(Routes.idCardScanWithArgs("driver", true)) }
             )
+        }
+        placeholderScreen(Routes.MAIN, "Layar Utama")
+        placeholderScreen(Routes.IMPORT, "Impor Data")
+    }
+}
+
+private fun NavGraphBuilder.placeholderScreen(route: String, title: String) {
+    composable(route) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(title)
         }
     }
 }

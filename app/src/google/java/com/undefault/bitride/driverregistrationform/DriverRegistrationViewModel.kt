@@ -1,22 +1,17 @@
 package com.undefault.bitride.driverregistrationform
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.undefault.bitride.data.model.DriverProfile
-import com.undefault.bitride.data.model.Roles
-import com.undefault.bitride.data.repository.DataStoreRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 
 data class DriverRegistrationFormState(
@@ -30,15 +25,14 @@ data class DriverRegistrationFormState(
     val registrationSuccess: Boolean = false
 )
 
-@HiltViewModel
-class DriverRegistrationViewModel @Inject constructor(
-    private val userPreferencesRepository: UserPreferencesRepository,
-    private val dataStoreRepository: DataStoreRepository,
-    private val userRepository: UserRepository
-) : ViewModel() {
+class DriverRegistrationViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(DriverRegistrationFormState())
     val uiState: StateFlow<DriverRegistrationFormState> = _uiState.asStateFlow()
+
+    // PASS Firestore ke constructor
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun onNikChange(nik: String) {
         _uiState.update { currentState ->
@@ -99,30 +93,29 @@ class DriverRegistrationViewModel @Inject constructor(
     fun onConfirmData() {
         _uiState.update { it.copy(showConfirmationDialog = false, isLoading = true, validationError = null) }
         viewModelScope.launch {
-            val nik = _uiState.value.nik
-            val hashedNik = hashSha256(nik)
+            val nikToHash = _uiState.value.nik
+            val hashedNik = hashSha256(nikToHash)
 
             if (hashedNik.isBlank()) {
                 _uiState.update { it.copy(isLoading = false, validationError = "Gagal melakukan hash NIK.") }
                 return@launch
             }
 
-            // Profil awal hanya berisi statistik dengan nilai 0
-            val profile = DriverProfile()
-            dataStoreRepository.savePersonalInfo(_uiState.value.name, nik)
-            dataStoreRepository.saveBankInfo(_uiState.value.bankName, _uiState.value.bankAccountNumber)
+            val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
+            if (roleExists) {
+                _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
+                return@launch
+            }
 
-            val success = userRepository.createDriverProfile(hashedNik, profile)
+            val success = userRepository.createDriverProfile(hashedNik)
             if (success) {
-                withContext(Dispatchers.IO) {
-                    userPreferencesRepository.saveLoggedInUser(hashedNik, Roles.DRIVER)
-                }
-                Log.d("DriverRegistrationVM", "Data driver disimpan ke storage lokal dan Firestore.")
+                Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
+                userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
+                Log.d("DriverRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
                 _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
             } else {
-                _uiState.update {
-                    it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.")
-                }
+                Log.e("DriverRegistrationVM", "Pendaftaran profil Driver gagal!")
+                _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
             }
         }
     }

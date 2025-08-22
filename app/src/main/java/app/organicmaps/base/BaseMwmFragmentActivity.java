@@ -54,12 +54,12 @@ public abstract class BaseMwmFragmentActivity extends AppCompatActivity
   /**
    * Shows splash screen and initializes the core in case when it was not initialized.
    *
-   * This method is kept non-final so Hilt can inject {@code SavedStateHandle}.
-   * Avoid overriding it and use {@link #onSafeCreate(Bundle savedInstanceState)} instead.
+   * Do not override this method!
+   * Use {@link #onSafeCreate(Bundle savedInstanceState)}
    */
   @CallSuper
   @Override
-  protected void onCreate(@Nullable Bundle savedInstanceState)
+  protected final void onCreate(@Nullable Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     mThemeName = Config.getCurrentUiTheme(getApplicationContext());
@@ -94,13 +94,9 @@ public abstract class BaseMwmFragmentActivity extends AppCompatActivity
     mSafeCreated = true;
   }
 
-  /**
-   * Non-final to allow Hilt to clean up {@code SavedStateHandle}.
-   * Override {@link #onSafeDestroy()} instead for custom logic.
-   */
   @CallSuper
   @Override
-  protected void onDestroy()
+  protected final void onDestroy()
   {
     super.onDestroy();
 

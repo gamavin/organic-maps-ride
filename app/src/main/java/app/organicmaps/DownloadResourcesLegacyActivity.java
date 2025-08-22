@@ -42,18 +42,8 @@ import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.PaddingInsetsListener;
 import com.undefault.bitride.auth.AuthActivity;
-import com.undefault.bitride.navigation.Routes;
-import app.organicmaps.MwmActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,7 +51,6 @@ import java.util.Objects;
 public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 {
   private static final String TAG = DownloadResourcesLegacyActivity.class.getSimpleName();
-  public static final String EXTRA_NEXT_ROUTE = "extra_next_route";
 
   private TextView mTvMessage;
   private LinearProgressIndicator mProgress;
@@ -89,8 +78,6 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   private String[] mBtnNames;
 
   private int mCountryDownloadListenerSlot;
-
-  private boolean mIsBrouterDownloading;
 
   private final LocationListener mLocationListener = new LocationListener() {
     @Override
@@ -121,10 +108,6 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
           checkBoxText = String.format(getString(R.string.download_country_ask), name);
 
         mChbDownloadCountry.setText(checkBoxText);
-      }
-      else if (mAreResourcesDownloaded)
-      {
-        showMap();
       }
 
       MwmApplication.from(DownloadResourcesLegacyActivity.this).getLocationHelper().removeListener(this);
@@ -200,7 +183,16 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
       finish();
     });
 
-    setAction(DOWNLOAD);
+    if (prepareFilesDownload(false))
+    {
+      Utils.keepScreenOn(true, getWindow());
+
+      setAction(DOWNLOAD);
+
+      return;
+    }
+
+    showMap();
   }
 
   @CallSuper
@@ -307,37 +299,8 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 
   private void onDownloadClicked()
   {
-    if (!mAreResourcesDownloaded)
-    {
-      if (prepareFilesDownload(false))
-      {
-        Utils.keepScreenOn(true, getWindow());
-        setAction(PAUSE);
-        doDownload();
-      }
-      else
-      {
-        showMap();
-      }
-      return;
-    }
-
-    if (mCurrentCountry != null && mChbDownloadCountry.isChecked())
-    {
-      CountryItem item = CountryItem.fill(mCurrentCountry);
-      UiUtils.hide(mChbDownloadCountry);
-      mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
-      mProgress.setMax((int) item.totalSize);
-      mProgress.setProgressCompat(0, true);
-      Utils.keepScreenOn(true, getWindow());
-      mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
-      MapManager.startDownload(mCurrentCountry);
-      setAction(PROCEED_TO_MAP);
-    }
-    else
-    {
-      showMap();
-    }
+    setAction(PAUSE);
+    doDownload();
   }
 
   private void onPauseClicked()
@@ -371,87 +334,11 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   {
     if (!mAreResourcesDownloaded)
       return;
-    if (!areBrouterSegmentsReady())
-    {
-      downloadBrouterSegments();
-      return;
-    }
-    launchMap();
-  }
 
-  private boolean areBrouterSegmentsReady()
-  {
-    File dir = new File(getFilesDir(), "brouter/segments4");
-    File[] files = dir.listFiles((d, name) -> name.endsWith(".rd5"));
-    return files != null && files.length > 0;
-  }
-
-  private void downloadBrouterSegments()
-  {
-    if (mIsBrouterDownloading)
-      return;
-    mIsBrouterDownloading = true;
-    mTvMessage.setText(R.string.downloading_brouter_segments);
-    mProgress.setIndeterminate(true);
-
-    new Thread(() -> {
-      boolean ok = false;
-      File dir = new File(getFilesDir(), "brouter/segments4");
-      if (!dir.exists())
-        dir.mkdirs();
-      File out = new File(dir, "E10_N10.rd5");
-      HttpURLConnection connection = null;
-      try
-      {
-        URL url = new URL("https://brouter.de/brouter/segments4/E10_N10.rd5");
-        connection = (HttpURLConnection) url.openConnection();
-        try (InputStream in = new BufferedInputStream(connection.getInputStream());
-             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(out)))
-        {
-          byte[] buffer = new byte[8192];
-          int len;
-          while ((len = in.read(buffer)) != -1)
-            bos.write(buffer, 0, len);
-          ok = true;
-        }
-      }
-      catch (IOException ignored)
-      {
-      }
-      finally
-      {
-        if (connection != null)
-          connection.disconnect();
-      }
-
-      boolean result = ok;
-      runOnUiThread(() -> {
-        mIsBrouterDownloading = false;
-        mProgress.setIndeterminate(false);
-        if (result)
-          showMap();
-        else
-          launchMap();
-      });
-    }).start();
-  }
-
-  private void launchMap()
-  {
     // Re-use original intent to retain all flags and payload.
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
-    final String nextRoute = intent.getStringExtra(EXTRA_NEXT_ROUTE);
-    if (TextUtils.isEmpty(nextRoute) || Routes.MAP_HOME.equals(nextRoute))
-    {
-      intent.setComponent(new ComponentName(this, MwmActivity.class));
-      intent.removeExtra(AuthActivity.EXTRA_START_DESTINATION);
-    }
-    else
-    {
-      intent.setComponent(new ComponentName(this, AuthActivity.class));
-      intent.putExtra(AuthActivity.EXTRA_START_DESTINATION, nextRoute);
-    }
+    intent.setComponent(new ComponentName(this, AuthActivity.class));
 
     // Disable animation because AuthActivity should appear exactly over this one
     intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -474,19 +361,23 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     {
       // World and WorldCoasts has been downloaded, we should register maps again to correctly add them to the model.
       Framework.nativeReloadWorldMaps();
-      mAreResourcesDownloaded = true;
-      if (mCurrentCountry == null)
+
+      if (mCurrentCountry != null && mChbDownloadCountry.isChecked())
       {
-        MwmApplication.from(this).getLocationHelper().addListener(mLocationListener);
-        setAction(DOWNLOAD);
+        CountryItem item = CountryItem.fill(mCurrentCountry);
+        UiUtils.hide(mChbDownloadCountry);
+        mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
+        mProgress.setMax((int) item.totalSize);
+        mProgress.setProgressCompat(0, true);
+
+        mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
+        MapManager.startDownload(mCurrentCountry);
+        setAction(PROCEED_TO_MAP);
       }
       else
       {
-        int status = MapManager.nativeGetStatus(mCurrentCountry);
-        if (status == CountryItem.STATUS_DONE)
-          showMap();
-        else
-          setAction(DOWNLOAD);
+        mAreResourcesDownloaded = true;
+        showMap();
       }
     }
     else
