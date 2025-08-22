@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
+import com.undefault.bitride.util.runWithGms
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +30,7 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
     val uiState: StateFlow<CustomerRegistrationFormState> = _uiState.asStateFlow()
 
     // PASS Firestore ke constructor
-    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance(), application)
     private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun processScannedData(scannedNik: String?, scannedName: String?) {
@@ -91,22 +92,26 @@ class CustomerRegistrationViewModel(application: Application) : AndroidViewModel
                 return@launch
             }
 
-            val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
-            if (roleExists) {
-                _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
-                return@launch
-            }
+            runWithGms(getApplication(), {
+                val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
+                if (roleExists) {
+                    _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
+                    return@runWithGms
+                }
 
-            val success = userRepository.createCustomerProfile(hashedNik)
-            if (success) {
-                Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
-                userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
-                Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
-                _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
-            } else {
-                Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
-                _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
-            }
+                val success = userRepository.createCustomerProfile(hashedNik)
+                if (success) {
+                    Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
+                    userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
+                    Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
+                    _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+                } else {
+                    Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
+                    _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+                }
+            }, {
+                _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
+            })
         }
     }
 

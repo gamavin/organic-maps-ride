@@ -1,29 +1,35 @@
 package com.undefault.bitride.data.repository
 
+import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.undefault.bitride.util.runWithGms
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class UserRepository @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val context: Context
 ) {
 
-    suspend fun doesRoleExist(nikHash: String, role: String): Boolean = try {
-        val snapshot = firestore.collection("users").document(nikHash).get().await()
-        val roles = snapshot.get("roles") as? List<*>
-        roles?.contains(role) == true
-    } catch (_: Exception) {
-        false
-    }
+    suspend fun doesRoleExist(nikHash: String, role: String): Boolean =
+        runWithGms(context, {
+            try {
+                val snapshot = firestore.collection("users").document(nikHash).get().await()
+                val roles = snapshot.get("roles") as? List<*>
+                roles?.contains(role) == true
+            } catch (_: Exception) {
+                false
+            }
+        }, { false })
 
     suspend fun createDriverProfile(nikHash: String): Boolean =
-        createRoleIfAbsent(nikHash, "DRIVER")
+        runWithGms(context, { createRoleIfAbsent(nikHash, "DRIVER") }, { false })
 
     suspend fun createCustomerProfile(nikHash: String): Boolean =
-        createRoleIfAbsent(nikHash, "CUSTOMER")
+        runWithGms(context, { createRoleIfAbsent(nikHash, "CUSTOMER") }, { false })
 
     private suspend fun createRoleIfAbsent(nikHash: String, role: String): Boolean = try {
         val doc = firestore.collection("users").document(nikHash)
