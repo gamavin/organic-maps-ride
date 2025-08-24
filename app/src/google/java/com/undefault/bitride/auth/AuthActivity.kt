@@ -1,5 +1,6 @@
 package com.undefault.bitride.auth
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.fragment.app.Fragment
@@ -32,7 +33,6 @@ class AuthActivity : BaseMwmFragmentActivity() {
             showContent()
         }
     }
-
     private fun showContent() {
         setContent {
             BitrideTheme {
