@@ -4,6 +4,7 @@ package com.undefault.bitride.navigation
  * Kumpulan konstanta rute yang digunakan pada sistem navigasi BitRide.
  */
 object Routes {
+    const val MAP_DOWNLOAD = "map_download"
     const val CHOOSE_ROLE = "choose_role"
     const val ID_CARD_SCAN = "id_card_scan"
     const val CUSTOMER_REGISTRATION_FORM = "customer_registration_form"
