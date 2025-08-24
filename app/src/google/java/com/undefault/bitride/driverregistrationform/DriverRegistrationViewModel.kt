@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
+import com.undefault.bitride.data.repository.LocalUserRepository
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
+import app.organicmaps.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,8 +32,12 @@ class DriverRegistrationViewModel(application: Application) : AndroidViewModel(a
     private val _uiState = MutableStateFlow(DriverRegistrationFormState())
     val uiState: StateFlow<DriverRegistrationFormState> = _uiState.asStateFlow()
 
-    // PASS Firestore ke constructor
-    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    // Gunakan UserRepository dengan flag BuildConfig.USE_FIRESTORE
+    private val userRepository = UserRepository(
+        firestore = if (BuildConfig.USE_FIRESTORE) FirebaseFirestore.getInstance() else null,
+        localRepository = LocalUserRepository(),
+        useFirestore = BuildConfig.USE_FIRESTORE
+    )
     private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun onNikChange(nik: String) {

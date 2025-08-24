@@ -3,13 +3,19 @@ package com.undefault.bitride.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
+import com.undefault.bitride.data.repository.LocalUserRepository
 import com.undefault.bitride.data.repository.UserRepository
+import app.organicmaps.BuildConfig
 import kotlinx.coroutines.launch
 
 class RegisterViewModel : ViewModel() {
 
-    // PASS Firestore ke constructor
-    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    // Gunakan UserRepository dengan flag BuildConfig.USE_FIRESTORE
+    private val userRepository = UserRepository(
+        firestore = if (BuildConfig.USE_FIRESTORE) FirebaseFirestore.getInstance() else null,
+        localRepository = LocalUserRepository(),
+        useFirestore = BuildConfig.USE_FIRESTORE
+    )
 
     /**
      * Fungsi yang dipanggil setelah NIK dan Nama berhasil di-scan dan di-hash.
