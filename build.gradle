@@ -31,14 +31,8 @@ def getVersion() {
         throw new GradleException("Tidak menemukan 'bash'. Pastikan Git for Windows terpasang atau 'bash' ada di PATH.")
     }
 
-    def scriptPath = "${rootDir}/tools/unix/version.sh"
-    if (!file(scriptPath).exists()) {
-        logger.warn("tools/unix/version.sh tidak ditemukan, memakai versi default 1.0")
-        return new Tuple2(1, "1.0")
-    }
-
-    def versionCode = Integer.parseInt(run([bash, scriptPath, 'android_code']))
-    def versionName = run([bash, scriptPath, 'android_name'])
+    def versionCode = Integer.parseInt(run([bash, '../tools/unix/version.sh', 'android_code']))
+    def versionName = run([bash, '../tools/unix/version.sh', 'android_name'])
     return new Tuple2(versionCode, versionName)
 }
 
