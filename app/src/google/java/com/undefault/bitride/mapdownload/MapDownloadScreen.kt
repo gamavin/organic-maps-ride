@@ -1,15 +1,16 @@
 package com.undefault.bitride.mapdownload
 
-import android.view.View
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.doOnAttach
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.navigation.NavController
+import app.organicmaps.R
 import app.organicmaps.downloader.CountrySuggestFragment
 import app.organicmaps.sdk.downloader.MapManager
 import com.undefault.bitride.navigation.Routes
@@ -41,15 +42,17 @@ fun MapDownloadScreen(navController: NavController) {
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
-            FragmentContainerView(ctx).apply { id = View.generateViewId() }
+            FragmentContainerView(ctx).apply { id = R.id.map_download_container }
         },
         update = { view ->
             val activity = context as FragmentActivity
             val fm = activity.supportFragmentManager
             if (fm.findFragmentById(view.id) == null) {
-                fm.beginTransaction()
-                    .replace(view.id, CountrySuggestFragment())
-                    .commit()
+                view.doOnAttach {
+                    fm.beginTransaction()
+                        .replace(view.id, CountrySuggestFragment())
+                        .commitNow()
+                }
             }
         }
     )
