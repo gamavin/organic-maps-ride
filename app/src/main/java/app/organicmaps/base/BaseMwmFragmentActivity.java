@@ -59,7 +59,7 @@ public abstract class BaseMwmFragmentActivity extends AppCompatActivity
    */
   @CallSuper
   @Override
-  protected final void onCreate(@Nullable Bundle savedInstanceState)
+  protected void onCreate(@Nullable Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     mThemeName = Config.getCurrentUiTheme(getApplicationContext());
@@ -96,7 +96,7 @@ public abstract class BaseMwmFragmentActivity extends AppCompatActivity
 
   @CallSuper
   @Override
-  protected final void onDestroy()
+  protected void onDestroy()
   {
     super.onDestroy();
 
