@@ -13,7 +13,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.undefault.bitride.auth.AuthScreen
 import com.undefault.bitride.chooserole.ChooseRoleScreen
 import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormScreen
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
@@ -29,18 +28,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    NavHost(navController = navController, startDestination = Routes.AUTH) {
-        composable(Routes.AUTH) {
-            AuthScreen(
-                onNavigateToChooseRole = { navController.navigate(Routes.CHOOSE_ROLE) },
-                onNavigateToNextScreen = {
-                    MeshManager.start(context)
-                    navController.navigate(Routes.MAIN) {
-                        popUpTo(Routes.AUTH) { inclusive = true }
-                    }
-                }
-            )
-        }
+    NavHost(navController = navController, startDestination = Routes.CHOOSE_ROLE) {
         composable(Routes.CHOOSE_ROLE) {
             ChooseRoleScreen(navController)
         }
@@ -85,7 +73,7 @@ fun AppNavigation() {
                 onRegistrationComplete = {
                     MeshManager.start(context)
                     navController.navigate(Routes.MAIN) {
-                        popUpTo(Routes.AUTH) { inclusive = true }
+                        popUpTo(Routes.CHOOSE_ROLE) { inclusive = true }
                     }
                 },
                 onNavigateToScanKtp = { navController.navigate(Routes.idCardScanWithArgs("customer", true)) }
@@ -106,7 +94,7 @@ fun AppNavigation() {
                 onRegistrationComplete = {
                     MeshManager.start(context)
                     navController.navigate(Routes.MAIN) {
-                        popUpTo(Routes.AUTH) { inclusive = true }
+                        popUpTo(Routes.CHOOSE_ROLE) { inclusive = true }
                     }
                 },
                 onNavigateToScanKtp = { navController.navigate(Routes.idCardScanWithArgs("driver", true)) }
