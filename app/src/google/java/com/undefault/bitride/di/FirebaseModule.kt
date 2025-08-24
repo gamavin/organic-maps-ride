@@ -10,6 +10,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import app.organicmaps.BuildConfig
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -17,7 +18,8 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun provideFirestore(@ApplicationContext context: Context): FirebaseFirestore {
+    fun provideFirestore(@ApplicationContext context: Context): FirebaseFirestore? {
+        if (!BuildConfig.USE_FIRESTORE) return null
         // Pastikan app sekunder ada (kalau BitrideHiltApp belum sempat init karena urutan, init di sini juga aman)
         val app = try {
             FirebaseApp.getInstance(BitrideFirebase.APP_NAME)
