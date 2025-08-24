@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.undefault.bitride.chooserole.ChooseRoleScreen
+import com.undefault.bitride.mapdownload.MapDownloadScreen
 import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormScreen
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
@@ -28,7 +29,10 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    NavHost(navController = navController, startDestination = Routes.CHOOSE_ROLE) {
+    NavHost(navController = navController, startDestination = Routes.MAP_DOWNLOAD) {
+        composable(Routes.MAP_DOWNLOAD) {
+            MapDownloadScreen(navController)
+        }
         composable(Routes.CHOOSE_ROLE) {
             ChooseRoleScreen(navController)
         }
