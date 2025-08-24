@@ -34,7 +34,6 @@ import app.organicmaps.util.SharingUtils;
 import app.organicmaps.util.ThemeUtils;
 import app.organicmaps.util.Utils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.undefault.bitride.auth.AuthActivity;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -208,10 +207,7 @@ public class SplashActivity extends AppCompatActivity
     }
     else
     {
-      if (app.organicmaps.sdk.DownloadResourcesLegacyActivity.nativeGetBytesToDownload() > 0)
-        intent.setComponent(new ComponentName(this, DownloadResourcesLegacyActivity.class));
-      else
-        intent.setComponent(new ComponentName(this, AuthActivity.class));
+      intent.setComponent(new ComponentName(this, DownloadResourcesLegacyActivity.class));
     }
 
     // FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_RESET_TASK_IF_NEEDED break the cold start.
