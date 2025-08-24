@@ -1,47 +1,48 @@
 package com.undefault.bitride.auth
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserRepository
-import com.undefault.bitride.util.runWithGms
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 
-@HiltViewModel
-class RegisterViewModel @Inject constructor(
-    private val userRepository: UserRepository,
-    @ApplicationContext private val context: Context
-) : ViewModel() {
+class RegisterViewModel : ViewModel() {
 
-    fun registerCustomer(nikHash: String, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            context.runWithGms<Unit>(
-                onAvailable = {
-                    val success = userRepository.createCustomerProfile(nikHash)
-                    onResult(success)
-                },
-                onUnavailable = {
-                    onResult(false)
-                }
-            )
-        }
-    }
+    // PASS Firestore ke constructor
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
 
-    fun registerDriver(nikHash: String, onResult: (Boolean) -> Unit) {
+    /**
+     * Fungsi yang dipanggil setelah NIK dan Nama berhasil di-scan dan di-hash.
+     */
+    fun onRegistrationSubmit(hashedNik: String, userName: String, userType: String) {
         viewModelScope.launch {
-            context.runWithGms<Unit>(
-                onAvailable = {
-                    val success = userRepository.createDriverProfile(nikHash)
-                    onResult(success)
-                },
-                onUnavailable = {
-                    onResult(false)
+            if (userType.equals("D", ignoreCase = true)) {
+                val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
+                if (roleExists) {
+                    println("Error: Akun Driver dengan NIK ini sudah terdaftar!")
+                    return@launch
                 }
-            )
+                val success = userRepository.createDriverProfile(hashedNik)
+                if (success) {
+                    println("Pendaftaran profil Driver berhasil untuk: $hashedNik")
+                } else {
+                    println("Error: Pendaftaran profil Driver gagal!")
+                }
+            } else if (userType.equals("C", ignoreCase = true)) {
+                val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
+                if (roleExists) {
+                    println("Error: Akun Customer dengan NIK ini sudah terdaftar!")
+                    return@launch
+                }
+                val success = userRepository.createCustomerProfile(hashedNik)
+                if (success) {
+                    println("Pendaftaran profil Customer berhasil untuk: $hashedNik")
+                } else {
+                    println("Error: Pendaftaran profil Customer gagal!")
+                }
+            } else {
+                println("Error: Tipe pengguna tidak valid: $userType")
+            }
         }
     }
 }
-

@@ -1,15 +1,12 @@
 package com.undefault.bitride.customerregistrationform
 
-import android.content.Context
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
-import com.undefault.bitride.util.runWithGms
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,15 +23,14 @@ data class CustomerRegistrationFormState(
     val registrationSuccess: Boolean = false
 )
 
-@HiltViewModel
-class CustomerRegistrationViewModel @Inject constructor(
-    private val userRepository: UserRepository,
-    private val userPreferencesRepository: UserPreferencesRepository,
-    @ApplicationContext private val context: Context
-) : ViewModel() {
+class CustomerRegistrationViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(CustomerRegistrationFormState())
     val uiState: StateFlow<CustomerRegistrationFormState> = _uiState.asStateFlow()
+
+    // PASS Firestore ke constructor
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun processScannedData(scannedNik: String?, scannedName: String?) {
         _uiState.update { currentState ->
@@ -95,29 +91,22 @@ class CustomerRegistrationViewModel @Inject constructor(
                 return@launch
             }
 
-            context.runWithGms(
-                onAvailable = {
-                    val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
-                    if (roleExists) {
-                        _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
-                        return@runWithGms
-                    }
+            val roleExists = userRepository.doesRoleExist(hashedNik, "CUSTOMER")
+            if (roleExists) {
+                _uiState.update { it.copy(isLoading = false, validationError = "Akun Customer dengan NIK ini sudah terdaftar.") }
+                return@launch
+            }
 
-                    val success = userRepository.createCustomerProfile(hashedNik)
-                    if (success) {
-                        Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
-                        userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
-                        Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
-                        _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
-                    } else {
-                        Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
-                        _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
-                    }
-                },
-                onUnavailable = {
-                    _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
-                }
-            )
+            val success = userRepository.createCustomerProfile(hashedNik)
+            if (success) {
+                Log.d("CustomerRegistrationVM", "Pendaftaran profil Customer berhasil untuk: $hashedNik")
+                userPreferencesRepository.saveLoggedInUser(hashedNik, "CUSTOMER")
+                Log.d("CustomerRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
+                _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+            } else {
+                Log.e("CustomerRegistrationVM", "Pendaftaran profil Customer gagal!")
+                _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+            }
         }
     }
 

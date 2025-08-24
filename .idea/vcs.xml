@@ -197,7 +197,6 @@
     <mapping directory="$PROJECT_DIR$/../3party/utfcpp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../3party/utfcpp/extern/ftest" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/bitride" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../tools/kothic" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../tools/osmctools" vcs="Git" />
   </component>

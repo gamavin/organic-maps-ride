@@ -1,15 +1,12 @@
 package com.undefault.bitride.driverregistrationform
 
-import android.content.Context
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
 import com.undefault.bitride.data.repository.UserPreferencesRepository
 import com.undefault.bitride.data.repository.UserRepository
-import com.undefault.bitride.util.runWithGms
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,15 +25,14 @@ data class DriverRegistrationFormState(
     val registrationSuccess: Boolean = false
 )
 
-@HiltViewModel
-class DriverRegistrationViewModel @Inject constructor(
-    private val userRepository: UserRepository,
-    private val userPreferencesRepository: UserPreferencesRepository,
-    @ApplicationContext private val context: Context
-) : ViewModel() {
+class DriverRegistrationViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(DriverRegistrationFormState())
     val uiState: StateFlow<DriverRegistrationFormState> = _uiState.asStateFlow()
+
+    // PASS Firestore ke constructor
+    private val userRepository = UserRepository(FirebaseFirestore.getInstance())
+    private val userPreferencesRepository = UserPreferencesRepository(application)
 
     fun onNikChange(nik: String) {
         _uiState.update { currentState ->
@@ -105,29 +101,22 @@ class DriverRegistrationViewModel @Inject constructor(
                 return@launch
             }
 
-            context.runWithGms(
-                onAvailable = {
-                    val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
-                    if (roleExists) {
-                        _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
-                        return@runWithGms
-                    }
+            val roleExists = userRepository.doesRoleExist(hashedNik, "DRIVER")
+            if (roleExists) {
+                _uiState.update { it.copy(isLoading = false, validationError = "Akun Driver dengan NIK ini sudah terdaftar.") }
+                return@launch
+            }
 
-                    val success = userRepository.createDriverProfile(hashedNik)
-                    if (success) {
-                        Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
-                        userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
-                        Log.d("DriverRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
-                        _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
-                    } else {
-                        Log.e("DriverRegistrationVM", "Pendaftaran profil Driver gagal!")
-                        _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
-                    }
-                },
-                onUnavailable = {
-                    _uiState.update { it.copy(isLoading = false, validationError = "Google Play Services tidak tersedia.") }
-                }
-            )
+            val success = userRepository.createDriverProfile(hashedNik)
+            if (success) {
+                Log.d("DriverRegistrationVM", "Pendaftaran profil Driver berhasil untuk: $hashedNik")
+                userPreferencesRepository.saveLoggedInUser(hashedNik, "DRIVER")
+                Log.d("DriverRegistrationVM", "Data pengguna disimpan ke SharedPreferences.")
+                _uiState.update { it.copy(isLoading = false, registrationSuccess = true) }
+            } else {
+                Log.e("DriverRegistrationVM", "Pendaftaran profil Driver gagal!")
+                _uiState.update { it.copy(isLoading = false, validationError = "Pendaftaran gagal, coba lagi.") }
+            }
         }
     }
 

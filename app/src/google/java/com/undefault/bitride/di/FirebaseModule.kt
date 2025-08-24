@@ -3,7 +3,6 @@ package com.undefault.bitride.di
 import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
-import com.undefault.bitride.data.repository.UserRepository
 import com.undefault.bitride.firebase.BitrideFirebase
 import dagger.Module
 import dagger.Provides
@@ -29,11 +28,4 @@ object FirebaseModule {
         }
         return FirebaseFirestore.getInstance(app)
     }
-
-    @Provides
-    @Singleton
-    fun provideUserRepository(
-        firestore: FirebaseFirestore,
-        @ApplicationContext context: Context
-    ): UserRepository = UserRepository(firestore, context)
 }
