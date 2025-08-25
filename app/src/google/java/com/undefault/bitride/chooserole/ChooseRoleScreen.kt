@@ -28,8 +28,9 @@ fun ChooseRoleScreen(
 
     val navigateToNextScreen = { destination: String ->
         if (destination == Routes.MAIN) {
-            SearchActivity.start(context as Activity, "")
-            (context as? Activity)?.finish()
+            val activity = context as Activity
+            SearchActivity.start(activity, "")
+            activity.finish()
         } else {
             navController.navigate(destination) {
                 // Bersihkan semua layar sebelumnya sampai ke awal
