@@ -947,6 +947,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     final int mode = LocationState.getMode();
     if (mode != FOLLOW && mode != FOLLOW_AND_ROTATE)
       LocationState.nativeSwitchToNextMode();
+    if (mOnmapDownloader != null)
+      mOnmapDownloader.updateState(true);
   }
 
   private void refreshSearchToolbar()
