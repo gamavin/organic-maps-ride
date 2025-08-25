@@ -389,6 +389,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     processIntent();
     migrateOAuthCredentials();
 
+    setupInitialLocation();
+
     if (sIsFirstLaunch)
     {
       sIsFirstLaunch = false;
@@ -858,7 +860,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     initMainMenu();
     initOnmapDownloader();
-    setupInitialLocation();
     initPositionChooser();
   }
 
@@ -927,6 +928,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void switchToMyPosition()
   {
+    if (!Framework.nativeIsEngineCreated())
+      return;
+
     final int mode = LocationState.getMode();
     if (mode != FOLLOW && mode != FOLLOW_AND_ROTATE)
       LocationState.nativeSwitchToNextMode();
