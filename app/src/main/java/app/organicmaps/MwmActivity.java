@@ -163,7 +163,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public static final String EXTRA_DEST_LAT = "dest_lat";
   public static final String EXTRA_DEST_LON = "dest_lon";
   public static final String EXTRA_RETURN_TO_AUTH = "return_to_auth";
-  public static final String EXTRA_SHOW_SEARCH = "show_search";
   private static final String EXTRA_CONSUMED = "mwm.extra.intent.processed";
   private static final int MIN_DOWNLOADED_MAPS = 1;
   private boolean mPreciseLocationDialogShown = false;
@@ -206,23 +205,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private boolean mReturnToAuth;
   private int mReturnToAuthSlot;
-  private boolean mReturnToAuthHandled;
   private final MapManager.StorageCallback mReturnToAuthCallback = new MapManager.StorageCallback()
   {
     @Override
     public void onStatusChanged(List<MapManager.StorageCallbackData> data)
     {
-      if (mReturnToAuthHandled)
-      {
-        Logger.d(TAG, "mReturnToAuthCallback already handled");
-        return;
-      }
-
       if (shouldReturnToAuth())
-      {
-        mReturnToAuthHandled = true;
         openAuthAndFinish();
-      }
     }
 
     @Override
@@ -399,12 +388,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     processIntent();
     migrateOAuthCredentials();
+
     if (sIsFirstLaunch)
     {
       sIsFirstLaunch = false;
-      setupInitialLocation();
-      if (mOnmapDownloader != null)
-        mOnmapDownloader.updateState(true);
+      showSearch("");
     }
 
   }
@@ -447,12 +435,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (countryId != null)
     {
       Framework.nativeShowCountry(countryId, false);
-      return;
-    }
-
-    if (intent.getBooleanExtra(EXTRA_SHOW_SEARCH, false))
-    {
-      showSearch("");
       return;
     }
 
@@ -875,8 +857,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     initMainMenu();
     initOnmapDownloader();
-    if (mOnmapDownloader != null)
-      mOnmapDownloader.onResume();
+    setupInitialLocation();
     initPositionChooser();
   }
 
@@ -948,8 +929,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     final int mode = LocationState.getMode();
     if (mode != FOLLOW && mode != FOLLOW_AND_ROTATE)
       LocationState.nativeSwitchToNextMode();
-    if (mOnmapDownloader != null)
-      mOnmapDownloader.updateState(true);
   }
 
   private void refreshSearchToolbar()
@@ -1275,29 +1254,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void openAuthAndFinish()
   {
-    runOnUiThread(() ->
+    if (mReturnToAuthSlot != 0)
     {
-      if (mReturnToAuthSlot != 0)
-      {
-        MapManager.nativeUnsubscribe(mReturnToAuthSlot);
-        mReturnToAuthSlot = 0;
-      }
-
-      if (mOnmapDownloader != null)
-      {
-        mOnmapDownloader.onPause();
-        mOnmapDownloader = null;
-      }
-
-      if (MapManager.nativeIsDownloading())
-      {
-        Logger.w(TAG, "Engine is not idle when returning to auth");
-        return;
-      }
-
-      startActivity(new Intent(this, AuthActivity.class));
-      finish();
-    });
+      MapManager.nativeUnsubscribe(mReturnToAuthSlot);
+      mReturnToAuthSlot = 0;
+    }
+    startActivity(new Intent(this, AuthActivity.class));
+    finish();
   }
 
   @Override
