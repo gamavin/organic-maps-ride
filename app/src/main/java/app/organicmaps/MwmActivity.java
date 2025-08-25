@@ -206,13 +206,23 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private boolean mReturnToAuth;
   private int mReturnToAuthSlot;
+  private boolean mReturnToAuthHandled;
   private final MapManager.StorageCallback mReturnToAuthCallback = new MapManager.StorageCallback()
   {
     @Override
     public void onStatusChanged(List<MapManager.StorageCallbackData> data)
     {
+      if (mReturnToAuthHandled)
+      {
+        Logger.d(TAG, "mReturnToAuthCallback already handled");
+        return;
+      }
+
       if (shouldReturnToAuth())
+      {
+        mReturnToAuthHandled = true;
         openAuthAndFinish();
+      }
     }
 
     @Override
@@ -1262,13 +1272,29 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void openAuthAndFinish()
   {
-    if (mReturnToAuthSlot != 0)
+    runOnUiThread(() ->
     {
-      MapManager.nativeUnsubscribe(mReturnToAuthSlot);
-      mReturnToAuthSlot = 0;
-    }
-    startActivity(new Intent(this, AuthActivity.class));
-    finish();
+      if (mReturnToAuthSlot != 0)
+      {
+        MapManager.nativeUnsubscribe(mReturnToAuthSlot);
+        mReturnToAuthSlot = 0;
+      }
+
+      if (mOnmapDownloader != null)
+      {
+        mOnmapDownloader.onPause();
+        mOnmapDownloader = null;
+      }
+
+      if (MapManager.nativeIsDownloading())
+      {
+        Logger.w(TAG, "Engine is not idle when returning to auth");
+        return;
+      }
+
+      startActivity(new Intent(this, AuthActivity.class));
+      finish();
+    });
   }
 
   @Override
