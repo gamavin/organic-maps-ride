@@ -16,6 +16,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -78,6 +80,11 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 
   private int mCountryDownloadListenerSlot;
 
+  private static final long WAIT_COUNTRY_TIMEOUT_MS = 10000;
+  private final Handler mHandler = new Handler(Looper.getMainLooper());
+  private final Runnable mCountryTimeoutRunnable = this::onCountryTimeout;
+  private boolean mPendingShowMap;
+
   private final LocationListener mLocationListener = new LocationListener() {
     @Override
     public void onLocationUpdated(@NonNull Location location)
@@ -107,6 +114,18 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
           checkBoxText = String.format(getString(R.string.download_country_ask), name);
 
         mChbDownloadCountry.setText(checkBoxText);
+      }
+
+      if (mPendingShowMap)
+      {
+        mHandler.removeCallbacks(mCountryTimeoutRunnable);
+        mProgress.setIndeterminate(false);
+        mBtnDownload.setEnabled(true);
+        if (status == CountryItem.STATUS_DONE)
+          showMap();
+        else
+          setAction(PROCEED_TO_MAP);
+        mPendingShowMap = false;
       }
 
       MwmApplication.from(DownloadResourcesLegacyActivity.this).getLocationHelper().removeListener(this);
@@ -223,6 +242,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   {
     super.onPause();
     MwmApplication.from(this).getLocationHelper().removeListener(mLocationListener);
+    mHandler.removeCallbacks(mCountryTimeoutRunnable);
     if (mAlertDialog != null && mAlertDialog.isShowing())
       mAlertDialog.dismiss();
     mAlertDialog = null;
@@ -377,7 +397,10 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
       else
       {
         mAreResourcesDownloaded = true;
-        showMap();
+        if (mCurrentCountry != null && MapManager.nativeGetStatus(mCurrentCountry) == CountryItem.STATUS_DONE)
+          showMap();
+        else
+          waitForCountryAndShowMap();
       }
     }
     else
@@ -439,5 +462,26 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   public int getThemeResourceId(@NonNull String theme)
   {
     return R.style.MwmTheme_DownloadResourcesLegacy;
+  }
+
+  private void waitForCountryAndShowMap()
+  {
+    mPendingShowMap = true;
+    mBtnDownload.setEnabled(false);
+    mProgress.setIndeterminate(true);
+    mTvMessage.setText(R.string.unknown_current_position);
+    UiUtils.hide(mChbDownloadCountry);
+    mHandler.postDelayed(mCountryTimeoutRunnable, WAIT_COUNTRY_TIMEOUT_MS);
+  }
+
+  private void onCountryTimeout()
+  {
+    if (!mPendingShowMap)
+      return;
+
+    mPendingShowMap = false;
+    mProgress.setIndeterminate(false);
+    mBtnDownload.setEnabled(true);
+    setAction(PROCEED_TO_MAP);
   }
 }
