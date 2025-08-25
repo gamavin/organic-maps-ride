@@ -1241,10 +1241,15 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mPanelAnimator.registerListener(mOnmapDownloader);
   }
 
+  /**
+   * Checks whether we can return to the authentication flow.
+   * This relies on the availability of a map covering the screen center
+   * rather than the total number of downloaded maps.
+   */
   private boolean shouldReturnToAuth()
   {
     return !MapManager.nativeIsDownloading()
-        && MapManager.nativeGetDownloadedCount() > MIN_DOWNLOADED_MAPS;
+        && Framework.nativeIsDownloadedMapAtScreenCenter();
   }
 
   private void openAuthAndFinish()
