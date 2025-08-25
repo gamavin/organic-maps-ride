@@ -59,6 +59,9 @@ public class OnmapDownloader implements MwmActivity.LeftAnimationTrackListener
           mCurrentCountry.update();
           updateProgressState(false);
 
+          if (item.newStatus == CountryItem.STATUS_DONE)
+            mActivity.onCountryDownloadFinished();
+
           return;
         }
       }

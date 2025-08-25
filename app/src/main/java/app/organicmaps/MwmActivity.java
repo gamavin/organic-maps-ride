@@ -389,6 +389,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     processIntent();
     migrateOAuthCredentials();
 
+    setupInitialLocation();
+
     if (sIsFirstLaunch)
     {
       sIsFirstLaunch = false;
@@ -851,7 +853,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     initMainMenu();
     initOnmapDownloader();
-    setupInitialLocation();
     initPositionChooser();
   }
 
@@ -903,6 +904,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (myPosition != null)
     {
       switchToMyPosition();
+      if (mOnmapDownloader != null)
+        mOnmapDownloader.updateState(true);
       return;
     }
     mFirstFixListener = new LocationListener()
@@ -913,6 +916,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
         locationHelper.removeListener(this);
         mFirstFixListener = null;
         switchToMyPosition();
+        if (mOnmapDownloader != null)
+          mOnmapDownloader.updateState(true);
       }
     };
     locationHelper.addListener(mFirstFixListener);
@@ -1262,6 +1267,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
     }
     startActivity(new Intent(this, AuthActivity.class));
     finish();
+  }
+
+  public void onCountryDownloadFinished()
+  {
+    if (mReturnToAuth && shouldReturnToAuth())
+      openAuthAndFinish();
   }
 
   @Override
