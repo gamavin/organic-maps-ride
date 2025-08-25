@@ -1,9 +1,12 @@
 package com.undefault.bitride.navigation
 
+import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,6 +21,7 @@ import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormSc
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
 import com.undefault.bitride.driverlounge.DriverLoungeScreen
+import app.organicmaps.MwmActivity
 import app.organicmaps.bitride.mesh.MeshManager
 
 /**
@@ -100,7 +104,13 @@ fun AppNavigation() {
                 onNavigateToScanKtp = { navController.navigate(Routes.idCardScanWithArgs("driver", true)) }
             )
         }
-        placeholderScreen(Routes.MAIN, "Layar Utama")
+        composable(Routes.MAIN) {
+            val context = LocalContext.current
+            LaunchedEffect(Unit) {
+                context.startActivity(Intent(context, MwmActivity::class.java))
+                (context as? Activity)?.finish()
+            }
+        }
         placeholderScreen(Routes.IMPORT, "Impor Data")
     }
 }
