@@ -357,16 +357,15 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     // Re-use original intent to retain all flags and payload.
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
-    intent.setComponent(new ComponentName(this, MwmActivity.class));
-    intent.putExtra(MwmActivity.EXTRA_RETURN_TO_AUTH, true);
+    intent.setComponent(new ComponentName(this, com.undefault.bitride.auth.AuthActivity.class));
 
-    // Disable animation because MwmActivity should appear exactly over this one
+    // Disable animation because AuthActivity should appear exactly over this one
     intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
     // See {@link SplashActivity.processNavigation()}
     if (Factory.isStartedForApiResult(intent))
     {
-      // Wait for the result from MwmActivity for API callers.
+      // Wait for the result from AuthActivity for API callers.
       mApiRequest.launch(intent);
       return;
     }
