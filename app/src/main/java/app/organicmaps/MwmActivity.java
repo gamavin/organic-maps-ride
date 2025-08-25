@@ -392,7 +392,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (sIsFirstLaunch)
     {
       sIsFirstLaunch = false;
-      showSearch("");
+      if (!mReturnToAuth)
+        showSearch("");
     }
 
   }
