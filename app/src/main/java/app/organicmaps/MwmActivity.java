@@ -209,7 +209,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     @Override
     public void onStatusChanged(List<MapManager.StorageCallbackData> data)
     {
-      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 0)
+      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 1)
         openAuthAndFinish();
     }
 
@@ -680,7 +680,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mReturnToAuth = intent != null && intent.getBooleanExtra(EXTRA_RETURN_TO_AUTH, false);
     if (mReturnToAuth)
     {
-      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 0)
+      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 1)
       {
         openAuthAndFinish();
         return;
