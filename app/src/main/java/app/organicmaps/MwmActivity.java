@@ -138,7 +138,6 @@ import app.organicmaps.widget.placepage.PlacePageViewModel;
 import com.undefault.bitride.auth.AuthActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import app.organicmaps.sdk.routing.RoutingInfo;
 
@@ -205,32 +204,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private boolean mRestoreRoutingPlanFragmentNeeded;
 
   private boolean mReturnToAuth;
-  private int mReturnToAuthSlot;
-  private boolean mReturnToAuthHandled;
-  private final MapManager.StorageCallback mReturnToAuthCallback = new MapManager.StorageCallback()
-  {
-    @Override
-    public void onStatusChanged(List<MapManager.StorageCallbackData> data)
-    {
-      if (mReturnToAuthHandled)
-      {
-        Logger.d(TAG, "mReturnToAuthCallback already handled");
-        return;
-      }
-
-      if (shouldReturnToAuth())
-      {
-        mReturnToAuthHandled = true;
-        openAuthAndFinish();
-      }
-    }
-
-    @Override
-    public void onProgress(String countryId, long localSize, long remoteSize)
-    {
-      // No-op
-    }
-  };
   @Nullable
   private Bundle mSavedForTabletState;
   private String mDonatesUrl;
@@ -398,6 +371,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     }
 
     processIntent();
+    if (mReturnToAuth && shouldReturnToAuth())
+      openAuthAndFinish();
     migrateOAuthCredentials();
     if (sIsFirstLaunch)
     {
@@ -704,7 +679,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
         openAuthAndFinish();
         return;
       }
-      mReturnToAuthSlot = MapManager.nativeSubscribe(mReturnToAuthCallback);
     }
 
     initViews(isLaunchByDeepLink);
@@ -1277,12 +1251,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     runOnUiThread(() ->
     {
-      if (mReturnToAuthSlot != 0)
-      {
-        MapManager.nativeUnsubscribe(mReturnToAuthSlot);
-        mReturnToAuthSlot = 0;
-      }
-
       if (mOnmapDownloader != null)
       {
         mOnmapDownloader.onPause();
@@ -1508,11 +1476,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mPostNotificationPermissionRequest = null;
     mPowerSaveSettings.unregister();
     mPowerSaveSettings = null;
-    if (mReturnToAuthSlot != 0)
-    {
-      MapManager.nativeUnsubscribe(mReturnToAuthSlot);
-      mReturnToAuthSlot = 0;
-    }
     if (mRemoveDisplayListener && !isChangingConfigurations())
       mDisplayManager.removeListener(DisplayType.Device);
     if (mMeshBound)
