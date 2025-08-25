@@ -476,7 +476,24 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 
     mPendingShowMap = false;
     mProgress.setIndeterminate(false);
-    mAreResourcesDownloaded = true;
-    openAuth();
+
+    if (mAlertDialog != null && mAlertDialog.isShowing())
+      return;
+
+    mAlertDialog = new MaterialAlertDialogBuilder(this)
+        .setTitle(R.string.current_location_unknown_error_title)
+        .setMessage(R.string.enable_location_services)
+        .setPositiveButton(R.string.downloader_retry, (dialog, which) -> waitForCountryAndShowMap())
+        .setNegativeButton(R.string.continue_button, (dialog, which) -> {
+          mAreResourcesDownloaded = true;
+          openAuth();
+        })
+        .setOnCancelListener(dialog -> {
+          mAreResourcesDownloaded = true;
+          openAuth();
+        })
+        .setOnDismissListener(dialog -> mAlertDialog = null)
+        .create();
+    mAlertDialog.show();
   }
 }
