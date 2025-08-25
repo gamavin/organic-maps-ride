@@ -184,9 +184,15 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     });
 
     if (prepareFilesDownload(false))
+    {
       Utils.keepScreenOn(true, getWindow());
 
-    setAction(DOWNLOAD);
+      setAction(DOWNLOAD);
+
+      return;
+    }
+
+    showMap();
   }
 
   @CallSuper
