@@ -41,7 +41,6 @@ import app.organicmaps.sdk.util.StringUtils;
 import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.PaddingInsetsListener;
-import com.undefault.bitride.auth.AuthActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import java.util.List;
@@ -66,6 +65,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   private ActivityResultLauncher<Intent> mApiRequest;
 
   private boolean mAreResourcesDownloaded;
+  private boolean mProceedFromButton;
 
   private static final int DOWNLOAD = 0;
   private static final int PAUSE = 1;
@@ -327,6 +327,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   private void onProceedToMapClicked()
   {
     mAreResourcesDownloaded = true;
+    mProceedFromButton = true;
     showMap();
   }
 
@@ -338,15 +339,17 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     // Re-use original intent to retain all flags and payload.
     // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
-    intent.setComponent(new ComponentName(this, AuthActivity.class));
+    intent.setComponent(new ComponentName(this, MwmActivity.class));
+    intent.putExtra(MwmActivity.EXTRA_FIRST_RUN, true);
+    intent.putExtra(MwmActivity.EXTRA_SKIP_TO_AUTH, mProceedFromButton && !mChbDownloadCountry.isChecked());
 
-    // Disable animation because AuthActivity should appear exactly over this one
+    // Disable animation because MwmActivity should appear exactly over this one
     intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
     // See {@link SplashActivity.processNavigation()}
     if (Factory.isStartedForApiResult(intent))
     {
-      // Wait for the result from AuthActivity for API callers.
+      // Wait for the result from MwmActivity for API callers.
       mApiRequest.launch(intent);
       return;
     }
