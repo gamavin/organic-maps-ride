@@ -43,6 +43,7 @@ import app.organicmaps.sdk.util.StringUtils;
 import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.PaddingInsetsListener;
+import com.undefault.bitride.auth.AuthActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import java.util.List;
@@ -72,8 +73,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
   private static final int PAUSE = 1;
   private static final int RESUME = 2;
   private static final int TRY_AGAIN = 3;
-  private static final int PROCEED_TO_MAP = 4;
-  private static final int BTN_COUNT = 5;
+  private static final int BTN_COUNT = 4;
 
   private View.OnClickListener[] mBtnListeners;
   private String[] mBtnNames;
@@ -106,7 +106,6 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 
       if (status != CountryItem.STATUS_DONE)
       {
-        UiUtils.show(mChbDownloadCountry);
         String checkBoxText;
         if (status == CountryItem.STATUS_UPDATABLE)
           checkBoxText = String.format(getString(R.string.update_country_ask), name);
@@ -120,11 +119,19 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
       {
         mHandler.removeCallbacks(mCountryTimeoutRunnable);
         mProgress.setIndeterminate(false);
-        mBtnDownload.setEnabled(true);
         if (status == CountryItem.STATUS_DONE)
-          showMap();
+        {
+          mAreResourcesDownloaded = true;
+          openAuth();
+        }
         else
-          setAction(PROCEED_TO_MAP);
+        {
+          CountryItem item = CountryItem.fill(mCurrentCountry);
+          mProgress.setMax((int) item.totalSize);
+          mProgress.setProgressCompat(0, true);
+          mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
+          MapManager.startDownload(mCurrentCountry);
+        }
         mPendingShowMap = false;
       }
 
@@ -171,7 +178,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
         {
         case CountryItem.STATUS_DONE:
           mAreResourcesDownloaded = true;
-          showMap();
+          openAuth();
           return;
 
         case CountryItem.STATUS_FAILED: MapManager.showError(DownloadResourcesLegacyActivity.this, item, null); return;
@@ -205,12 +212,13 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     {
       Utils.keepScreenOn(true, getWindow());
 
-      setAction(DOWNLOAD);
+      setAction(PAUSE);
+      doDownload();
 
       return;
     }
 
-    showMap();
+    openAuth();
   }
 
   @CallSuper
@@ -260,7 +268,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     {
       mAreResourcesDownloaded = true;
       if (showMap)
-        showMap();
+        openAuth();
 
       return false;
     }
@@ -284,6 +292,8 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     mProgress = findViewById(R.id.progressbar);
     mBtnDownload = findViewById(R.id.btn_download_resources);
     mChbDownloadCountry = findViewById(R.id.chb_download_country);
+    mChbDownloadCountry.setChecked(true);
+    UiUtils.hide(mChbDownloadCountry);
 
     mBtnListeners = new View.OnClickListener[BTN_COUNT];
     mBtnNames = new String[BTN_COUNT];
@@ -300,8 +310,6 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     mBtnListeners[TRY_AGAIN] = v -> onTryAgainClicked();
     mBtnNames[TRY_AGAIN] = getString(R.string.try_again);
 
-    mBtnListeners[PROCEED_TO_MAP] = v -> onProceedToMapClicked();
-    mBtnNames[PROCEED_TO_MAP] = getString(R.string.download_resources_continue);
   }
 
   private void setAction(int action)
@@ -343,30 +351,21 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
     }
   }
 
-  private void onProceedToMapClicked()
-  {
-    mAreResourcesDownloaded = true;
-    showMap();
-  }
-
-  public void showMap()
+  public void openAuth()
   {
     if (!mAreResourcesDownloaded)
       return;
 
     // Re-use original intent to retain all flags and payload.
-    // https://github.com/organicmaps/organicmaps/issues/6944
     final Intent intent = Objects.requireNonNull(getIntent());
-    intent.setComponent(new ComponentName(this, MwmActivity.class));
-    intent.putExtra(MwmActivity.EXTRA_RETURN_TO_AUTH, true);
+    intent.setComponent(new ComponentName(this, AuthActivity.class));
 
-    // Disable animation because MwmActivity should appear exactly over this one
+    // Disable animation because AuthActivity should appear exactly over this one
     intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
     // See {@link SplashActivity.processNavigation()}
     if (Factory.isStartedForApiResult(intent))
     {
-      // Wait for the result from MwmActivity for API callers.
       mApiRequest.launch(intent);
       return;
     }
@@ -382,25 +381,21 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
       // World and WorldCoasts has been downloaded, we should register maps again to correctly add them to the model.
       Framework.nativeReloadWorldMaps();
 
-      if (mCurrentCountry != null && mChbDownloadCountry.isChecked())
+      if (mCurrentCountry != null)
       {
+        mAreResourcesDownloaded = false;
         CountryItem item = CountryItem.fill(mCurrentCountry);
-        UiUtils.hide(mChbDownloadCountry);
         mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
         mProgress.setMax((int) item.totalSize);
         mProgress.setProgressCompat(0, true);
 
         mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
         MapManager.startDownload(mCurrentCountry);
-        setAction(PROCEED_TO_MAP);
       }
       else
       {
-        mAreResourcesDownloaded = true;
-        if (mCurrentCountry != null && MapManager.nativeGetStatus(mCurrentCountry) == CountryItem.STATUS_DONE)
-          showMap();
-        else
-          waitForCountryAndShowMap();
+        mAreResourcesDownloaded = false;
+        waitForCountryAndShowMap();
       }
     }
     else
@@ -481,7 +476,7 @@ public class DownloadResourcesLegacyActivity extends BaseMwmFragmentActivity
 
     mPendingShowMap = false;
     mProgress.setIndeterminate(false);
-    mBtnDownload.setEnabled(true);
-    setAction(PROCEED_TO_MAP);
+    mAreResourcesDownloaded = true;
+    openAuth();
   }
 }

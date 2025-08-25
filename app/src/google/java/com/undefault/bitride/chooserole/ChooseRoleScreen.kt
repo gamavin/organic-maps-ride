@@ -1,5 +1,7 @@
 package com.undefault.bitride.chooserole
 
+import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -9,10 +11,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.compose.ui.platform.LocalContext
+import app.organicmaps.MwmActivity
 import app.organicmaps.bitride.mesh.MeshManager
 import com.undefault.bitride.navigation.Routes
 
@@ -23,14 +26,6 @@ fun ChooseRoleScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-
-    val navigateToNextScreen = { destination: String ->
-        navController.navigate(destination) {
-            // Bersihkan semua layar sebelumnya sampai ke awal
-            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-            launchSingleTop = true
-        }
-    }
 
     Scaffold { paddingValues ->
         Column(
@@ -44,7 +39,9 @@ fun ChooseRoleScreen(
             if (uiState.canLoginAsCustomer) {
                 Button(onClick = {
                     MeshManager.start(context)
-                    viewModel.checkDataAndGetNextRoute(navigateToNextScreen)
+                    val activity = context as? Activity
+                    activity?.startActivity(Intent(activity, MwmActivity::class.java))
+                    activity?.finish()
                 }) {
                     Text("Masuk sebagai Customer")
                 }
