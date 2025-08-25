@@ -135,8 +135,10 @@ import app.organicmaps.widget.StackedButtonsDialog;
 import app.organicmaps.widget.menu.MainMenu;
 import app.organicmaps.widget.placepage.PlacePageController;
 import app.organicmaps.widget.placepage.PlacePageViewModel;
+import com.undefault.bitride.auth.AuthActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import app.organicmaps.sdk.routing.RoutingInfo;
 
@@ -160,6 +162,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public static final String EXTRA_UPDATE_THEME = "update_theme";
   public static final String EXTRA_DEST_LAT = "dest_lat";
   public static final String EXTRA_DEST_LON = "dest_lon";
+  public static final String EXTRA_RETURN_TO_AUTH = "return_to_auth";
   private static final String EXTRA_CONSUMED = "mwm.extra.intent.processed";
   private boolean mPreciseLocationDialogShown = false;
 
@@ -198,6 +201,24 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private FloatingSearchToolbarController mSearchController;
 
   private boolean mRestoreRoutingPlanFragmentNeeded;
+
+  private boolean mReturnToAuth;
+  private int mReturnToAuthSlot;
+  private final MapManager.StorageCallback mReturnToAuthCallback = new MapManager.StorageCallback()
+  {
+    @Override
+    public void onStatusChanged(List<MapManager.StorageCallbackData> data)
+    {
+      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 0)
+        openAuthAndFinish();
+    }
+
+    @Override
+    public void onProgress(String countryId, long localSize, long remoteSize)
+    {
+      // No-op
+    }
+  };
   @Nullable
   private Bundle mSavedForTabletState;
   private String mDonatesUrl;
@@ -653,6 +674,17 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     final Intent intent = getIntent();
     final boolean isLaunchByDeepLink = intent != null && !intent.hasCategory(Intent.CATEGORY_LAUNCHER);
+    mReturnToAuth = intent != null && intent.getBooleanExtra(EXTRA_RETURN_TO_AUTH, false);
+    if (mReturnToAuth)
+    {
+      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 0)
+      {
+        openAuthAndFinish();
+        return;
+      }
+      mReturnToAuthSlot = MapManager.nativeSubscribe(mReturnToAuthCallback);
+    }
+
     initViews(isLaunchByDeepLink);
     mPickupBackButton = findViewById(R.id.pickup_back_button);
     if (mPickupBackButton != null)
@@ -1175,6 +1207,17 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mPanelAnimator.registerListener(mOnmapDownloader);
   }
 
+  private void openAuthAndFinish()
+  {
+    if (mReturnToAuthSlot != 0)
+    {
+      MapManager.nativeUnsubscribe(mReturnToAuthSlot);
+      mReturnToAuthSlot = 0;
+    }
+    startActivity(new Intent(this, AuthActivity.class));
+    finish();
+  }
+
   @Override
   protected void onSaveInstanceState(@NonNull Bundle outState)
   {
@@ -1378,6 +1421,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mPostNotificationPermissionRequest = null;
     mPowerSaveSettings.unregister();
     mPowerSaveSettings = null;
+    if (mReturnToAuthSlot != 0)
+    {
+      MapManager.nativeUnsubscribe(mReturnToAuthSlot);
+      mReturnToAuthSlot = 0;
+    }
     if (mRemoveDisplayListener && !isChangingConfigurations())
       mDisplayManager.removeListener(DisplayType.Device);
     if (mMeshBound)
