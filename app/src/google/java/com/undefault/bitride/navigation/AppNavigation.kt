@@ -1,5 +1,7 @@
 package com.undefault.bitride.navigation
 
+import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -18,6 +20,7 @@ import com.undefault.bitride.customerregistrationform.CustomerRegistrationFormSc
 import com.undefault.bitride.driverregistrationform.DriverRegistrationFormScreen
 import com.undefault.bitride.idcardscan.IdCardScanScreen
 import com.undefault.bitride.driverlounge.DriverLoungeScreen
+import app.organicmaps.MwmActivity
 import app.organicmaps.bitride.mesh.MeshManager
 
 /**
@@ -72,9 +75,11 @@ fun AppNavigation() {
                 initialName = name,
                 onRegistrationComplete = {
                     MeshManager.start(context)
-                    navController.navigate(Routes.MAIN) {
-                        popUpTo(Routes.CHOOSE_ROLE) { inclusive = true }
+                    val intent = Intent(context, MwmActivity::class.java).apply {
+                        putExtra(MwmActivity.EXTRA_SHOW_SEARCH, true)
                     }
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
                 },
                 onNavigateToScanKtp = { navController.navigate(Routes.idCardScanWithArgs("customer", true)) }
             )
@@ -93,7 +98,7 @@ fun AppNavigation() {
                 initialName = name,
                 onRegistrationComplete = {
                     MeshManager.start(context)
-                    navController.navigate(Routes.MAIN) {
+                    navController.navigate(Routes.DRIVER_LOUNGE) {
                         popUpTo(Routes.CHOOSE_ROLE) { inclusive = true }
                     }
                 },
