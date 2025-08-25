@@ -861,7 +861,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     initMainMenu();
     initOnmapDownloader();
+    if (mOnmapDownloader != null)
+      mOnmapDownloader.onResume();
     setupInitialLocation();
+    if (mOnmapDownloader != null)
+      mOnmapDownloader.updateState(true);
     initPositionChooser();
   }
 
