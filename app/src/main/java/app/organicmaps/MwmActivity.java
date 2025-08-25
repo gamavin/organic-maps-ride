@@ -97,7 +97,6 @@ import app.organicmaps.sdk.display.DisplayChangedListener;
 import app.organicmaps.sdk.display.DisplayManager;
 import app.organicmaps.sdk.display.DisplayType;
 import app.organicmaps.sdk.downloader.MapManager;
-import app.organicmaps.sdk.downloader.CountryItem;
 import app.organicmaps.sdk.downloader.UpdateInfo;
 import app.organicmaps.sdk.editor.Editor;
 import app.organicmaps.sdk.editor.OsmOAuth;
@@ -119,8 +118,6 @@ import app.organicmaps.sdk.util.PowerManagment;
 import app.organicmaps.sdk.util.UiUtils;
 import app.organicmaps.sdk.util.log.Logger;
 import app.organicmaps.sdk.widget.placepage.PlacePageData;
-import com.undefault.bitride.auth.AuthActivity;
-import java.util.List;
 import app.organicmaps.search.FloatingSearchToolbarController;
 import app.organicmaps.search.SearchActivity;
 import app.organicmaps.search.SearchFragment;
@@ -163,8 +160,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public static final String EXTRA_UPDATE_THEME = "update_theme";
   public static final String EXTRA_DEST_LAT = "dest_lat";
   public static final String EXTRA_DEST_LON = "dest_lon";
-  public static final String EXTRA_FIRST_RUN = "first_run";
-  public static final String EXTRA_SKIP_TO_AUTH = "skip_to_auth";
   private static final String EXTRA_CONSUMED = "mwm.extra.intent.processed";
   private boolean mPreciseLocationDialogShown = false;
 
@@ -198,9 +193,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Nullable
   private OnmapDownloader mOnmapDownloader;
   private boolean mIsTabletLayout;
-  private boolean mFirstRun;
-  private boolean mSkipToAuth;
-  private int mCountryDownloadListenerSlot;
   @SuppressWarnings("NotNullFieldNotInitialized")
   @NonNull
   private FloatingSearchToolbarController mSearchController;
@@ -215,37 +207,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private PlacePageViewModel mPlacePageViewModel;
   private MapButtonsViewModel mMapButtonsViewModel;
   private MapButtonsController.LayoutMode mPreviousMapLayoutMode;
-
-  private final MapManager.StorageCallback mCountryDownloadListener = new MapManager.StorageCallback()
-  {
-    @Override
-    public void onStatusChanged(List<MapManager.StorageCallbackData> data)
-    {
-      if (!mFirstRun)
-        return;
-
-      for (MapManager.StorageCallbackData item : data)
-      {
-        if (!item.isLeafNode)
-          continue;
-
-        if (item.newStatus == CountryItem.STATUS_DONE)
-        {
-          goToAuthActivity();
-          return;
-        }
-
-        if (item.newStatus == CountryItem.STATUS_FAILED)
-          MapManager.showError(MwmActivity.this, item, null);
-      }
-    }
-
-    @Override
-    public void onProgress(String countryId, long localSize, long remoteSize)
-    {
-      // No op.
-    }
-  };
 
   @Nullable
   private WindowInsetsCompat mCurrentWindowInsets;
@@ -407,20 +368,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       sIsFirstLaunch = false;
       showSearch("");
-    }
-
-    if (mFirstRun)
-    {
-      if (MwmApplication.from(this).getLocationHelper().isInFirstRun())
-        MwmApplication.from(this).getLocationHelper().onExitFromFirstRun();
-
-      if (mOnmapDownloader != null)
-        mOnmapDownloader.updateState(true);
-
-      if (mSkipToAuth)
-        goToAuthActivity();
-      else
-        checkAuthTransition();
     }
 
   }
@@ -705,8 +652,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mDisplayManager.addListener(DisplayType.Device, this);
 
     final Intent intent = getIntent();
-    mFirstRun = intent != null && intent.getBooleanExtra(EXTRA_FIRST_RUN, false);
-    mSkipToAuth = intent != null && intent.getBooleanExtra(EXTRA_SKIP_TO_AUTH, false);
     final boolean isLaunchByDeepLink = intent != null && !intent.hasCategory(Intent.CATEGORY_LAUNCHER);
     initViews(isLaunchByDeepLink);
     mPickupBackButton = findViewById(R.id.pickup_back_button);
@@ -1352,15 +1297,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (mOnmapDownloader != null)
       mOnmapDownloader.onResume();
 
-    if (mFirstRun)
-    {
-      if (Map.isEngineCreated() && MwmApplication.from(this).getLocationHelper().isInFirstRun())
-        MwmApplication.from(this).getLocationHelper().onExitFromFirstRun();
-
-      if (mCountryDownloadListenerSlot == 0)
-        mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
-    }
-
     mNavigationController.refresh();
     refreshLightStatusBar();
 
@@ -1388,12 +1324,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     if (mOnmapDownloader != null)
       mOnmapDownloader.onPause();
-
-    if (mFirstRun && mCountryDownloadListenerSlot != 0)
-    {
-      MapManager.nativeUnsubscribe(mCountryDownloadListenerSlot);
-      mCountryDownloadListenerSlot = 0;
-    }
     MwmApplication.from(this).getSensorHelper().removeListener(this);
     dismissLocationErrorDialog();
     dismissAlertDialog();
@@ -3109,23 +3039,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     Logger.d(TAG, "trim memory, level = " + level);
     if (level >= TRIM_MEMORY_RUNNING_LOW)
       Framework.nativeMemoryWarning();
-  }
-  private void checkAuthTransition()
-  {
-    if (!mFirstRun)
-      return;
-
-    View downloader = findViewById(R.id.onmap_downloader);
-    if (downloader == null || downloader.getVisibility() != View.VISIBLE)
-      goToAuthActivity();
-  }
-
-  private void goToAuthActivity()
-  {
-    Intent intent = new Intent(this, AuthActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    startActivity(intent);
-    finish();
   }
   private static String sha256(String s)
   {
