@@ -1,6 +1,7 @@
 #include "app/organicmaps/sdk/platform/GuiThread.hpp"
 
 #include "app/organicmaps/sdk/core/jni_helper.hpp"
+#include "base/logging.hpp"
 
 #include <memory>
 
@@ -26,8 +27,25 @@ GuiThread::~GuiThread()
 // static
 void GuiThread::ProcessTask(jlong task)
 {
+  if (task == 0)
+  {
+    LOG(LWARNING, ("GuiThread::ProcessTask called with null task"));
+    return;
+  }
+
   std::unique_ptr<Task> t(reinterpret_cast<Task *>(task));
-  (*t)();
+  try
+  {
+    (*t)();
+  }
+  catch (std::exception const & e)
+  {
+    LOG(LERROR, ("Exception while executing gui task:", e.what()));
+  }
+  catch (...)
+  {
+    LOG(LERROR, ("Unknown exception while executing gui task"));
+  }
 }
 
 base::TaskLoop::PushResult GuiThread::Push(Task && task)
