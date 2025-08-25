@@ -27,13 +27,13 @@ fun ChooseRoleScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    val navigateToNextScreen = { destination: String ->
+    val navigateToNextScreen: (String) -> Unit = { destination ->
         if (destination == Routes.MAIN) {
             context.startActivity(
                 Intent(context, MwmActivity::class.java)
                     .putExtra(MwmActivity.EXTRA_SHOW_SEARCH, true)
             )
-            (context as? Activity)?.finish()
+            (context as? Activity)?.finish() ?: Unit
         } else {
             navController.navigate(destination) {
                 // Bersihkan semua layar sebelumnya sampai ke awal
