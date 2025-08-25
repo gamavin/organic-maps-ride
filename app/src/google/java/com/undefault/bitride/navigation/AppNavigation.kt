@@ -107,7 +107,10 @@ fun AppNavigation() {
         composable(Routes.MAIN) {
             val context = LocalContext.current
             LaunchedEffect(Unit) {
-                context.startActivity(Intent(context, MwmActivity::class.java))
+                context.startActivity(
+                    Intent(context, MwmActivity::class.java)
+                        .putExtra(MwmActivity.EXTRA_SHOW_SEARCH, true)
+                )
                 (context as? Activity)?.finish()
             }
         }
