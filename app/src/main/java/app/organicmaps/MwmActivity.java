@@ -163,6 +163,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public static final String EXTRA_DEST_LAT = "dest_lat";
   public static final String EXTRA_DEST_LON = "dest_lon";
   public static final String EXTRA_RETURN_TO_AUTH = "return_to_auth";
+  public static final String EXTRA_SHOW_SEARCH = "show_search";
   private static final String EXTRA_CONSUMED = "mwm.extra.intent.processed";
   private static final int MIN_DOWNLOADED_MAPS = 1;
   private boolean mPreciseLocationDialogShown = false;
@@ -390,10 +391,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     migrateOAuthCredentials();
 
     if (sIsFirstLaunch)
-    {
       sIsFirstLaunch = false;
-      showSearch("");
-    }
 
   }
 
@@ -435,6 +433,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (countryId != null)
     {
       Framework.nativeShowCountry(countryId, false);
+      return;
+    }
+
+    if (intent.getBooleanExtra(EXTRA_SHOW_SEARCH, false))
+    {
+      showSearch("");
       return;
     }
 
