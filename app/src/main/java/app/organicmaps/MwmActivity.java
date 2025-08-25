@@ -116,7 +116,6 @@ import app.organicmaps.sdk.util.Config;
 import app.organicmaps.sdk.util.LocationUtils;
 import app.organicmaps.sdk.util.PowerManagment;
 import app.organicmaps.sdk.util.UiUtils;
-import app.organicmaps.sdk.util.concurrency.UiThread;
 import app.organicmaps.sdk.util.log.Logger;
 import app.organicmaps.sdk.widget.placepage.PlacePageData;
 import app.organicmaps.search.FloatingSearchToolbarController;
@@ -390,13 +389,10 @@ public class MwmActivity extends BaseMwmFragmentActivity
     processIntent();
     migrateOAuthCredentials();
 
-    setupInitialLocation();
-
     if (sIsFirstLaunch)
     {
       sIsFirstLaunch = false;
-      if (!mReturnToAuth)
-        showSearch("");
+      showSearch("");
     }
 
   }
@@ -684,7 +680,14 @@ public class MwmActivity extends BaseMwmFragmentActivity
     final boolean isLaunchByDeepLink = intent != null && !intent.hasCategory(Intent.CATEGORY_LAUNCHER);
     mReturnToAuth = intent != null && intent.getBooleanExtra(EXTRA_RETURN_TO_AUTH, false);
     if (mReturnToAuth)
+    {
+      if (shouldReturnToAuth())
+      {
+        openAuthAndFinish();
+        return;
+      }
       mReturnToAuthSlot = MapManager.nativeSubscribe(mReturnToAuthCallback);
+    }
 
     initViews(isLaunchByDeepLink);
     mPickupBackButton = findViewById(R.id.pickup_back_button);
@@ -854,6 +857,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     initMainMenu();
     initOnmapDownloader();
+    setupInitialLocation();
     initPositionChooser();
   }
 
@@ -905,8 +909,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (myPosition != null)
     {
       switchToMyPosition();
-      if (mOnmapDownloader != null)
-        mOnmapDownloader.updateState(true);
       return;
     }
     mFirstFixListener = new LocationListener()
@@ -917,8 +919,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
         locationHelper.removeListener(this);
         mFirstFixListener = null;
         switchToMyPosition();
-        if (mOnmapDownloader != null)
-          mOnmapDownloader.updateState(true);
       }
     };
     locationHelper.addListener(mFirstFixListener);
@@ -926,15 +926,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void switchToMyPosition()
   {
-    if (!Map.isEngineCreated())
-      return;
     final int mode = LocationState.getMode();
     if (mode != FOLLOW && mode != FOLLOW_AND_ROTATE)
       LocationState.nativeSwitchToNextMode();
-    if (mReturnToAuth && shouldReturnToAuth())
-      openAuthAndFinish();
-    if (mOnmapDownloader != null)
-      mOnmapDownloader.updateState(true);
   }
 
   private void refreshSearchToolbar()
@@ -1255,8 +1249,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private boolean shouldReturnToAuth()
   {
     return !MapManager.nativeIsDownloading()
-        && Framework.nativeIsDownloadedMapAtScreenCenter()
-        && MwmApplication.from(this).getLocationHelper().getMyPosition() != null;
+        && Framework.nativeIsDownloadedMapAtScreenCenter();
   }
 
   private void openAuthAndFinish()
@@ -1266,16 +1259,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
       MapManager.nativeUnsubscribe(mReturnToAuthSlot);
       mReturnToAuthSlot = 0;
     }
-    UiThread.runLater(() -> {
-      startActivity(new Intent(this, AuthActivity.class));
-      finish();
-    });
-  }
-
-  public void onCountryDownloadFinished()
-  {
-    if (mReturnToAuth && shouldReturnToAuth())
-      openAuthAndFinish();
+    startActivity(new Intent(this, AuthActivity.class));
+    finish();
   }
 
   @Override

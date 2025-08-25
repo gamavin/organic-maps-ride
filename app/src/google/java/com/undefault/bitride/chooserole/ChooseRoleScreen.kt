@@ -1,6 +1,5 @@
 package com.undefault.bitride.chooserole
 
-import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -14,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
-import app.organicmaps.search.SearchActivity
 import app.organicmaps.bitride.mesh.MeshManager
 import com.undefault.bitride.navigation.Routes
 
@@ -27,16 +25,10 @@ fun ChooseRoleScreen(
     val context = LocalContext.current
 
     val navigateToNextScreen = { destination: String ->
-        if (destination == Routes.MAIN) {
-            val activity = context as Activity
-            SearchActivity.start(activity, "")
-            activity.finish()
-        } else {
-            navController.navigate(destination) {
-                // Bersihkan semua layar sebelumnya sampai ke awal
-                popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                launchSingleTop = true
-            }
+        navController.navigate(destination) {
+            // Bersihkan semua layar sebelumnya sampai ke awal
+            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            launchSingleTop = true
         }
     }
 
