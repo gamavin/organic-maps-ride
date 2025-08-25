@@ -27,6 +27,22 @@ fun ChooseRoleScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    val navigateToNextScreen: (String) -> Unit = { destination ->
+        if (destination == Routes.MAIN) {
+            context.startActivity(
+                Intent(context, MwmActivity::class.java)
+                    .putExtra(MwmActivity.EXTRA_SHOW_SEARCH, true)
+            )
+            (context as? Activity)?.finish() ?: Unit
+        } else {
+            navController.navigate(destination) {
+                // Bersihkan semua layar sebelumnya sampai ke awal
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -39,9 +55,7 @@ fun ChooseRoleScreen(
             if (uiState.canLoginAsCustomer) {
                 Button(onClick = {
                     MeshManager.start(context)
-                    val activity = context as? Activity
-                    activity?.startActivity(Intent(activity, MwmActivity::class.java))
-                    activity?.finish()
+                    viewModel.checkDataAndGetNextRoute(navigateToNextScreen)
                 }) {
                     Text("Masuk sebagai Customer")
                 }

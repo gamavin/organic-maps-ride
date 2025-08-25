@@ -55,7 +55,6 @@ public class LocationHelper implements BaseLocationProvider.Listener
   private BaseLocationProvider mLocationProvider;
   private long mInterval;
   private boolean mInFirstRun;
-  private boolean mAllowUpdatesInFirstRun;
   private boolean mActive;
   private Handler mHandler;
   private Runnable mLocationTimeoutRunnable = this::notifyLocationUpdateTimeout;
@@ -160,7 +159,7 @@ public class LocationHelper implements BaseLocationProvider.Listener
     // If we are still in the first run mode, i.e. user is staying on the first run screens,
     // not on the map, we mustn't post location update to the core. Only this preserving allows us
     // to play nice zoom animation once a user will leave first screens and will see a map.
-    if (mInFirstRun && !mAllowUpdatesInFirstRun)
+    if (mInFirstRun)
     {
       Logger.d(TAG, "Location update is obtained and must be ignored, because the app is in a first run mode");
       return;
@@ -471,18 +470,6 @@ public class LocationHelper implements BaseLocationProvider.Listener
   {
     Logger.i(TAG);
     mInFirstRun = true;
-  }
-
-  @UiThread
-  public void allowLocationUpdatesInFirstRun()
-  {
-    Logger.i(TAG, "Allowing location updates during first run");
-    if (mAllowUpdatesInFirstRun)
-      return;
-
-    mAllowUpdatesInFirstRun = true;
-    if (mInFirstRun && mSavedLocation != null)
-      notifyLocationUpdated();
   }
 
   @UiThread
