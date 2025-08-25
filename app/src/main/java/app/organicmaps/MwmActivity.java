@@ -116,6 +116,7 @@ import app.organicmaps.sdk.util.Config;
 import app.organicmaps.sdk.util.LocationUtils;
 import app.organicmaps.sdk.util.PowerManagment;
 import app.organicmaps.sdk.util.UiUtils;
+import app.organicmaps.sdk.util.concurrency.UiThread;
 import app.organicmaps.sdk.util.log.Logger;
 import app.organicmaps.sdk.widget.placepage.PlacePageData;
 import app.organicmaps.search.FloatingSearchToolbarController;
@@ -1265,8 +1266,10 @@ public class MwmActivity extends BaseMwmFragmentActivity
       MapManager.nativeUnsubscribe(mReturnToAuthSlot);
       mReturnToAuthSlot = 0;
     }
-    startActivity(new Intent(this, AuthActivity.class));
-    finish();
+    UiThread.runLater(() -> {
+      startActivity(new Intent(this, AuthActivity.class));
+      finish();
+    });
   }
 
   public void onCountryDownloadFinished()
