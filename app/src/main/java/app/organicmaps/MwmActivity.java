@@ -399,9 +399,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     processIntent();
     migrateOAuthCredentials();
-
     if (sIsFirstLaunch)
+    {
       sIsFirstLaunch = false;
+      setupInitialLocation();
+      if (mOnmapDownloader != null)
+        mOnmapDownloader.updateState(true);
+    }
 
   }
 
@@ -873,9 +877,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
     initOnmapDownloader();
     if (mOnmapDownloader != null)
       mOnmapDownloader.onResume();
-    setupInitialLocation();
-    if (mOnmapDownloader != null)
-      mOnmapDownloader.updateState(true);
     initPositionChooser();
   }
 
