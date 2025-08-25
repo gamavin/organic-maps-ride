@@ -1251,16 +1251,16 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     runOnUiThread(() ->
     {
-      if (mOnmapDownloader != null)
-      {
-        mOnmapDownloader.onPause();
-        mOnmapDownloader = null;
-      }
-
       if (MapManager.nativeIsDownloading())
       {
         Logger.w(TAG, "Engine is not idle when returning to auth");
         return;
+      }
+
+      if (mOnmapDownloader != null)
+      {
+        mOnmapDownloader.onPause();
+        mOnmapDownloader = null;
       }
 
       startActivity(new Intent(this, AuthActivity.class));
