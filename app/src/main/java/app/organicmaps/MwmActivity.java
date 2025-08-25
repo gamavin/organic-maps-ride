@@ -164,6 +164,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public static final String EXTRA_DEST_LON = "dest_lon";
   public static final String EXTRA_RETURN_TO_AUTH = "return_to_auth";
   private static final String EXTRA_CONSUMED = "mwm.extra.intent.processed";
+  private static final int MIN_DOWNLOADED_MAPS = 1;
   private boolean mPreciseLocationDialogShown = false;
 
   private static final String[] DOCKED_FRAGMENTS = {SearchFragment.class.getName(), DownloaderFragment.class.getName(),
@@ -209,7 +210,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     @Override
     public void onStatusChanged(List<MapManager.StorageCallbackData> data)
     {
-      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 1)
+      if (shouldReturnToAuth())
         openAuthAndFinish();
     }
 
@@ -680,7 +681,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mReturnToAuth = intent != null && intent.getBooleanExtra(EXTRA_RETURN_TO_AUTH, false);
     if (mReturnToAuth)
     {
-      if (!MapManager.nativeIsDownloading() && MapManager.nativeGetDownloadedCount() > 1)
+      if (shouldReturnToAuth())
       {
         openAuthAndFinish();
         return;
@@ -1238,6 +1239,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
     mOnmapDownloader = new OnmapDownloader(this);
     if (mIsTabletLayout)
       mPanelAnimator.registerListener(mOnmapDownloader);
+  }
+
+  private boolean shouldReturnToAuth()
+  {
+    return !MapManager.nativeIsDownloading()
+        && MapManager.nativeGetDownloadedCount() > MIN_DOWNLOADED_MAPS;
   }
 
   private void openAuthAndFinish()
