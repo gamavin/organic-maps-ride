@@ -1295,6 +1295,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
         return;
       }
 
+      Logger.i(TAG, "Starting AuthActivity and finishing MwmActivity");
       startActivity(new Intent(this, AuthActivity.class));
       finish();
     });
