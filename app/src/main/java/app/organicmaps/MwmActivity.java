@@ -911,6 +911,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (myPosition != null)
     {
       switchToMyPosition();
+      if (mOnmapDownloader != null)
+        mOnmapDownloader.updateState(true);
       return;
     }
     mFirstFixListener = new LocationListener()
@@ -921,6 +923,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
         locationHelper.removeListener(this);
         mFirstFixListener = null;
         switchToMyPosition();
+        if (mOnmapDownloader != null)
+          mOnmapDownloader.updateState(true);
       }
     };
     locationHelper.addListener(mFirstFixListener);
