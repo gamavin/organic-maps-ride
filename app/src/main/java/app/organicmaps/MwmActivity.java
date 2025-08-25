@@ -1268,6 +1268,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
     finish();
   }
 
+  public void onCountryDownloadFinished()
+  {
+    if (mReturnToAuth && shouldReturnToAuth())
+      openAuthAndFinish();
+  }
+
   @Override
   protected void onSaveInstanceState(@NonNull Bundle outState)
   {
