@@ -263,6 +263,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @NonNull
   private DisplayManager mDisplayManager;
 
+  @Nullable
+  private LocationListener mFirstFixListener;
+
   ManageRouteBottomSheet mManageRouteBottomSheet;
 
   private boolean mRemoveDisplayListener = true;
@@ -853,6 +856,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     initMainMenu();
     initOnmapDownloader();
+    setupInitialLocation();
     initPositionChooser();
   }
 
@@ -895,6 +899,35 @@ public class MwmActivity extends BaseMwmFragmentActivity
       closePositionChooser();
     });
     UiUtils.hide(mPointChooser);
+  }
+
+  private void setupInitialLocation()
+  {
+    final LocationHelper locationHelper = MwmApplication.from(this).getLocationHelper();
+    final MapObject myPosition = locationHelper.getMyPosition();
+    if (myPosition != null)
+    {
+      switchToMyPosition();
+      return;
+    }
+    mFirstFixListener = new LocationListener()
+    {
+      @Override
+      public void onLocationUpdated(@NonNull Location location)
+      {
+        locationHelper.removeListener(this);
+        mFirstFixListener = null;
+        switchToMyPosition();
+      }
+    };
+    locationHelper.addListener(mFirstFixListener);
+  }
+
+  private void switchToMyPosition()
+  {
+    final int mode = LocationState.getMode();
+    if (mode != FOLLOW && mode != FOLLOW_AND_ROTATE)
+      LocationState.nativeSwitchToNextMode();
   }
 
   private void refreshSearchToolbar()
@@ -1394,6 +1427,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
     Framework.nativeRemovePlacePageActivationListener(this);
     BookmarkManager.INSTANCE.removeLoadingListener(this);
     MwmApplication.from(this).getLocationHelper().removeListener(this);
+    if (mFirstFixListener != null)
+    {
+      MwmApplication.from(this).getLocationHelper().removeListener(mFirstFixListener);
+      mFirstFixListener = null;
+    }
     if (mDisplayManager.isDeviceDisplayUsed() && !RoutingController.get().isNavigating())
     {
       LocationState.nativeRemoveListener();
