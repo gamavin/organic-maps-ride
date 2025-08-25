@@ -683,14 +683,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     final boolean isLaunchByDeepLink = intent != null && !intent.hasCategory(Intent.CATEGORY_LAUNCHER);
     mReturnToAuth = intent != null && intent.getBooleanExtra(EXTRA_RETURN_TO_AUTH, false);
     if (mReturnToAuth)
-    {
-      if (shouldReturnToAuth())
-      {
-        openAuthAndFinish();
-        return;
-      }
       mReturnToAuthSlot = MapManager.nativeSubscribe(mReturnToAuthCallback);
-    }
 
     initViews(isLaunchByDeepLink);
     mPickupBackButton = findViewById(R.id.pickup_back_button);
@@ -932,12 +925,15 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void switchToMyPosition()
   {
-    if (!Framework.nativeIsEngineCreated())
+    if (!Map.isEngineCreated())
       return;
-
     final int mode = LocationState.getMode();
     if (mode != FOLLOW && mode != FOLLOW_AND_ROTATE)
       LocationState.nativeSwitchToNextMode();
+    if (mReturnToAuth && shouldReturnToAuth())
+      openAuthAndFinish();
+    if (mOnmapDownloader != null)
+      mOnmapDownloader.updateState(true);
   }
 
   private void refreshSearchToolbar()
@@ -1258,7 +1254,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private boolean shouldReturnToAuth()
   {
     return !MapManager.nativeIsDownloading()
-        && Framework.nativeIsDownloadedMapAtScreenCenter();
+        && Framework.nativeIsDownloadedMapAtScreenCenter()
+        && MwmApplication.from(this).getLocationHelper().getMyPosition() != null;
   }
 
   private void openAuthAndFinish()
